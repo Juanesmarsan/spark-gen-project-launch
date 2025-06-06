@@ -34,6 +34,7 @@ export interface Proyecto {
   estado: 'activo' | 'completado' | 'pausado';
   presupuestoTotal?: number; // Para proyectos por presupuesto
   precioHora?: number; // Para proyectos por administración
+  certificacionReal?: number; // Para proyectos por administración - importe real certificado por el cliente
   descripcion?: string;
   trabajadoresAsignados: Trabajador[];
   fechaCreacion: Date;

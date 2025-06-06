@@ -1,15 +1,24 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Euro, TrendingUp, Calculator, Percent } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Euro, TrendingUp, Calculator, Percent, Clock, Edit, Save, X } from "lucide-react";
 import { Proyecto } from "@/types/proyecto";
 import { useCalculosBeneficios } from "@/hooks/useCalculosBeneficios";
+import { generarCalendarioMesPuro } from "@/utils/calendarioUtils";
 
 interface AnalisisFinancieroTabProps {
   proyecto: Proyecto;
+  onUpdateProyecto?: (proyecto: Proyecto) => void;
 }
 
-export const AnalisisFinancieroTab = ({ proyecto }: AnalisisFinancieroTabProps) => {
+export const AnalisisFinancieroTab = ({ proyecto, onUpdateProyecto }: AnalisisFinancieroTabProps) => {
+  const [editandoCertificacion, setEditandoCertificacion] = useState(false);
+  const [certificacionTemp, setCertificacionTemp] = useState(proyecto.certificacionReal?.toString() || '');
+
   const {
     calcularBeneficioBrutoAdministracion,
     calcularBeneficioBrutoPresupuesto,
@@ -18,18 +27,64 @@ export const AnalisisFinancieroTab = ({ proyecto }: AnalisisFinancieroTabProps) 
     calcularMargenProyecto
   } = useCalculosBeneficios();
 
+  // Calcular total de horas trabajadas para proyectos de administración
+  const calcularTotalHorasTrabajadas = () => {
+    if (proyecto.tipo !== 'administracion') return 0;
+
+    let totalHoras = 0;
+    const añoActual = new Date().getFullYear();
+
+    proyecto.trabajadoresAsignados.forEach(trabajador => {
+      for (let mes = 1; mes <= 12; mes++) {
+        const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
+        
+        calendario.dias.forEach(dia => {
+          if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+            if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+              totalHoras += dia.horasReales || 0;
+            }
+          }
+        });
+      }
+    });
+
+    return totalHoras;
+  };
+
+  const totalHoras = calcularTotalHorasTrabajadas();
+
+  // Usar certificación real si está disponible, sino usar el cálculo teórico
   const beneficioBruto = proyecto.tipo === 'administracion' 
-    ? calcularBeneficioBrutoAdministracion(proyecto)
+    ? (proyecto.certificacionReal || calcularBeneficioBrutoAdministracion(proyecto))
     : calcularBeneficioBrutoPresupuesto(proyecto);
   
   const gastosTotales = calcularGastosTotales(proyecto);
-  const beneficioNeto = calcularBeneficioNeto(proyecto);
-  const margen = calcularMargenProyecto(proyecto);
+  const beneficioNeto = beneficioBruto - gastosTotales;
+  const margen = beneficioBruto > 0 ? (beneficioNeto / beneficioBruto) * 100 : 0;
 
   const getMargenColor = (margen: number) => {
     if (margen >= 20) return "bg-green-100 text-green-800";
     if (margen >= 10) return "bg-yellow-100 text-yellow-800";
     return "bg-red-100 text-red-800";
+  };
+
+  const handleGuardarCertificacion = () => {
+    if (!onUpdateProyecto) return;
+
+    const certificacionNumerica = certificacionTemp ? parseFloat(certificacionTemp) : undefined;
+    
+    const proyectoActualizado = {
+      ...proyecto,
+      certificacionReal: certificacionNumerica
+    };
+
+    onUpdateProyecto(proyectoActualizado);
+    setEditandoCertificacion(false);
+  };
+
+  const handleCancelarEdicion = () => {
+    setCertificacionTemp(proyecto.certificacionReal?.toString() || '');
+    setEditandoCertificacion(false);
   };
 
   return (
@@ -52,7 +107,10 @@ export const AnalisisFinancieroTab = ({ proyecto }: AnalisisFinancieroTabProps) 
               <Euro className="w-5 h-5 text-blue-600" />
               <div>
                 <p className="text-sm text-gray-600">
-                  {proyecto.tipo === 'administracion' ? 'Beneficio Bruto' : 'Certificado'}
+                  {proyecto.tipo === 'administracion' ? 
+                    (proyecto.certificacionReal ? 'Certificación Real' : 'Beneficio Teórico') : 
+                    'Certificado'
+                  }
                 </p>
                 <p className="text-lg font-semibold">{beneficioBruto.toLocaleString()}€</p>
               </div>
@@ -105,24 +163,104 @@ export const AnalisisFinancieroTab = ({ proyecto }: AnalisisFinancieroTabProps) 
       {/* Detalles adicionales */}
       <div className="grid gap-4 md:grid-cols-2">
         {proyecto.tipo === 'administracion' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Detalles de Administración</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Precio por hora:</span>
-                <span className="font-medium">{proyecto.precioHora}€/h</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Trabajadores asignados:</span>
-                <span className="font-medium">{proyecto.trabajadoresAsignados.length}</span>
-              </div>
-              <div className="text-xs text-gray-500 mt-2">
-                * Las horas de vacaciones y bajas no se incluyen en el cálculo
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Detalles de Administración</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Precio por hora:</span>
+                  <span className="font-medium">{proyecto.precioHora}€/h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Total horas trabajadas:</span>
+                  <span className="font-medium">{totalHoras.toLocaleString()} h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Beneficio teórico:</span>
+                  <span className="font-medium">{calcularBeneficioBrutoAdministracion(proyecto).toLocaleString()}€</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Trabajadores asignados:</span>
+                  <span className="font-medium">{proyecto.trabajadoresAsignados.length}</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  * Las horas de vacaciones y bajas no se incluyen en el cálculo
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-base">Certificación del Cliente</CardTitle>
+                  {!editandoCertificacion && onUpdateProyecto && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditandoCertificacion(true)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editandoCertificacion ? (
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="certificacion">Importe certificado por el cliente</Label>
+                      <Input
+                        id="certificacion"
+                        type="number"
+                        value={certificacionTemp}
+                        onChange={(e) => setCertificacionTemp(e.target.value)}
+                        placeholder="Introduce el importe..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleGuardarCertificacion}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Save className="w-4 h-4 mr-1" />
+                        Guardar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelarEdicion}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {proyecto.certificacionReal ? (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Certificación real:</span>
+                        <span className="font-medium text-green-600">
+                          {proyecto.certificacionReal.toLocaleString()}€
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No se ha registrado certificación del cliente
+                      </p>
+                    )}
+                    <div className="text-xs text-gray-500">
+                      Este es el importe que realmente certificará/pagará el cliente
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
         )}
 
         {proyecto.tipo === 'presupuesto' && (

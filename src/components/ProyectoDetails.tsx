@@ -216,7 +216,10 @@ export const ProyectoDetails = ({
           </TabsContent>
 
           <TabsContent value="financiero">
-            <AnalisisFinancieroTab proyecto={proyecto} />
+            <AnalisisFinancieroTab 
+              proyecto={proyecto} 
+              onUpdateProyecto={onUpdateProyecto}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
