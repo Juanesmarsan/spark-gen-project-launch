@@ -1,9 +1,10 @@
-
 export interface Trabajador {
   id: number;
   nombre: string;
   apellidos: string;
   precioHora?: number; // Solo para proyectos por administración
+  fechaEntrada?: Date;
+  fechaSalida?: Date;
 }
 
 export interface GastoVariableProyecto {

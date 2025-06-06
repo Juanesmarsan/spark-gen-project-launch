@@ -11,6 +11,7 @@ import { ProyectoForm } from "./ProyectoForm";
 import { GastosVariablesProyectoTab } from "./proyecto/GastosVariablesProyectoTab";
 import { CertificacionesTab } from "./proyecto/CertificacionesTab";
 import { AnalisisFinancieroTab } from "./proyecto/AnalisisFinancieroTab";
+import { TrabajadoresTab } from "./proyecto/TrabajadoresTab";
 
 interface ProyectoDetailsProps {
   proyecto: Proyecto;
@@ -113,8 +114,9 @@ export const ProyectoDetails = ({
       
       <CardContent>
         <Tabs defaultValue="detalles" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="detalles">Detalles</TabsTrigger>
+            <TabsTrigger value="trabajadores">Trabajadores</TabsTrigger>
             <TabsTrigger value="gastos">Gastos</TabsTrigger>
             <TabsTrigger value="certificaciones">
               {proyecto.tipo === 'presupuesto' ? 'Certificaciones' : 'Facturación'}
@@ -174,6 +176,13 @@ export const ProyectoDetails = ({
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="trabajadores">
+            <TrabajadoresTab
+              proyecto={proyecto}
+              onUpdateProyecto={onUpdateProyecto}
+            />
           </TabsContent>
 
           <TabsContent value="gastos">

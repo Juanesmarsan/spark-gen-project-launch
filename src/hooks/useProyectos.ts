@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Proyecto, ProyectoFormData } from '@/types/proyecto';
 
@@ -19,6 +20,11 @@ export const useProyectos = () => {
         const proyectosProcesados = proyectosParseados.map((proyecto: any) => ({
           ...proyecto,
           fechaCreacion: new Date(proyecto.fechaCreacion),
+          trabajadoresAsignados: proyecto.trabajadoresAsignados?.map((trabajador: any) => ({
+            ...trabajador,
+            fechaEntrada: trabajador.fechaEntrada ? new Date(trabajador.fechaEntrada) : undefined,
+            fechaSalida: trabajador.fechaSalida ? new Date(trabajador.fechaSalida) : undefined,
+          })) || [],
           gastosVariables: proyecto.gastosVariables?.map((gasto: any) => ({
             ...gasto,
             fecha: new Date(gasto.fecha)
