@@ -3,6 +3,7 @@ import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
 import { useToast } from "@/hooks/use-toast";
 import { useEmpleados } from "@/hooks/useEmpleados";
 import { useInventarios } from "@/hooks/useInventarios";
+import { useGastosPersonalGerencia } from "@/hooks/useGastosPersonalGerencia";
 
 export const usePersonalActions = () => {
   console.log('usePersonalActions: Inicializando hook');
@@ -10,6 +11,7 @@ export const usePersonalActions = () => {
   const { toast } = useToast();
   const { empleados: todosEmpleados, agregarEmpleado, updateEmpleado, eliminarEmpleado, deshabilitarEmpleado, habilitarEmpleado, agregarCambioSalario, agregarGastoVariable } = useEmpleados();
   const { inventarioEpis, inventarioHerramientas, inventarioVehiculos } = useInventarios();
+  const { sincronizarGastoVariableConGastosFijos, sincronizarSalariosGerenciaConGastosFijos } = useGastosPersonalGerencia();
   
   // Filtrar solo el personal de gerencia - buscar por departamento 'gerencia' o categoria 'gerencia'
   const empleados = todosEmpleados.filter(emp => {
@@ -33,11 +35,16 @@ export const usePersonalActions = () => {
     const nuevoEmpleado = agregarEmpleado(nuevoEmpleadoData);
     setMostrarFormulario(false);
     
+    // Sincronizar salarios de gerencia con gastos fijos
+    setTimeout(() => {
+      sincronizarSalariosGerenciaConGastosFijos();
+    }, 100);
+    
     toast({
       title: "Personal añadido",
       description: "El personal se ha añadido correctamente.",
     });
-  }, [agregarEmpleado, toast]);
+  }, [agregarEmpleado, toast, sincronizarSalariosGerenciaConGastosFijos]);
 
   const handleEliminarEmpleado = useCallback((empleadoId: number) => {
     console.log('usePersonalActions: Eliminando empleado');
@@ -92,7 +99,12 @@ export const usePersonalActions = () => {
     console.log('usePersonalActions: Actualizando empleado');
     updateEmpleado(empleadoActualizado);
     setEmpleadoSeleccionado(empleadoActualizado);
-  }, [updateEmpleado]);
+    
+    // Sincronizar cambios de salario con gastos fijos
+    setTimeout(() => {
+      sincronizarSalariosGerenciaConGastosFijos();
+    }, 100);
+  }, [updateEmpleado, sincronizarSalariosGerenciaConGastosFijos]);
 
   const agregarAdelanto = useCallback((concepto: string, cantidad: number) => {
     if (!empleadoSeleccionado) return;
@@ -178,6 +190,10 @@ export const usePersonalActions = () => {
     console.log('usePersonalActions: Agregando gasto variable');
     agregarGastoVariable(empleadoSeleccionado.id, gasto);
     
+    // Sincronizar gasto variable con gastos fijos
+    const gastoConId = { ...gasto, id: Date.now() };
+    sincronizarGastoVariableConGastosFijos(empleadoSeleccionado.id, gastoConId);
+    
     setTimeout(() => {
       const empleadoActualizado = empleados.find(emp => emp.id === empleadoSeleccionado.id);
       if (empleadoActualizado) {
@@ -189,7 +205,7 @@ export const usePersonalActions = () => {
       title: "Gasto añadido",
       description: "El gasto variable se ha registrado correctamente.",
     });
-  }, [empleadoSeleccionado, agregarGastoVariable, empleados, toast]);
+  }, [empleadoSeleccionado, agregarGastoVariable, empleados, toast, sincronizarGastoVariableConGastosFijos]);
 
   return {
     empleados,

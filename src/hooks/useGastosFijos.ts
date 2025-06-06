@@ -45,7 +45,6 @@ export const useGastosFijos = () => {
     }
   }, []);
 
-  // Guardar gastos fijos en localStorage cuando cambien
   useEffect(() => {
     if (gastosFijos.length > 0) {
       console.log("Guardando gastos fijos en localStorage:", gastosFijos);
@@ -91,11 +90,38 @@ export const useGastosFijos = () => {
     };
   };
 
+  // Función para calcular resumen excluyendo gastos de personal de gerencia (para análisis financiero)
+  const calcularResumenSinPersonalGerencia = (): ResumenGastosFijos => {
+    // Filtrar gastos que no sean de personal de gerencia
+    const gastosExcluyendoGerencia = gastosFijos.filter(gasto => {
+      const conceptoLower = gasto.concepto.toLowerCase();
+      return !(conceptoLower.includes('esteban') || 
+               conceptoLower.includes('nuria') || 
+               conceptoLower.includes('gerencia'));
+    });
+
+    const totalBruto = gastosExcluyendoGerencia.reduce((sum, gasto) => sum + gasto.totalBruto, 0);
+    const totalBaseImponible = gastosExcluyendoGerencia.reduce((sum, gasto) => sum + gasto.baseImponible, 0);
+    
+    const numeroOperarios = empleados.filter(emp => emp.departamento === 'operario').length;
+    const coeficienteEmpresa = numeroOperarios > 0 ? totalBruto / numeroOperarios : 0;
+    const coeficienteEmpresaDiario = coeficienteEmpresa / 30;
+
+    return {
+      totalBruto,
+      totalBaseImponible,
+      coeficienteEmpresa,
+      coeficienteEmpresaDiario,
+      numeroOperarios
+    };
+  };
+
   return {
     gastosFijos,
     agregarGasto,
     actualizarGasto,
     eliminarGasto,
-    calcularResumen
+    calcularResumen,
+    calcularResumenSinPersonalGerencia
   };
 };
