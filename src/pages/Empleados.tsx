@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
@@ -12,6 +12,8 @@ import { useEmpleados } from "@/hooks/useEmpleados";
 import { useInventarios } from "@/hooks/useInventarios";
 
 const Empleados = () => {
+  console.log('Empleados: Renderizando componente');
+  
   const { toast } = useToast();
   const { empleados, agregarEmpleado, updateEmpleado, agregarGastoVariable } = useEmpleados();
   const { inventarioEpis, inventarioHerramientas, inventarioVehiculos } = useInventarios();
@@ -19,7 +21,8 @@ const Empleados = () => {
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
-  const handleAgregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables'>) => {
+  const handleAgregarEmpleado = useCallback((nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables'>) => {
+    console.log('Empleados: Agregando empleado');
     const nuevoEmpleado = agregarEmpleado(nuevoEmpleadoData);
     setMostrarFormulario(false);
     
@@ -27,16 +30,18 @@ const Empleados = () => {
       title: "Empleado añadido",
       description: "El empleado se ha añadido correctamente.",
     });
-  };
+  }, [agregarEmpleado, toast]);
 
-  const handleUpdateEmpleado = (empleadoActualizado: Empleado) => {
+  const handleUpdateEmpleado = useCallback((empleadoActualizado: Empleado) => {
+    console.log('Empleados: Actualizando empleado');
     updateEmpleado(empleadoActualizado);
     setEmpleadoSeleccionado(empleadoActualizado);
-  };
+  }, [updateEmpleado]);
 
-  const agregarAdelanto = (concepto: string, cantidad: number) => {
+  const agregarAdelanto = useCallback((concepto: string, cantidad: number) => {
     if (!empleadoSeleccionado) return;
 
+    console.log('Empleados: Agregando adelanto');
     const nuevoAdelantoObj = {
       id: Date.now(),
       concepto,
@@ -50,11 +55,12 @@ const Empleados = () => {
     };
 
     handleUpdateEmpleado(empleadoActualizado);
-  };
+  }, [empleadoSeleccionado, handleUpdateEmpleado]);
 
-  const asignarEpi = (epiId: number, fecha: Date) => {
+  const asignarEpi = useCallback((epiId: number, fecha: Date) => {
     if (!empleadoSeleccionado) return;
 
+    console.log('Empleados: Asignando EPI');
     const epi = inventarioEpis.find(e => e.id === epiId);
     if (epi) {
       const nuevoEpiAsignado = {
@@ -71,11 +77,12 @@ const Empleados = () => {
 
       handleUpdateEmpleado(empleadoActualizado);
     }
-  };
+  }, [empleadoSeleccionado, inventarioEpis, handleUpdateEmpleado]);
 
-  const asignarHerramienta = (herramientaId: number, fecha: Date) => {
+  const asignarHerramienta = useCallback((herramientaId: number, fecha: Date) => {
     if (!empleadoSeleccionado) return;
 
+    console.log('Empleados: Asignando herramienta');
     const herramienta = inventarioHerramientas.find(h => h.id === herramientaId);
     if (herramienta) {
       const nuevaHerramientaAsignada = {
@@ -92,11 +99,12 @@ const Empleados = () => {
 
       handleUpdateEmpleado(empleadoActualizado);
     }
-  };
+  }, [empleadoSeleccionado, inventarioHerramientas, handleUpdateEmpleado]);
 
-  const asignarVehiculo = (vehiculoId: number) => {
+  const asignarVehiculo = useCallback((vehiculoId: number) => {
     if (!empleadoSeleccionado) return;
 
+    console.log('Empleados: Asignando vehículo');
     const vehiculo = inventarioVehiculos.find(v => v.id === vehiculoId);
     if (vehiculo) {
       const empleadoActualizado = {
@@ -106,14 +114,15 @@ const Empleados = () => {
 
       handleUpdateEmpleado(empleadoActualizado);
     }
-  };
+  }, [empleadoSeleccionado, inventarioVehiculos, handleUpdateEmpleado]);
 
-  const handleAgregarGastoVariable = (gasto: Omit<GastoVariableEmpleado, 'id'>) => {
+  const handleAgregarGastoVariable = useCallback((gasto: Omit<GastoVariableEmpleado, 'id'>) => {
     if (!empleadoSeleccionado) return;
 
+    console.log('Empleados: Agregando gasto variable');
     agregarGastoVariable(empleadoSeleccionado.id, gasto);
     
-    // Actualizar el empleado seleccionado para reflejar los cambios
+    // Encontrar el empleado actualizado
     const empleadoActualizado = empleados.find(emp => emp.id === empleadoSeleccionado.id);
     if (empleadoActualizado) {
       setEmpleadoSeleccionado(empleadoActualizado);
@@ -123,7 +132,7 @@ const Empleados = () => {
       title: "Gasto añadido",
       description: "El gasto variable se ha registrado correctamente.",
     });
-  };
+  }, [empleadoSeleccionado, agregarGastoVariable, empleados, toast]);
 
   return (
     <div className="p-6 space-y-6">

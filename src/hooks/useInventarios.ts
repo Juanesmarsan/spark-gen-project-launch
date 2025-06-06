@@ -1,9 +1,11 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Epi, Herramienta, Vehiculo } from '@/types/empleado';
 
 export const useInventarios = () => {
-  const [inventarioEpis] = useState<Epi[]>(() => {
+  console.log('useInventarios: Inicializando hook');
+
+  const inventarioEpis = useMemo<Epi[]>(() => {
     const stored = localStorage.getItem('epis');
     return stored ? JSON.parse(stored) : [
       { id: 1, nombre: "Casco de seguridad", precio: 25, disponible: true },
@@ -11,9 +13,9 @@ export const useInventarios = () => {
       { id: 3, nombre: "Botas de seguridad", precio: 85, disponible: true },
       { id: 4, nombre: "Guantes de trabajo", precio: 12, disponible: true },
     ];
-  });
+  }, []);
 
-  const [inventarioHerramientas] = useState<Herramienta[]>(() => {
+  const inventarioHerramientas = useMemo<Herramienta[]>(() => {
     const stored = localStorage.getItem('herramientas');
     return stored ? JSON.parse(stored) : [
       { id: 1, tipo: "Taladro", marca: "Bosch", coste: 120, disponible: true },
@@ -21,7 +23,7 @@ export const useInventarios = () => {
       { id: 3, tipo: "Destornillador eléctrico", marca: "Makita", coste: 75, disponible: true },
       { id: 4, tipo: "Sierra circular", marca: "DeWalt", coste: 250, disponible: true },
     ];
-  });
+  }, []);
 
   const [inventarioVehiculos, setInventarioVehiculos] = useState<Vehiculo[]>(() => {
     const stored = localStorage.getItem('vehiculos');
@@ -47,7 +49,7 @@ export const useInventarios = () => {
   return {
     inventarioEpis,
     inventarioHerramientas,
-    inventarioVehiculos: getVehiculosActualizados(),
+    inventarioVehiculos,
     refreshVehiculos: getVehiculosActualizados
   };
 };

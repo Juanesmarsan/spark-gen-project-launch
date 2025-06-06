@@ -10,6 +10,8 @@ export const useEmpleados = () => {
   useEffect(() => {
     if (isLoaded) return;
     
+    console.log('useEmpleados: Cargando empleados desde localStorage...');
+    
     try {
       const empleadosGuardados = localStorage.getItem('empleados');
       
@@ -28,6 +30,7 @@ export const useEmpleados = () => {
           })) || [],
         }));
         
+        console.log('useEmpleados: Empleados cargados:', empleadosProcesados.length);
         setEmpleados(empleadosProcesados);
       } else {
         // Datos de ejemplo si no hay empleados
@@ -56,6 +59,7 @@ export const useEmpleados = () => {
           proyectos: [],
           gastosVariables: [],
         };
+        console.log('useEmpleados: Creando empleado de ejemplo');
         setEmpleados([empleadoEjemplo]);
       }
       
@@ -70,12 +74,14 @@ export const useEmpleados = () => {
   const saveToLocalStorage = (newEmpleados: Empleado[]) => {
     try {
       localStorage.setItem('empleados', JSON.stringify(newEmpleados));
+      console.log('useEmpleados: Empleados guardados en localStorage');
     } catch (error) {
       console.error("Error al guardar empleados:", error);
     }
   };
 
   const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables'>) => {
+    console.log('useEmpleados: Agregando empleado...');
     const nuevoEmpleado: Empleado = {
       ...nuevoEmpleadoData,
       id: Date.now(),
@@ -99,6 +105,7 @@ export const useEmpleados = () => {
   };
 
   const updateEmpleado = (empleadoActualizado: Empleado) => {
+    console.log('useEmpleados: Actualizando empleado...');
     const nuevosEmpleados = empleados.map(emp => 
       emp.id === empleadoActualizado.id ? empleadoActualizado : emp
     );
@@ -107,6 +114,7 @@ export const useEmpleados = () => {
   };
 
   const agregarGastoVariable = (empleadoId: number, gasto: Omit<GastoVariableEmpleado, 'id'>) => {
+    console.log('useEmpleados: Agregando gasto variable...');
     const nuevosEmpleados = empleados.map(emp => {
       if (emp.id === empleadoId) {
         const nuevoGasto: GastoVariableEmpleado = {
