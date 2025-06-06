@@ -25,24 +25,59 @@ const Inventario = () => {
   ]);
 
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [herramientaEnEdicion, setHerramientaEnEdicion] = useState<Herramienta | null>(null);
   const [nuevaHerramienta, setNuevaHerramienta] = useState({
     tipo: "",
     marca: "",
     coste: 0
   });
 
-  const agregarHerramienta = () => {
+  const resetearFormulario = () => {
+    setNuevaHerramienta({ tipo: "", marca: "", coste: 0 });
+    setHerramientaEnEdicion(null);
+  };
+
+  const abrirFormularioEdicion = (herramienta: Herramienta) => {
+    setHerramientaEnEdicion(herramienta);
+    setNuevaHerramienta({
+      tipo: herramienta.tipo,
+      marca: herramienta.marca,
+      coste: herramienta.coste
+    });
+    setMostrarFormulario(true);
+  };
+
+  const abrirFormularioNuevo = () => {
+    resetearFormulario();
+    setMostrarFormulario(true);
+  };
+
+  const cerrarFormulario = () => {
+    setMostrarFormulario(false);
+    resetearFormulario();
+  };
+
+  const guardarHerramienta = () => {
     if (nuevaHerramienta.tipo && nuevaHerramienta.marca && nuevaHerramienta.coste > 0) {
-      const nueva: Herramienta = {
-        id: Date.now(),
-        tipo: nuevaHerramienta.tipo,
-        marca: nuevaHerramienta.marca,
-        coste: nuevaHerramienta.coste,
-        disponible: true
-      };
-      setHerramientas(prev => [...prev, nueva]);
-      setNuevaHerramienta({ tipo: "", marca: "", coste: 0 });
-      setMostrarFormulario(false);
+      if (herramientaEnEdicion) {
+        // Editar herramienta existente
+        setHerramientas(prev => prev.map(h => 
+          h.id === herramientaEnEdicion.id 
+            ? { ...h, tipo: nuevaHerramienta.tipo, marca: nuevaHerramienta.marca, coste: nuevaHerramienta.coste }
+            : h
+        ));
+      } else {
+        // Agregar nueva herramienta
+        const nueva: Herramienta = {
+          id: Date.now(),
+          tipo: nuevaHerramienta.tipo,
+          marca: nuevaHerramienta.marca,
+          coste: nuevaHerramienta.coste,
+          disponible: true
+        };
+        setHerramientas(prev => [...prev, nueva]);
+      }
+      cerrarFormulario();
     }
   };
 
@@ -56,14 +91,16 @@ const Inventario = () => {
         <h1 className="text-3xl font-bold">Inventario de Herramientas</h1>
         <Dialog open={mostrarFormulario} onOpenChange={setMostrarFormulario}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={abrirFormularioNuevo}>
               <Plus className="w-4 h-4 mr-2" />
               Añadir Herramienta
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nueva Herramienta</DialogTitle>
+              <DialogTitle>
+                {herramientaEnEdicion ? 'Editar Herramienta' : 'Nueva Herramienta'}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -92,11 +129,11 @@ const Inventario = () => {
                 />
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setMostrarFormulario(false)}>
+                <Button variant="outline" onClick={cerrarFormulario}>
                   Cancelar
                 </Button>
-                <Button onClick={agregarHerramienta}>
-                  Añadir Herramienta
+                <Button onClick={guardarHerramienta}>
+                  {herramientaEnEdicion ? 'Guardar Cambios' : 'Añadir Herramienta'}
                 </Button>
               </div>
             </div>
@@ -136,7 +173,11 @@ const Inventario = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => abrirFormularioEdicion(herramienta)}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button 

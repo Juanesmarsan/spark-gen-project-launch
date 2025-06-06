@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +51,7 @@ const Vehiculos = () => {
   ]);
 
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [vehiculoEnEdicion, setVehiculoEnEdicion] = useState<Vehiculo | null>(null);
   const [nuevoVehiculo, setNuevoVehiculo] = useState({
     matricula: "",
     tipo: "",
@@ -62,31 +62,78 @@ const Vehiculos = () => {
     kilometros: 0
   });
 
-  const agregarVehiculo = () => {
+  const resetearFormulario = () => {
+    setNuevoVehiculo({
+      matricula: "",
+      tipo: "",
+      marca: "",
+      modelo: "",
+      caducidadITV: undefined,
+      caducidadSeguro: undefined,
+      kilometros: 0
+    });
+    setVehiculoEnEdicion(null);
+  };
+
+  const abrirFormularioEdicion = (vehiculo: Vehiculo) => {
+    setVehiculoEnEdicion(vehiculo);
+    setNuevoVehiculo({
+      matricula: vehiculo.matricula,
+      tipo: vehiculo.tipo,
+      marca: vehiculo.marca,
+      modelo: vehiculo.modelo,
+      caducidadITV: vehiculo.caducidadITV,
+      caducidadSeguro: vehiculo.caducidadSeguro,
+      kilometros: vehiculo.kilometros
+    });
+    setMostrarFormulario(true);
+  };
+
+  const abrirFormularioNuevo = () => {
+    resetearFormulario();
+    setMostrarFormulario(true);
+  };
+
+  const cerrarFormulario = () => {
+    setMostrarFormulario(false);
+    resetearFormulario();
+  };
+
+  const guardarVehiculo = () => {
     if (nuevoVehiculo.matricula && nuevoVehiculo.tipo && nuevoVehiculo.marca && 
         nuevoVehiculo.modelo && nuevoVehiculo.caducidadITV && nuevoVehiculo.caducidadSeguro) {
-      const nuevo: Vehiculo = {
-        id: Date.now(),
-        matricula: nuevoVehiculo.matricula,
-        tipo: nuevoVehiculo.tipo,
-        marca: nuevoVehiculo.marca,
-        modelo: nuevoVehiculo.modelo,
-        caducidadITV: nuevoVehiculo.caducidadITV,
-        caducidadSeguro: nuevoVehiculo.caducidadSeguro,
-        kilometros: nuevoVehiculo.kilometros,
-        asignado: false
-      };
-      setVehiculos(prev => [...prev, nuevo]);
-      setNuevoVehiculo({
-        matricula: "",
-        tipo: "",
-        marca: "",
-        modelo: "",
-        caducidadITV: undefined,
-        caducidadSeguro: undefined,
-        kilometros: 0
-      });
-      setMostrarFormulario(false);
+      if (vehiculoEnEdicion) {
+        // Editar vehículo existente
+        setVehiculos(prev => prev.map(v => 
+          v.id === vehiculoEnEdicion.id 
+            ? { 
+                ...v, 
+                matricula: nuevoVehiculo.matricula,
+                tipo: nuevoVehiculo.tipo,
+                marca: nuevoVehiculo.marca,
+                modelo: nuevoVehiculo.modelo,
+                caducidadITV: nuevoVehiculo.caducidadITV!,
+                caducidadSeguro: nuevoVehiculo.caducidadSeguro!,
+                kilometros: nuevoVehiculo.kilometros
+              }
+            : v
+        ));
+      } else {
+        // Agregar nuevo vehículo
+        const nuevo: Vehiculo = {
+          id: Date.now(),
+          matricula: nuevoVehiculo.matricula,
+          tipo: nuevoVehiculo.tipo,
+          marca: nuevoVehiculo.marca,
+          modelo: nuevoVehiculo.modelo,
+          caducidadITV: nuevoVehiculo.caducidadITV,
+          caducidadSeguro: nuevoVehiculo.caducidadSeguro,
+          kilometros: nuevoVehiculo.kilometros,
+          asignado: false
+        };
+        setVehiculos(prev => [...prev, nuevo]);
+      }
+      cerrarFormulario();
     }
   };
 
@@ -107,14 +154,16 @@ const Vehiculos = () => {
         <h1 className="text-3xl font-bold">Flota de Vehículos</h1>
         <Dialog open={mostrarFormulario} onOpenChange={setMostrarFormulario}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={abrirFormularioNuevo}>
               <Plus className="w-4 h-4 mr-2" />
               Registrar Vehículo
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Nuevo Vehículo</DialogTitle>
+              <DialogTitle>
+                {vehiculoEnEdicion ? 'Editar Vehículo' : 'Nuevo Vehículo'}
+              </DialogTitle>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -197,11 +246,11 @@ const Vehiculos = () => {
                 />
               </div>
               <div className="flex gap-2 col-span-2">
-                <Button variant="outline" onClick={() => setMostrarFormulario(false)}>
+                <Button variant="outline" onClick={cerrarFormulario}>
                   Cancelar
                 </Button>
-                <Button onClick={agregarVehiculo}>
-                  Registrar Vehículo
+                <Button onClick={guardarVehiculo}>
+                  {vehiculoEnEdicion ? 'Guardar Cambios' : 'Registrar Vehículo'}
                 </Button>
               </div>
             </div>
@@ -263,7 +312,11 @@ const Vehiculos = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => abrirFormularioEdicion(vehiculo)}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button 

@@ -28,6 +28,7 @@ const Epis = () => {
   ]);
 
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [epiEnEdicion, setEpiEnEdicion] = useState<Epi | null>(null);
   const [nuevoEpi, setNuevoEpi] = useState({
     nombre: "",
     tipo: "",
@@ -35,19 +36,54 @@ const Epis = () => {
     precio: 0
   });
 
-  const agregarEpi = () => {
+  const resetearFormulario = () => {
+    setNuevoEpi({ nombre: "", tipo: "", marca: "", precio: 0 });
+    setEpiEnEdicion(null);
+  };
+
+  const abrirFormularioEdicion = (epi: Epi) => {
+    setEpiEnEdicion(epi);
+    setNuevoEpi({
+      nombre: epi.nombre,
+      tipo: epi.tipo,
+      marca: epi.marca,
+      precio: epi.precio
+    });
+    setMostrarFormulario(true);
+  };
+
+  const abrirFormularioNuevo = () => {
+    resetearFormulario();
+    setMostrarFormulario(true);
+  };
+
+  const cerrarFormulario = () => {
+    setMostrarFormulario(false);
+    resetearFormulario();
+  };
+
+  const guardarEpi = () => {
     if (nuevoEpi.nombre && nuevoEpi.tipo && nuevoEpi.marca && nuevoEpi.precio > 0) {
-      const nuevo: Epi = {
-        id: Date.now(),
-        nombre: nuevoEpi.nombre,
-        tipo: nuevoEpi.tipo,
-        marca: nuevoEpi.marca,
-        precio: nuevoEpi.precio,
-        disponible: true
-      };
-      setEpis(prev => [...prev, nuevo]);
-      setNuevoEpi({ nombre: "", tipo: "", marca: "", precio: 0 });
-      setMostrarFormulario(false);
+      if (epiEnEdicion) {
+        // Editar EPI existente
+        setEpis(prev => prev.map(e => 
+          e.id === epiEnEdicion.id 
+            ? { ...e, nombre: nuevoEpi.nombre, tipo: nuevoEpi.tipo, marca: nuevoEpi.marca, precio: nuevoEpi.precio }
+            : e
+        ));
+      } else {
+        // Agregar nuevo EPI
+        const nuevo: Epi = {
+          id: Date.now(),
+          nombre: nuevoEpi.nombre,
+          tipo: nuevoEpi.tipo,
+          marca: nuevoEpi.marca,
+          precio: nuevoEpi.precio,
+          disponible: true
+        };
+        setEpis(prev => [...prev, nuevo]);
+      }
+      cerrarFormulario();
     }
   };
 
@@ -61,14 +97,16 @@ const Epis = () => {
         <h1 className="text-3xl font-bold">Equipos de Protección Individual (EPIs)</h1>
         <Dialog open={mostrarFormulario} onOpenChange={setMostrarFormulario}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={abrirFormularioNuevo}>
               <Plus className="w-4 h-4 mr-2" />
               Añadir EPI
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nuevo EPI</DialogTitle>
+              <DialogTitle>
+                {epiEnEdicion ? 'Editar EPI' : 'Nuevo EPI'}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -105,11 +143,11 @@ const Epis = () => {
                 />
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setMostrarFormulario(false)}>
+                <Button variant="outline" onClick={cerrarFormulario}>
                   Cancelar
                 </Button>
-                <Button onClick={agregarEpi}>
-                  Añadir EPI
+                <Button onClick={guardarEpi}>
+                  {epiEnEdicion ? 'Guardar Cambios' : 'Añadir EPI'}
                 </Button>
               </div>
             </div>
@@ -151,7 +189,11 @@ const Epis = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => abrirFormularioEdicion(epi)}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button 
