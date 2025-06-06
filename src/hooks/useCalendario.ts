@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+
+import { useState, useMemo, useEffect } from 'react';
 import { DiaCalendario, CalendarioMensual, FestivoEspañol, ResumenHoras } from '@/types/calendario';
 
 // Festivos nacionales fijos de España 2024-2025
@@ -47,6 +48,54 @@ export const useCalendario = (empleadoId: number) => {
   const todosLosFestivos = useMemo(() => {
     return [...festivosNacionalesFijos, ...festivosValencia];
   }, []);
+
+  // Cargar calendarios desde localStorage al inicializar
+  useEffect(() => {
+    console.log(`Cargando calendarios para empleado ${empleadoId} desde localStorage...`);
+    const calendarioKey = `calendarios_empleado_${empleadoId}`;
+    const calendariosGuardados = localStorage.getItem(calendarioKey);
+    
+    if (calendariosGuardados) {
+      try {
+        const calendariosParseados = JSON.parse(calendariosGuardados);
+        const mapaCalendarios = new Map<string, CalendarioMensual>();
+        
+        Object.entries(calendariosParseados).forEach(([clave, calendario]: [string, any]) => {
+          // Convertir las fechas de string a Date
+          const calendarioConFechas = {
+            ...calendario,
+            dias: calendario.dias.map((dia: any) => ({
+              ...dia,
+              fecha: new Date(dia.fecha)
+            }))
+          };
+          mapaCalendarios.set(clave, calendarioConFechas);
+        });
+        
+        setCalendarios(mapaCalendarios);
+        console.log(`Calendarios cargados para empleado ${empleadoId}:`, mapaCalendarios.size);
+      } catch (error) {
+        console.error('Error al cargar calendarios desde localStorage:', error);
+      }
+    }
+  }, [empleadoId]);
+
+  // Guardar calendarios en localStorage cuando cambien
+  useEffect(() => {
+    if (calendarios.size > 0) {
+      console.log(`Guardando calendarios para empleado ${empleadoId} en localStorage...`);
+      const calendarioKey = `calendarios_empleado_${empleadoId}`;
+      
+      // Convertir el Map a un objeto plano para localStorage
+      const calendariosObj: Record<string, CalendarioMensual> = {};
+      calendarios.forEach((calendario, clave) => {
+        calendariosObj[clave] = calendario;
+      });
+      
+      localStorage.setItem(calendarioKey, JSON.stringify(calendariosObj));
+      console.log(`Calendarios guardados para empleado ${empleadoId}:`, calendarios.size);
+    }
+  }, [calendarios, empleadoId]);
 
   const esFestivo = (fecha: Date): boolean => {
     const fechaStr = fecha.toISOString().split('T')[0];
@@ -102,6 +151,8 @@ export const useCalendario = (empleadoId: number) => {
       return calendarioExistente;
     }
 
+    console.log(`Generando nuevo calendario para ${mes}/${año} del empleado ${empleadoId}`);
+    
     const primerDia = new Date(año, mes - 1, 1);
     const ultimoDia = new Date(año, mes, 0);
     const dias: DiaCalendario[] = [];
@@ -126,7 +177,13 @@ export const useCalendario = (empleadoId: number) => {
       dias,
     };
 
-    setCalendarios(prev => new Map(prev).set(claveCalendario, nuevoCalendario));
+    // Actualizar el estado inmediatamente para que se guarde en localStorage
+    setCalendarios(prev => {
+      const nuevoMapa = new Map(prev);
+      nuevoMapa.set(claveCalendario, nuevoCalendario);
+      return nuevoMapa;
+    });
+
     return nuevoCalendario;
   };
 
@@ -134,6 +191,8 @@ export const useCalendario = (empleadoId: number) => {
     const año = fecha.getFullYear();
     const mes = fecha.getMonth() + 1;
     const claveCalendario = `${empleadoId}-${año}-${mes}`;
+    
+    console.log(`Actualizando día ${fecha.toISOString().split('T')[0]} para empleado ${empleadoId}`);
     
     setCalendarios(prev => {
       const nuevoMapa = new Map(prev);
