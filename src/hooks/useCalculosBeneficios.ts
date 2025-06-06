@@ -1,4 +1,5 @@
 
+
 import { useCallback } from 'react';
 import { Proyecto } from '@/types/proyecto';
 import { generarCalendarioMesPuro } from '@/utils/calendarioUtils';
@@ -14,33 +15,53 @@ export const useCalculosBeneficios = () => {
 
     // Para cada trabajador asignado al proyecto
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      // Determinar el rango de meses a considerar para este trabajador
-      const fechaEntrada = trabajador.fechaEntrada || new Date(añoActual, 0, 1); // Si no hay fecha de entrada, usar inicio de año
-      const fechaSalida = trabajador.fechaSalida || new Date(añoActual, 11, 31); // Si no hay fecha de salida, usar fin de año
+      // Si no hay fecha de entrada, usar inicio de año como valor por defecto
+      const fechaEntrada = trabajador.fechaEntrada || new Date(añoActual, 0, 1);
+      const fechaSalida = trabajador.fechaSalida || new Date(añoActual, 11, 31);
       
-      const mesInicio = Math.max(1, fechaEntrada.getMonth() + 1);
-      const mesFin = Math.min(12, fechaSalida.getMonth() + 1);
+      console.log(`Calculando para ${trabajador.nombre}: ${fechaEntrada.toLocaleDateString()} - ${fechaSalida.toLocaleDateString()}`);
+      
+      // Determinar el rango de meses a procesar
+      const mesInicio = fechaEntrada.getMonth() + 1;
       const añoInicio = fechaEntrada.getFullYear();
+      const mesFin = fechaSalida.getMonth() + 1;
       const añoFin = fechaSalida.getFullYear();
 
-      // Solo calcular si el trabajador estuvo activo en el año actual
+      // Solo calcular si hay intersección con el año actual
       if (añoFin >= añoActual && añoInicio <= añoActual) {
         const mesInicioReal = añoInicio === añoActual ? mesInicio : 1;
         const mesFinReal = añoFin === añoActual ? mesFin : 12;
 
-        // Iterar sobre los meses en que el trabajador estuvo activo
+        // Iterar sobre cada mes del período activo
         for (let mes = mesInicioReal; mes <= mesFinReal; mes++) {
           const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
+          
+          // Determinar fechas límite para este mes específico
+          const primerDiaMes = new Date(añoActual, mes - 1, 1);
+          const ultimoDiaMes = new Date(añoActual, mes, 0);
+          
+          // Fecha efectiva de inicio para este mes
+          const fechaInicioMes = mes === mesInicio && añoInicio === añoActual 
+            ? fechaEntrada 
+            : primerDiaMes;
+            
+          // Fecha efectiva de fin para este mes
+          const fechaFinMes = mes === mesFin && añoFin === añoActual 
+            ? fechaSalida 
+            : ultimoDiaMes;
+          
+          console.log(`Mes ${mes}: desde ${fechaInicioMes.toLocaleDateString()} hasta ${fechaFinMes.toLocaleDateString()}`);
           
           calendario.dias.forEach(dia => {
             const fechaDia = new Date(añoActual, mes - 1, dia.fecha.getDate());
             
-            // Solo contar días dentro del período de trabajo del empleado
-            if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {
+            // Solo contar días dentro del período efectivo del trabajador para este mes
+            if (fechaDia >= fechaInicioMes && fechaDia <= fechaFinMes) {
               // Solo contar días laborables y sábados sin ausencias que impidan trabajar
               if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
                 if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
                   totalHoras += dia.horasReales || 0;
+                  console.log(`Día ${fechaDia.toLocaleDateString()}: +${dia.horasReales || 0} horas`);
                 }
               }
             }
@@ -95,23 +116,29 @@ export const useCalculosBeneficios = () => {
     }
 
     let totalHoras = 0;
+    const primerDiaMes = new Date(año, mes - 1, 1);
+    const ultimoDiaMes = new Date(año, mes, 0);
 
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      // Verificar si el trabajador estaba activo en ese mes
+      // Fechas de trabajo del empleado
       const fechaEntrada = trabajador.fechaEntrada || new Date(año, 0, 1);
       const fechaSalida = trabajador.fechaSalida || new Date(año, 11, 31);
-      const inicioMes = new Date(año, mes - 1, 1);
-      const finMes = new Date(año, mes, 0);
 
-      // Solo calcular si el trabajador estuvo activo durante ese mes
-      if (fechaEntrada <= finMes && fechaSalida >= inicioMes) {
+      // Verificar si el trabajador estaba activo durante ese mes
+      if (fechaEntrada <= ultimoDiaMes && fechaSalida >= primerDiaMes) {
+        // Determinar las fechas efectivas para este mes
+        const fechaInicioEfectiva = fechaEntrada > primerDiaMes ? fechaEntrada : primerDiaMes;
+        const fechaFinEfectiva = fechaSalida < ultimoDiaMes ? fechaSalida : ultimoDiaMes;
+        
+        console.log(`${trabajador.nombre} en ${mes}/${año}: desde ${fechaInicioEfectiva.toLocaleDateString()} hasta ${fechaFinEfectiva.toLocaleDateString()}`);
+        
         const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
         
         calendario.dias.forEach(dia => {
           const fechaDia = new Date(año, mes - 1, dia.fecha.getDate());
           
-          // Solo contar días dentro del período de trabajo del empleado
-          if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {
+          // Solo contar días dentro del período efectivo del trabajador
+          if (fechaDia >= fechaInicioEfectiva && fechaDia <= fechaFinEfectiva) {
             if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
               if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
                 totalHoras += dia.horasReales || 0;
@@ -181,3 +208,4 @@ export const useCalculosBeneficios = () => {
     calcularGastosMensuales
   };
 };
+

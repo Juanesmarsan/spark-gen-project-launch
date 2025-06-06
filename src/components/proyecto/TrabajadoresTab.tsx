@@ -23,17 +23,25 @@ const calcularHorasTrabajador = (trabajador: Trabajador, mesSeleccionado: Date):
   const mes = mesSeleccionado.getMonth() + 1;
   const año = mesSeleccionado.getFullYear();
   
-  // Verificar si el trabajador estaba activo en ese mes
+  // Fechas de trabajo del empleado
   const fechaEntrada = trabajador.fechaEntrada || new Date(año, 0, 1);
   const fechaSalida = trabajador.fechaSalida || new Date(año, 11, 31);
-  const inicioMes = new Date(año, mes - 1, 1);
-  const finMes = new Date(año, mes, 0);
+  
+  // Fechas límite del mes seleccionado
+  const primerDiaMes = new Date(año, mes - 1, 1);
+  const ultimoDiaMes = new Date(año, mes, 0);
 
-  // Si el trabajador no estaba activo durante ese mes, devolver 0
-  if (fechaEntrada > finMes || fechaSalida < inicioMes) {
+  // Verificar si el trabajador estaba activo durante ese mes
+  if (fechaEntrada > ultimoDiaMes || fechaSalida < primerDiaMes) {
     console.log(`${trabajador.nombre}: 0 horas (no activo en ${format(mesSeleccionado, 'MMMM yyyy', { locale: es })})`);
     return 0;
   }
+  
+  // Determinar las fechas efectivas para este mes
+  const fechaInicioEfectiva = fechaEntrada > primerDiaMes ? fechaEntrada : primerDiaMes;
+  const fechaFinEfectiva = fechaSalida < ultimoDiaMes ? fechaSalida : ultimoDiaMes;
+  
+  console.log(`Período efectivo: ${fechaInicioEfectiva.toLocaleDateString()} - ${fechaFinEfectiva.toLocaleDateString()}`);
   
   const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
   
@@ -41,8 +49,8 @@ const calcularHorasTrabajador = (trabajador: Trabajador, mesSeleccionado: Date):
   calendario.dias.forEach(dia => {
     const fechaDia = new Date(año, mes - 1, dia.fecha.getDate());
     
-    // Solo contar días dentro del período de trabajo del empleado
-    if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {
+    // Solo contar días dentro del período efectivo del trabajador
+    if (fechaDia >= fechaInicioEfectiva && fechaDia <= fechaFinEfectiva) {
       if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
         if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
           horasTotales += dia.horasReales || 0;
