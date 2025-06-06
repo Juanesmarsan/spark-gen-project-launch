@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -39,13 +38,13 @@ const AnalisisFinanciero = () => {
 
   // Calcular gastos fijos totales anuales
   const totalGastosFijosAnual = gastosFijos.reduce((total, gasto) => {
-    const importeAnual = gasto.frecuenciaPago === 'mensual' 
-      ? gasto.importeMensual * 12 
-      : gasto.frecuenciaPago === 'trimestral' 
-        ? gasto.importeMensual * 4 
-        : gasto.frecuenciaPago === 'semestral' 
-          ? gasto.importeMensual * 2 
-          : gasto.importeMensual;
+    const importeAnual = gasto.frecuencia === 'mensual' 
+      ? gasto.importe * 12 
+      : gasto.frecuencia === 'trimestral' 
+        ? gasto.importe * 4 
+        : gasto.frecuencia === 'semestral' 
+          ? gasto.importe * 2 
+          : gasto.importe;
     return total + importeAnual;
   }, 0);
 
@@ -70,13 +69,13 @@ const AnalisisFinanciero = () => {
   const top10GastosFijos = gastosFijos
     .map(gasto => ({
       descripcion: gasto.concepto,
-      importe: gasto.frecuenciaPago === 'mensual' 
-        ? gasto.importeMensual * 12 
-        : gasto.frecuenciaPago === 'trimestral' 
-          ? gasto.importeMensual * 4 
-          : gasto.frecuenciaPago === 'semestral' 
-            ? gasto.importeMensual * 2 
-            : gasto.importeMensual,
+      importe: gasto.frecuencia === 'mensual' 
+        ? gasto.importe * 12 
+        : gasto.frecuencia === 'trimestral' 
+          ? gasto.importe * 4 
+          : gasto.frecuencia === 'semestral' 
+            ? gasto.importe * 2 
+            : gasto.importe,
       fill: `hsl(${Math.random() * 360}, 70%, 50%)`
     }))
     .sort((a, b) => b.importe - a.importe)
@@ -288,7 +287,7 @@ const AnalisisFinanciero = () => {
               </div>
               <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                 <span className="font-medium">Salarios Anuales:</span>
-                <span className="font-bold text-green-700">€{salarioAnualEmpleados.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</span>
+                <span className="font-bold text-green-700">€{salarioAnualEmpleados.toLocaleString('es-ES', { maximumFraction Digits: 2 })}</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                 <span className="font-medium">Gastos Variables:</span>
