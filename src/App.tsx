@@ -1,9 +1,19 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { Layout } from "@/components/Layout";
+import Dashboard from "./pages/Dashboard";
+import Empleados from "./pages/Empleados";
+import Proyectos from "./pages/Proyectos";
+import Inventario from "./pages/Inventario";
+import Vehiculos from "./pages/Vehiculos";
+import GastosFijos from "./pages/GastosFijos";
+import GastosVariables from "./pages/GastosVariables";
+import AnalisisFinanciero from "./pages/AnalisisFinanciero";
+import Reportes from "./pages/Reportes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -14,11 +24,20 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/empleados" element={<Empleados />} />
+            <Route path="/proyectos" element={<Proyectos />} />
+            <Route path="/inventario" element={<Inventario />} />
+            <Route path="/vehiculos" element={<Vehiculos />} />
+            <Route path="/gastos-fijos" element={<GastosFijos />} />
+            <Route path="/gastos-variables" element={<GastosVariables />} />
+            <Route path="/analisis-financiero" element={<AnalisisFinanciero />} />
+            <Route path="/reportes" element={<Reportes />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
