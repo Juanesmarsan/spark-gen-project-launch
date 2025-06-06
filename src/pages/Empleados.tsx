@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar as CalendarIcon, Upload, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { EmpleadoForm } from "@/components/EmpleadoForm";
 
 interface Empleado {
   id: number;
@@ -92,7 +92,6 @@ const Empleados = () => {
 
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [nuevoEmpleado, setNuevoEmpleado] = useState<Partial<Empleado>>({});
   const [nuevoAdelanto, setNuevoAdelanto] = useState({ concepto: "", cantidad: 0 });
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>();
 
@@ -112,6 +111,20 @@ const Empleados = () => {
 
   const proyectos = ["Proyecto Alpha", "Proyecto Beta", "Proyecto Gamma"];
   const vehiculos = ["Furgoneta 1234-ABC", "Camión 5678-DEF", "Coche 9012-GHI"];
+
+  const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo'>) => {
+    const nuevoEmpleado: Empleado = {
+      ...nuevoEmpleadoData,
+      id: Date.now(),
+      adelantos: [],
+      epis: [],
+      herramientas: [],
+      documentos: [],
+      proyectos: [],
+    };
+    setEmpleados(prev => [...prev, nuevoEmpleado]);
+    setMostrarFormulario(false);
+  };
 
   const agregarAdelanto = (empleadoId: number) => {
     if (nuevoAdelanto.concepto && nuevoAdelanto.cantidad > 0) {
@@ -174,10 +187,18 @@ const Empleados = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Gestión de Empleados</h1>
-        <Button onClick={() => setMostrarFormulario(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Añadir Empleado
-        </Button>
+        <Dialog open={mostrarFormulario} onOpenChange={setMostrarFormulario}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setMostrarFormulario(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Añadir Empleado
+            </Button>
+          </DialogTrigger>
+          <EmpleadoForm
+            onSubmit={agregarEmpleado}
+            onCancel={() => setMostrarFormulario(false)}
+          />
+        </Dialog>
       </div>
 
       <div className="grid gap-6">
