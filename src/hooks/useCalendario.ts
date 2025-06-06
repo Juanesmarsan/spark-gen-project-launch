@@ -76,7 +76,10 @@ export const useCalendario = (empleadoId: number) => {
       if (dia.tipo === 'laborable') {
         horasLaborales += dia.horasDefecto;
         horasRealesLaborales += dia.horasReales;
-      } else if (dia.tipo === 'festivo' || dia.tipo === 'sabado' || dia.tipo === 'domingo') {
+      } else if (dia.tipo === 'sabado') {
+        // Los sábados se suman como horas reales laborales, no festivas
+        horasRealesLaborales += dia.horasReales;
+      } else if (dia.tipo === 'festivo' || dia.tipo === 'domingo') {
         horasRealesFestivas += dia.horasReales;
       }
     });

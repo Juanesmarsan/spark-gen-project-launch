@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,14 @@ export const CalendarioMensual = ({ empleado }: CalendarioMensualProps) => {
   const { generarCalendarioMes, actualizarDia, calcularResumenHoras } = useCalendario(empleado.id);
   const calendario = generarCalendarioMes(mesActual, añoActual);
   const resumen = calcularResumenHoras(calendario);
+
+  // Cálculos salariales
+  const totalAdelantos = empleado.adelantos.reduce((sum, adelanto) => sum + adelanto.cantidad, 0);
+  const valorHorasExtras = resumen.horasExtras * empleado.precioHoraExtra;
+  const valorHorasFestivas = resumen.horasRealesFestivas * empleado.precioHoraFestiva;
+  const complemento = valorHorasExtras + valorHorasFestivas;
+  const salarioNeto = empleado.salarioBruto - empleado.seguridadSocialTrabajador - empleado.retenciones;
+  const totalAPagar = salarioNeto + complemento - totalAdelantos - empleado.embargo;
 
   const cambiarMes = (direccion: 'anterior' | 'siguiente') => {
     if (direccion === 'anterior') {
@@ -257,19 +264,47 @@ export const CalendarioMensual = ({ empleado }: CalendarioMensualProps) => {
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-800 mb-2">Cálculo Económico</h4>
+              <h4 className="font-semibold text-gray-800 mb-2">Cálculo Económico Detallado</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>Horas Extras ({resumen.horasExtras}h × €{empleado.precioHoraExtra}):</span>
-                  <span className="font-bold">€{(resumen.horasExtras * empleado.precioHoraExtra).toFixed(2)}</span>
+                  <span>Salario Bruto:</span>
+                  <span className="font-bold">€{empleado.salarioBruto.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Horas Festivas ({resumen.horasRealesFestivas}h × €{empleado.precioHoraFestiva}):</span>
-                  <span className="font-bold">€{(resumen.horasRealesFestivas * empleado.precioHoraFestiva).toFixed(2)}</span>
+                <div className="flex justify-between text-red-600">
+                  <span>- Seguridad Social Trabajador:</span>
+                  <span className="font-bold">€{empleado.seguridadSocialTrabajador.toFixed(2)}</span>
                 </div>
-                <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Total Complemento:</span>
-                  <span>€{((resumen.horasExtras * empleado.precioHoraExtra) + (resumen.horasRealesFestivas * empleado.precioHoraFestiva)).toFixed(2)}</span>
+                <div className="flex justify-between text-red-600">
+                  <span>- Retenciones:</span>
+                  <span className="font-bold">€{empleado.retenciones.toFixed(2)}</span>
+                </div>
+                <div className="border-t pt-2 flex justify-between font-bold text-blue-600">
+                  <span>Salario Neto:</span>
+                  <span>€{salarioNeto.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>+ Horas Extras ({resumen.horasExtras}h × €{empleado.precioHoraExtra}):</span>
+                  <span className="font-bold">€{valorHorasExtras.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>+ Horas Festivas ({resumen.horasRealesFestivas}h × €{empleado.precioHoraFestiva}):</span>
+                  <span className="font-bold">€{valorHorasFestivas.toFixed(2)}</span>
+                </div>
+                <div className="border-t pt-2 flex justify-between font-bold text-purple-600">
+                  <span>Complemento:</span>
+                  <span>€{complemento.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-red-600">
+                  <span>- Adelantos:</span>
+                  <span className="font-bold">€{totalAdelantos.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-red-600">
+                  <span>- Embargo:</span>
+                  <span className="font-bold">€{empleado.embargo.toFixed(2)}</span>
+                </div>
+                <div className="border-t-2 pt-2 flex justify-between font-bold text-lg text-green-700">
+                  <span>TOTAL A PAGAR:</span>
+                  <span>€{totalAPagar.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -292,6 +327,12 @@ export const CalendarioMensual = ({ empleado }: CalendarioMensualProps) => {
                 <div className="flex justify-between">
                   <span>Precio Hora Festiva:</span>
                   <span className="font-medium">€{empleado.precioHoraFestiva}</span>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between">
+                    <span>Total Adelantos:</span>
+                    <span className="font-medium">€{totalAdelantos.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             </div>
