@@ -10,6 +10,7 @@ import { Empleado } from "@/types/empleado";
 import { ProyectoForm } from "./ProyectoForm";
 import { GastosVariablesProyectoTab } from "./proyecto/GastosVariablesProyectoTab";
 import { CertificacionesTab } from "./proyecto/CertificacionesTab";
+import { AnalisisFinancieroTab } from "./proyecto/AnalisisFinancieroTab";
 
 interface ProyectoDetailsProps {
   proyecto: Proyecto;
@@ -112,12 +113,13 @@ export const ProyectoDetails = ({
       
       <CardContent>
         <Tabs defaultValue="detalles" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="detalles">Detalles del Proyecto</TabsTrigger>
-            <TabsTrigger value="gastos">Gastos Variables</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="detalles">Detalles</TabsTrigger>
+            <TabsTrigger value="gastos">Gastos</TabsTrigger>
             <TabsTrigger value="certificaciones">
               {proyecto.tipo === 'presupuesto' ? 'Certificaciones' : 'Facturación'}
             </TabsTrigger>
+            <TabsTrigger value="financiero">Análisis</TabsTrigger>
           </TabsList>
 
           <TabsContent value="detalles" className="space-y-6">
@@ -192,6 +194,10 @@ export const ProyectoDetails = ({
                 <p className="text-gray-500">Funcionalidad de facturación por administración próximamente...</p>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="financiero">
+            <AnalisisFinancieroTab proyecto={proyecto} />
           </TabsContent>
         </Tabs>
       </CardContent>
