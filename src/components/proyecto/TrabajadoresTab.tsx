@@ -14,7 +14,6 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Proyecto, Trabajador } from "@/types/proyecto";
 import { useEmpleados } from "@/hooks/useEmpleados";
-import { generarCalendarioMesPuro } from "@/utils/calendarioUtils";
 
 interface TrabajadoresTabProps {
   proyecto: Proyecto;
@@ -37,56 +36,71 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
     emp.activo && !proyecto.trabajadoresAsignados.some(t => t.id === emp.id)
   );
 
-  // Calcular horas trabajadas para un trabajador específico
+  // Festivos fijos para el cálculo
+  const festivosFijos = [
+    '01-01', '01-06', '05-01', '08-15', '10-12', '11-01', '12-06', '12-08', '12-25', // Nacionales
+    '03-19', '04-22', '06-24', '10-09' // Valencia (fechas aproximadas, pueden variar por año)
+  ];
+
+  const esFestivo = (fecha: Date): boolean => {
+    const mesYDia = String(fecha.getMonth() + 1).padStart(2, '0') + '-' + String(fecha.getDate()).padStart(2, '0');
+    return festivosFijos.includes(mesYDia);
+  };
+
+  const getTipoDia = (fecha: Date): 'laborable' | 'festivo' | 'sabado' | 'domingo' => {
+    const diaSemana = fecha.getDay();
+    
+    if (diaSemana === 0) return 'domingo';
+    if (diaSemana === 6) return 'sabado';
+    if (esFestivo(fecha)) return 'festivo';
+    
+    return 'laborable';
+  };
+
+  // Calcular horas trabajadas para un trabajador específico por mes
   const calcularHorasTrabajador = (trabajador: Trabajador) => {
     if (!trabajador.fechaEntrada) return { horasLaborales: 0, horasExtras: 0, horasFestivas: 0 };
 
-    const añoActual = new Date().getFullYear();
-    const mesActual = new Date().getMonth() + 1;
     let horasLaborales = 0;
     let horasExtras = 0;
     let horasFestivas = 0;
 
     // Calcular desde el mes de entrada hasta el mes actual o hasta la fecha de salida
     const fechaFin = trabajador.fechaSalida || new Date();
-    const mesInicio = trabajador.fechaEntrada.getMonth() + 1;
-    const añoInicio = trabajador.fechaEntrada.getFullYear();
-    const mesFin = fechaFin.getMonth() + 1;
-    const añoFin = fechaFin.getFullYear();
-
-    for (let año = añoInicio; año <= añoFin; año++) {
-      const mesStart = año === añoInicio ? mesInicio : 1;
-      const mesEnd = año === añoFin ? mesFin : 12;
-
-      for (let mes = mesStart; mes <= mesEnd; mes++) {
-        const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
+    const fechaInicio = new Date(trabajador.fechaEntrada);
+    
+    // Iterar mes por mes
+    let fechaActual = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
+    
+    while (fechaActual <= fechaFin) {
+      const año = fechaActual.getFullYear();
+      const mes = fechaActual.getMonth();
+      
+      // Obtener el primer y último día del mes
+      const primerDiaMes = new Date(año, mes, 1);
+      const ultimoDiaMes = new Date(año, mes + 1, 0);
+      
+      // Determinar el rango de fechas a considerar en este mes
+      const fechaInicioMes = fechaInicio > primerDiaMes ? fechaInicio : primerDiaMes;
+      const fechaFinMes = fechaFin < ultimoDiaMes ? fechaFin : ultimoDiaMes;
+      
+      // Calcular horas para cada día del mes en el rango de trabajo
+      for (let fecha = new Date(fechaInicioMes); fecha <= fechaFinMes; fecha.setDate(fecha.getDate() + 1)) {
+        const tipoDia = getTipoDia(fecha);
         
-        calendario.dias.forEach(dia => {
-          // Solo contar días dentro del rango de trabajo del empleado
-          const fechaDia = dia.fecha;
-          const dentroDelRango = fechaDia >= trabajador.fechaEntrada! && 
-                               (!trabajador.fechaSalida || fechaDia <= trabajador.fechaSalida);
-
-          if (dentroDelRango) {
-            if (dia.tipo === 'laborable') {
-              // Verificar que no hay ausencias que excluyan las horas
-              if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
-                horasLaborales += dia.horasReales || 0;
-                // Si trabaja más de 8 horas en día laborable, son horas extras
-                if ((dia.horasReales || 0) > 8) {
-                  horasExtras += (dia.horasReales || 0) - 8;
-                }
-              }
-            } else if (dia.tipo === 'sabado') {
-              // Los sábados se consideran horas extras si se trabajan
-              horasExtras += dia.horasReales || 0;
-            } else if ((dia.tipo === 'festivo' || dia.tipo === 'domingo') && dia.horasReales) {
-              // Trabajo en festivos y domingos
-              horasFestivas += dia.horasReales || 0;
-            }
-          }
-        });
+        if (tipoDia === 'laborable') {
+          horasLaborales += 8; // Siempre 8 horas por día laborable
+        } else if (tipoDia === 'sabado') {
+          // Los sábados no se trabajan por defecto (0 horas)
+          // Si se quisiera contar como extras, se haría aquí
+        } else if (tipoDia === 'festivo' || tipoDia === 'domingo') {
+          // Festivos y domingos no se trabajan por defecto (0 horas)
+          // Si se quisiera contar como festivas, se haría aquí
+        }
       }
+      
+      // Avanzar al siguiente mes
+      fechaActual = new Date(año, mes + 1, 1);
     }
 
     return { horasLaborales, horasExtras, horasFestivas };
@@ -288,7 +302,10 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
       {mostrarHoras && proyecto.trabajadoresAsignados.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Resumen de Horas por Trabajador</CardTitle>
+            <CardTitle className="text-base">Resumen de Horas por Trabajador (Valores por Defecto)</CardTitle>
+            <p className="text-sm text-gray-600">
+              Cálculo basado en 8 horas por día laborable. Los sábados, domingos y festivos no se cuentan por defecto.
+            </p>
           </CardHeader>
           <CardContent>
             <Table>
