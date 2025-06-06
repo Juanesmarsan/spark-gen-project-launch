@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Epi, Herramienta, Vehiculo } from '@/types/empleado';
 
 export const useInventarios = () => {
@@ -23,7 +23,7 @@ export const useInventarios = () => {
     ];
   });
 
-  const [inventarioVehiculos] = useState<Vehiculo[]>(() => {
+  const [inventarioVehiculos, setInventarioVehiculos] = useState<Vehiculo[]>(() => {
     const stored = localStorage.getItem('vehiculos');
     return stored ? JSON.parse(stored) : [
       { id: 1, matricula: "1234-ABC", tipo: "Furgoneta", marca: "Ford", modelo: "Transit", asignado: false },
@@ -31,9 +31,23 @@ export const useInventarios = () => {
     ];
   });
 
+  // Sincronizar con localStorage cuando cambien los vehículos
+  useEffect(() => {
+    localStorage.setItem('vehiculos', JSON.stringify(inventarioVehiculos));
+  }, [inventarioVehiculos]);
+
+  // Función para obtener vehículos actualizados desde localStorage
+  const getVehiculosActualizados = () => {
+    const stored = localStorage.getItem('vehiculos');
+    const vehiculos = stored ? JSON.parse(stored) : inventarioVehiculos;
+    setInventarioVehiculos(vehiculos);
+    return vehiculos;
+  };
+
   return {
     inventarioEpis,
     inventarioHerramientas,
-    inventarioVehiculos
+    inventarioVehiculos: getVehiculosActualizados(),
+    refreshVehiculos: getVehiculosActualizados
   };
 };
