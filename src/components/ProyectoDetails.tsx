@@ -81,12 +81,22 @@ export const ProyectoDetails = ({
                     ...data,
                     trabajadoresAsignados: data.trabajadoresAsignados.map(id => {
                       const empleado = empleados.find(e => e.id === id);
+                      const fechasTrabajador = data.trabajadoresConFechas?.find(t => t.id === id);
+                      
                       return empleado ? {
                         id: empleado.id,
                         nombre: empleado.nombre,
                         apellidos: empleado.apellidos,
-                        precioHora: data.tipo === 'administracion' ? data.precioHora : undefined
-                      } : { id, nombre: '', apellidos: '' };
+                        precioHora: data.tipo === 'administracion' ? data.precioHora : undefined,
+                        fechaEntrada: fechasTrabajador?.fechaEntrada,
+                        fechaSalida: fechasTrabajador?.fechaSalida
+                      } : { 
+                        id, 
+                        nombre: '', 
+                        apellidos: '',
+                        fechaEntrada: fechasTrabajador?.fechaEntrada,
+                        fechaSalida: fechasTrabajador?.fechaSalida
+                      };
                     })
                   };
                   onUpdateProyecto(updatedProyecto);

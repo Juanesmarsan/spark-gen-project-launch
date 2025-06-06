@@ -50,4 +50,9 @@ export interface ProyectoFormData {
   precioHora?: number;
   descripcion?: string;
   trabajadoresAsignados: number[];
+  trabajadoresConFechas?: {
+    id: number;
+    fechaEntrada?: Date;
+    fechaSalida?: Date;
+  }[];
 }

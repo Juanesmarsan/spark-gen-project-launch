@@ -60,12 +60,22 @@ export const useProyectos = () => {
       fechaCreacion: new Date(),
       trabajadoresAsignados: data.trabajadoresAsignados.map(empleadoId => {
         const empleado = empleados.find(e => e.id === empleadoId);
+        const fechasTrabajador = data.trabajadoresConFechas?.find(t => t.id === empleadoId);
+        
         return empleado ? {
           id: empleado.id,
           nombre: empleado.nombre,
           apellidos: empleado.apellidos,
-          precioHora: data.tipo === 'administracion' ? data.precioHora : undefined
-        } : { id: empleadoId, nombre: '', apellidos: '' };
+          precioHora: data.tipo === 'administracion' ? data.precioHora : undefined,
+          fechaEntrada: fechasTrabajador?.fechaEntrada,
+          fechaSalida: fechasTrabajador?.fechaSalida
+        } : { 
+          id: empleadoId, 
+          nombre: '', 
+          apellidos: '',
+          fechaEntrada: fechasTrabajador?.fechaEntrada,
+          fechaSalida: fechasTrabajador?.fechaSalida
+        };
       }),
       gastosVariables: [],
       certificaciones: []

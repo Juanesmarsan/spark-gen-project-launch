@@ -7,6 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { ProyectoFormData, Proyecto } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
 
@@ -16,6 +21,12 @@ interface ProyectoFormProps {
   empleados: Empleado[];
   proyecto?: Proyecto;
   isEditing?: boolean;
+}
+
+interface TrabajadorConFechas {
+  id: number;
+  fechaEntrada?: Date;
+  fechaSalida?: Date;
 }
 
 export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditing = false }: ProyectoFormProps) => {
@@ -29,6 +40,8 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
     descripcion: "",
     trabajadoresAsignados: [],
   });
+
+  const [trabajadoresConFechas, setTrabajadoresConFechas] = useState<TrabajadorConFechas[]>([]);
 
   // Cargar datos del proyecto cuando se está editando
   useEffect(() => {
@@ -44,6 +57,15 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
         descripcion: proyecto.descripcion || "",
         trabajadoresAsignados: proyecto.trabajadoresAsignados.map(t => t.id),
       });
+      
+      // Cargar fechas de trabajadores
+      setTrabajadoresConFechas(
+        proyecto.trabajadoresAsignados.map(t => ({
+          id: t.id,
+          fechaEntrada: t.fechaEntrada,
+          fechaSalida: t.fechaSalida
+        }))
+      );
     } else if (!isEditing) {
       // Reset form for new project
       setFormData({
@@ -56,13 +78,21 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
         descripcion: "",
         trabajadoresAsignados: [],
       });
+      setTrabajadoresConFechas([]);
     }
   }, [proyecto, isEditing]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Enviando datos del formulario:", formData);
-    onSubmit(formData);
+    
+    // Crear formData extendido con fechas de trabajadores
+    const formDataConFechas = {
+      ...formData,
+      trabajadoresConFechas
+    };
+    
+    onSubmit(formDataConFechas);
   };
 
   const handleTrabajadorToggle = (empleadoId: number, checked: boolean) => {
@@ -73,10 +103,31 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
         ? [...prev.trabajadoresAsignados, empleadoId]
         : prev.trabajadoresAsignados.filter(id => id !== empleadoId)
     }));
+
+    if (checked) {
+      // Agregar trabajador con fechas vacías
+      setTrabajadoresConFechas(prev => [
+        ...prev,
+        { id: empleadoId, fechaEntrada: undefined, fechaSalida: undefined }
+      ]);
+    } else {
+      // Remover trabajador
+      setTrabajadoresConFechas(prev => prev.filter(t => t.id !== empleadoId));
+    }
+  };
+
+  const updateTrabajadorFecha = (empleadoId: number, tipo: 'entrada' | 'salida', fecha: Date | undefined) => {
+    setTrabajadoresConFechas(prev => 
+      prev.map(t => 
+        t.id === empleadoId 
+          ? { ...t, [tipo === 'entrada' ? 'fechaEntrada' : 'fechaSalida']: fecha }
+          : t
+      )
+    );
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{isEditing ? "Editar Proyecto" : "Nuevo Proyecto"}</DialogTitle>
       </DialogHeader>
@@ -188,22 +239,93 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
 
         <div>
           <Label>Trabajadores Asignados</Label>
-          <div className="border rounded-md p-4 max-h-40 overflow-y-auto space-y-2">
+          <div className="border rounded-md p-4 max-h-96 overflow-y-auto space-y-4">
             {empleados.length > 0 ? (
-              empleados.map((empleado) => (
-                <div key={empleado.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`trabajador-${empleado.id}`}
-                    checked={formData.trabajadoresAsignados.includes(empleado.id)}
-                    onCheckedChange={(checked) => 
-                      handleTrabajadorToggle(empleado.id, checked as boolean)
-                    }
-                  />
-                  <label htmlFor={`trabajador-${empleado.id}`} className="text-sm">
-                    {empleado.nombre} {empleado.apellidos}
-                  </label>
-                </div>
-              ))
+              empleados.map((empleado) => {
+                const isSelected = formData.trabajadoresAsignados.includes(empleado.id);
+                const trabajadorFechas = trabajadoresConFechas.find(t => t.id === empleado.id);
+                
+                return (
+                  <div key={empleado.id} className="space-y-2 p-3 border rounded">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`trabajador-${empleado.id}`}
+                        checked={isSelected}
+                        onCheckedChange={(checked) => 
+                          handleTrabajadorToggle(empleado.id, checked as boolean)
+                        }
+                      />
+                      <label htmlFor={`trabajador-${empleado.id}`} className="text-sm font-medium">
+                        {empleado.nombre} {empleado.apellidos}
+                      </label>
+                    </div>
+                    
+                    {isSelected && (
+                      <div className="grid grid-cols-2 gap-3 mt-2 pl-6">
+                        <div>
+                          <Label className="text-xs">Fecha de entrada</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !trabajadorFechas?.fechaEntrada && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {trabajadorFechas?.fechaEntrada 
+                                  ? format(trabajadorFechas.fechaEntrada, "dd/MM/yyyy") 
+                                  : "Seleccionar"
+                                }
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={trabajadorFechas?.fechaEntrada}
+                                onSelect={(fecha) => updateTrabajadorFecha(empleado.id, 'entrada', fecha)}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        
+                        <div>
+                          <Label className="text-xs">Fecha de salida</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !trabajadorFechas?.fechaSalida && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {trabajadorFechas?.fechaSalida 
+                                  ? format(trabajadorFechas.fechaSalida, "dd/MM/yyyy") 
+                                  : "Seleccionar"
+                                }
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={trabajadorFechas?.fechaSalida}
+                                onSelect={(fecha) => updateTrabajadorFecha(empleado.id, 'salida', fecha)}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             ) : (
               <div className="text-sm text-gray-500">
                 No hay empleados disponibles. Crea empleados primero en la sección de Empleados.
