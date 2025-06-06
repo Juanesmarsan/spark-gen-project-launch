@@ -1,14 +1,22 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Clock, CalendarDays, Edit, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Users, Clock, CalendarDays, Edit, Trash2, CalendarIcon } from "lucide-react";
 import { Proyecto, Trabajador } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
 import { useState } from "react";
 import { format, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { generarCalendarioMesPuro } from "@/utils/calendarioUtils";
 
 interface TrabajadoresTabProps {
@@ -65,6 +73,10 @@ const calcularHorasTrabajador = (trabajador: Trabajador, mesSeleccionado: Date):
 
 export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: TrabajadoresTabProps) => {
   const [mesSeleccionado, setMesSeleccionado] = useState<Date>(new Date());
+  const [trabajadorEditando, setTrabajadorEditando] = useState<Trabajador | null>(null);
+  const [fechaEntrada, setFechaEntrada] = useState<Date | undefined>();
+  const [fechaSalida, setFechaS alida] = useState<Date | undefined>();
+  const [precioHora, setPrecioHora] = useState<number | undefined>();
 
   const mesesDisponibles = [
     { value: '2025-01', label: 'Enero 2025', date: new Date(2025, 0, 1) },
@@ -82,6 +94,45 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
   ];
 
   const mesActual = format(mesSeleccionado, 'yyyy-MM');
+
+  const handleEditarTrabajador = (trabajador: Trabajador) => {
+    setTrabajadorEditando(trabajador);
+    setFechaEntrada(trabajador.fechaEntrada);
+    setFechaSalida(trabajador.fechaSalida);
+    setPrecioHora(trabajador.precioHora);
+  };
+
+  const handleGuardarEdicion = () => {
+    if (!trabajadorEditando) return;
+
+    const trabajadoresActualizados = proyecto.trabajadoresAsignados.map(t => 
+      t.id === trabajadorEditando.id 
+        ? { ...t, fechaEntrada, fechaSalida, precioHora }
+        : t
+    );
+
+    const proyectoActualizado = {
+      ...proyecto,
+      trabajadoresAsignados: trabajadoresActualizados
+    };
+
+    onUpdateProyecto(proyectoActualizado);
+    setTrabajadorEditando(null);
+    setFechaEntrada(undefined);
+    setFechaSalida(undefined);
+    setPrecioHora(undefined);
+  };
+
+  const handleEliminarTrabajador = (trabajadorId: number) => {
+    const trabajadoresFiltrados = proyecto.trabajadoresAsignados.filter(t => t.id !== trabajadorId);
+    
+    const proyectoActualizado = {
+      ...proyecto,
+      trabajadoresAsignados: trabajadoresFiltrados
+    };
+
+    onUpdateProyecto(proyectoActualizado);
+  };
 
   return (
     <div className="space-y-6">
@@ -181,12 +232,138 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" className="text-red-600">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditarTrabajador(trabajador)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Editar Trabajador</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label>Trabajador: {trabajador.nombre} {trabajador.apellidos}</Label>
+                                </div>
+                                
+                                <div>
+                                  <Label>Fecha de Entrada</Label>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full justify-start text-left font-normal",
+                                          !fechaEntrada && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {fechaEntrada ? format(fechaEntrada, "dd/MM/yyyy") : "Seleccionar fecha"}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={fechaEntrada}
+                                        onSelect={setFechaEntrada}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+
+                                <div>
+                                  <Label>Fecha de Salida (opcional)</Label>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full justify-start text-left font-normal",
+                                          !fechaSalida && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {fechaSalida ? format(fechaSalida, "dd/MM/yyyy") : "Sin fecha de salida"}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={fechaSalida}
+                                        onSelect={setFechaSalida}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                  {fechaSalida && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setFechaSalida(undefined)}
+                                      className="mt-2 text-red-600 hover:text-red-700"
+                                    >
+                                      Quitar fecha de salida
+                                    </Button>
+                                  )}
+                                </div>
+
+                                {proyecto.tipo === 'administracion' && (
+                                  <div>
+                                    <Label>Precio por Hora (€)</Label>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      value={precioHora || ''}
+                                      onChange={(e) => setPrecioHora(e.target.value ? parseFloat(e.target.value) : undefined)}
+                                      placeholder="Precio por hora"
+                                    />
+                                  </div>
+                                )}
+
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={() => setTrabajadorEditando(null)}>
+                                    Cancelar
+                                  </Button>
+                                  <Button onClick={handleGuardarEdicion}>
+                                    Guardar
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="text-red-600">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Eliminar trabajador?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción eliminará a {trabajador.nombre} {trabajador.apellidos} del proyecto. 
+                                  Esta acción no se puede deshacer.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleEliminarTrabajador(trabajador.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -230,7 +407,7 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
               </div>
             </div>
           </CardContent>
-        </Card>
+        </CardContent>
       )}
     </div>
   );
