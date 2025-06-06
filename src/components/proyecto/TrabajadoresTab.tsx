@@ -1,565 +1,248 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarIcon, Edit, UserMinus, UserPlus, Clock, ChevronLeft, ChevronRight } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Users, Clock, CalendarDays, Edit, Trash2 } from "lucide-react";
 import { Proyecto, Trabajador } from "@/types/proyecto";
-import { useEmpleados } from "@/hooks/useEmpleados";
+import { Empleado } from "@/types/empleado";
+import { useState } from "react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface TrabajadoresTabProps {
   proyecto: Proyecto;
+  empleados: Empleado[];
   onUpdateProyecto: (proyecto: Proyecto) => void;
 }
 
-export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabProps) => {
-  const [editingTrabajador, setEditingTrabajador] = useState<Trabajador | null>(null);
-  const [fechaEntrada, setFechaEntrada] = useState<Date | undefined>();
-  const [fechaSalida, setFechaSalida] = useState<Date | undefined>();
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedEmpleados, setSelectedEmpleados] = useState<number[]>([]);
-  const [fechaEntradaNuevos, setFechaEntradaNuevos] = useState<Date | undefined>(new Date());
-  const [mostrarHoras, setMostrarHoras] = useState(false);
-  const [mesSeleccionado, setMesSeleccionado] = useState(new Date());
+// Lista de días festivos (puedes expandir esta lista)
+const diasFestivos = [
+  '2025-01-01', // Año Nuevo
+  '2025-01-06', // Reyes
+  '2025-04-18', // Viernes Santo
+  '2025-04-21', // Lunes de Pascua
+  '2025-05-01', // Día del Trabajo
+  '2025-08-15', // Asunción
+  '2025-10-12', // Día de la Hispanidad
+  '2025-11-01', // Todos los Santos
+  '2025-12-06', // Día de la Constitución
+  '2025-12-08', // Inmaculada Concepción
+  '2025-12-25', // Navidad
+];
 
-  const { empleados } = useEmpleados();
+const esFestivo = (fecha: Date): boolean => {
+  const fechaStr = format(fecha, 'yyyy-MM-dd');
+  return diasFestivos.includes(fechaStr);
+};
 
-  // Filtrar empleados que no están ya asignados al proyecto
-  const empleadosDisponibles = empleados.filter(emp => 
-    emp.activo && !proyecto.trabajadoresAsignados.some(t => t.id === emp.id)
-  );
+const calcularHorasTrabajador = (trabajador: Trabajador, mesSeleccionado: Date): number => {
+  console.log(`Calculando horas para ${trabajador.nombre} en ${format(mesSeleccionado, 'MMMM yyyy', { locale: es })}`);
+  
+  const inicioMes = startOfMonth(mesSeleccionado);
+  const finMes = endOfMonth(mesSeleccionado);
+  
+  // Determinar fecha de inicio para el cálculo
+  let fechaInicio = inicioMes;
+  if (trabajador.fechaEntrada && trabajador.fechaEntrada > inicioMes) {
+    fechaInicio = trabajador.fechaEntrada;
+  }
+  
+  // Determinar fecha de fin para el cálculo
+  let fechaFin = finMes;
+  if (trabajador.fechaSalida && trabajador.fechaSalida < finMes) {
+    fechaFin = trabajador.fechaSalida;
+  }
+  
+  console.log(`${trabajador.nombre}: Calculando desde ${format(fechaInicio, 'dd/MM/yyyy')} hasta ${format(fechaFin, 'dd/MM/yyyy')}`);
+  
+  if (fechaInicio > fechaFin) {
+    console.log(`${trabajador.nombre}: No trabajó en este mes`);
+    return 0;
+  }
+  
+  const diasTrabajo = eachDayOfInterval({ start: fechaInicio, end: fechaFin });
+  
+  let horasTotales = 0;
+  diasTrabajo.forEach(dia => {
+    if (!isWeekend(dia) && !esFestivo(dia)) {
+      horasTotales += 8; // 8 horas por día laborable
+    }
+  });
+  
+  console.log(`${trabajador.nombre}: ${horasTotales} horas en ${format(mesSeleccionado, 'MMMM yyyy', { locale: es })}`);
+  return horasTotales;
+};
 
-  // Festivos fijos para el cálculo
-  const festivosFijos = [
-    '01-01', '01-06', '05-01', '08-15', '10-12', '11-01', '12-06', '12-08', '12-25', // Nacionales
-    '03-19', '04-22', '06-24', '10-09' // Valencia (fechas aproximadas, pueden variar por año)
+export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: TrabajadoresTabProps) => {
+  const [mesSeleccionado, setMesSeleccionado] = useState<Date>(new Date());
+
+  const mesesDisponibles = [
+    { value: '2025-01', label: 'Enero 2025', date: new Date(2025, 0, 1) },
+    { value: '2025-02', label: 'Febrero 2025', date: new Date(2025, 1, 1) },
+    { value: '2025-03', label: 'Marzo 2025', date: new Date(2025, 2, 1) },
+    { value: '2025-04', label: 'Abril 2025', date: new Date(2025, 3, 1) },
+    { value: '2025-05', label: 'Mayo 2025', date: new Date(2025, 4, 1) },
+    { value: '2025-06', label: 'Junio 2025', date: new Date(2025, 5, 1) },
+    { value: '2025-07', label: 'Julio 2025', date: new Date(2025, 6, 1) },
+    { value: '2025-08', label: 'Agosto 2025', date: new Date(2025, 7, 1) },
+    { value: '2025-09', label: 'Septiembre 2025', date: new Date(2025, 8, 1) },
+    { value: '2025-10', label: 'Octubre 2025', date: new Date(2025, 9, 1) },
+    { value: '2025-11', label: 'Noviembre 2025', date: new Date(2025, 10, 1) },
+    { value: '2025-12', label: 'Diciembre 2025', date: new Date(2025, 11, 1) },
   ];
 
-  const esFestivo = (fecha: Date): boolean => {
-    const mesYDia = String(fecha.getMonth() + 1).padStart(2, '0') + '-' + String(fecha.getDate()).padStart(2, '0');
-    return festivosFijos.includes(mesYDia);
-  };
-
-  const getTipoDia = (fecha: Date): 'laborable' | 'festivo' | 'sabado' | 'domingo' => {
-    const diaSemana = fecha.getDay();
-    
-    if (diaSemana === 0) return 'domingo';
-    if (diaSemana === 6) return 'sabado';
-    if (esFestivo(fecha)) return 'festivo';
-    
-    return 'laborable';
-  };
-
-  const cambiarMes = (direccion: 'anterior' | 'siguiente') => {
-    const nuevoMes = new Date(mesSeleccionado);
-    if (direccion === 'anterior') {
-      nuevoMes.setMonth(nuevoMes.getMonth() - 1);
-    } else {
-      nuevoMes.setMonth(nuevoMes.getMonth() + 1);
-    }
-    setMesSeleccionado(nuevoMes);
-  };
-
-  // Calcular horas trabajadas para un trabajador específico EN EL MES SELECCIONADO
-  const calcularHorasTrabajador = (trabajador: Trabajador) => {
-    if (!trabajador.fechaEntrada) {
-      console.log(`Trabajador ${trabajador.nombre}: Sin fecha de entrada`);
-      return { horasLaborales: 0, horasExtras: 0, horasFestivas: 0 };
-    }
-
-    let horasLaborales = 0;
-
-    // Determinar el rango de fechas del mes seleccionado
-    const inicioMes = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth(), 1);
-    const finMes = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth() + 1, 0);
-
-    // Determinar fecha de inicio: la mayor entre fecha de entrada del trabajador y inicio del mes
-    const fechaInicio = new Date(Math.max(trabajador.fechaEntrada.getTime(), inicioMes.getTime()));
-    
-    // Determinar fecha de fin: la menor entre fecha de salida (o hoy) y fin del mes
-    let fechaFin = trabajador.fechaSalida ? new Date(trabajador.fechaSalida) : new Date();
-    fechaFin = new Date(Math.min(fechaFin.getTime(), finMes.getTime()));
-
-    console.log(`Calculando horas para ${trabajador.nombre} en ${format(mesSeleccionado, 'MM/yyyy')}: ${fechaInicio.toDateString()} hasta ${fechaFin.toDateString()}`);
-    
-    // Solo calcular si hay días válidos en el mes
-    if (fechaInicio > fechaFin) {
-      console.log(`${trabajador.nombre}: No trabajó en ${format(mesSeleccionado, 'MM/yyyy')}`);
-      return { horasLaborales: 0, horasExtras: 0, horasFestivas: 0 };
-    }
-    
-    // Iterar día a día desde la fecha de inicio hasta la fecha de fin
-    const fechaActual = new Date(fechaInicio);
-    let diasLaborables = 0;
-    
-    while (fechaActual <= fechaFin) {
-      const tipoDia = getTipoDia(fechaActual);
-      
-      if (tipoDia === 'laborable') {
-        horasLaborales += 8; // 8 horas por día laborable
-        diasLaborables++;
-      }
-      // Los sábados, domingos y festivos no suman horas (0 horas)
-      
-      // Avanzar al siguiente día
-      fechaActual.setDate(fechaActual.getDate() + 1);
-    }
-
-    console.log(`${trabajador.nombre} en ${format(mesSeleccionado, 'MM/yyyy')}: ${diasLaborables} días laborables = ${horasLaborales} horas`);
-
-    return { 
-      horasLaborales, 
-      horasExtras: 0, 
-      horasFestivas: 0 
-    };
-  };
-
-  const handleEditTrabajador = (trabajador: Trabajador) => {
-    setEditingTrabajador(trabajador);
-    setFechaEntrada(trabajador.fechaEntrada);
-    setFechaSalida(trabajador.fechaSalida);
-  };
-
-  const handleSaveFechas = () => {
-    if (!editingTrabajador) return;
-
-    const trabajadoresActualizados = proyecto.trabajadoresAsignados.map(t => 
-      t.id === editingTrabajador.id 
-        ? { ...t, fechaEntrada, fechaSalida }
-        : t
-    );
-
-    onUpdateProyecto({
-      ...proyecto,
-      trabajadoresAsignados: trabajadoresActualizados
-    });
-
-    setEditingTrabajador(null);
-    setFechaEntrada(undefined);
-    setFechaSalida(undefined);
-  };
-
-  const handleRemoveTrabajador = (trabajadorId: number) => {
-    const trabajadoresFiltrados = proyecto.trabajadoresAsignados.filter(t => t.id !== trabajadorId);
-    onUpdateProyecto({
-      ...proyecto,
-      trabajadoresAsignados: trabajadoresFiltrados
-    });
-  };
-
-  const handleAddTrabajadores = () => {
-    if (selectedEmpleados.length === 0 || !fechaEntradaNuevos) return;
-
-    const nuevosTrabajadores = selectedEmpleados.map(empleadoId => {
-      const empleado = empleados.find(e => e.id === empleadoId);
-      if (!empleado) return null;
-
-      return {
-        id: empleado.id,
-        nombre: empleado.nombre,
-        apellidos: empleado.apellidos,
-        precioHora: proyecto.tipo === 'administracion' ? proyecto.precioHora : undefined,
-        fechaEntrada: fechaEntradaNuevos,
-        fechaSalida: undefined
-      };
-    }).filter(Boolean) as Trabajador[];
-
-    onUpdateProyecto({
-      ...proyecto,
-      trabajadoresAsignados: [...proyecto.trabajadoresAsignados, ...nuevosTrabajadores]
-    });
-
-    setShowAddDialog(false);
-    setSelectedEmpleados([]);
-    setFechaEntradaNuevos(new Date());
-  };
-
-  const handleEmpleadoToggle = (empleadoId: number, checked: boolean) => {
-    setSelectedEmpleados(prev => 
-      checked 
-        ? [...prev, empleadoId]
-        : prev.filter(id => id !== empleadoId)
-    );
-  };
-
-  const getEstadoTrabajador = (trabajador: Trabajador) => {
-    const hoy = new Date();
-    
-    if (!trabajador.fechaEntrada) return 'pendiente';
-    if (trabajador.fechaEntrada > hoy) return 'programado';
-    if (trabajador.fechaSalida && trabajador.fechaSalida < hoy) return 'finalizado';
-    return 'activo';
-  };
-
-  const getEstadoBadgeColor = (estado: string) => {
-    switch (estado) {
-      case 'activo':
-        return 'bg-green-100 text-green-800';
-      case 'programado':
-        return 'bg-blue-100 text-blue-800';
-      case 'finalizado':
-        return 'bg-gray-100 text-gray-800';
-      case 'pendiente':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const mesActual = format(mesSeleccionado, 'yyyy-MM');
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Trabajadores del Proyecto</h3>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setMostrarHoras(!mostrarHoras)}
-          >
-            <Clock className="w-4 h-4 mr-1" />
-            {mostrarHoras ? 'Ocultar Horas' : 'Ver Horas'}
-          </Button>
-          <span className="text-sm text-gray-500">
-            {proyecto.trabajadoresAsignados.length} trabajadores asignados
-          </span>
-          {empleadosDisponibles.length > 0 && (
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="bg-omenar-green hover:bg-omenar-dark-green">
-                  <UserPlus className="w-4 h-4 mr-1" />
-                  Añadir Trabajadores
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Añadir Trabajadores al Proyecto</DialogTitle>
-                </DialogHeader>
-                
-                <div className="space-y-4 py-4">
-                  <div>
-                    <Label>Fecha de entrada a la obra *</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !fechaEntradaNuevos && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {fechaEntradaNuevos ? format(fechaEntradaNuevos, "dd/MM/yyyy") : "Seleccionar fecha"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={fechaEntradaNuevos}
-                          onSelect={setFechaEntradaNuevos}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div>
-                    <Label>Seleccionar Empleados</Label>
-                    <div className="border rounded-md p-4 max-h-64 overflow-y-auto space-y-2">
-                      {empleadosDisponibles.map((empleado) => (
-                        <div key={empleado.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`nuevo-trabajador-${empleado.id}`}
-                            checked={selectedEmpleados.includes(empleado.id)}
-                            onCheckedChange={(checked) => 
-                              handleEmpleadoToggle(empleado.id, checked as boolean)
-                            }
-                          />
-                          <label htmlFor={`nuevo-trabajador-${empleado.id}`} className="text-sm">
-                            {empleado.nombre} {empleado.apellidos}
-                          </label>
-                        </div>
-                      ))}
-                      {empleadosDisponibles.length === 0 && (
-                        <p className="text-sm text-gray-500">
-                          Todos los empleados activos ya están asignados al proyecto
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleAddTrabajadores}
-                    disabled={selectedEmpleados.length === 0 || !fechaEntradaNuevos}
-                    className="bg-omenar-green hover:bg-omenar-dark-green"
-                  >
-                    Añadir Trabajadores
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
-
-      {mostrarHoras && proyecto.trabajadoresAsignados.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-base">Resumen de Horas por Trabajador</CardTitle>
-                <p className="text-sm text-gray-600">
-                  Cálculo mensual: 8 horas por día laborable, 0 horas sábados, domingos y festivos.
-                </p>
-              </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Trabajadores Asignados
+            </CardTitle>
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => cambiarMes('anterior')}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <div className="text-sm font-semibold min-w-[120px] text-center">
-                  {format(mesSeleccionado, 'MMMM yyyy', { locale: { name: 'es' } })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => cambiarMes('siguiente')}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                <CalendarDays className="w-4 h-4" />
+                <Select value={mesActual} onValueChange={(value) => {
+                  const mesEncontrado = mesesDisponibles.find(m => m.value === value);
+                  if (mesEncontrado) {
+                    setMesSeleccionado(mesEncontrado.date);
+                  }
+                }}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Seleccionar mes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mesesDisponibles.map((mes) => (
+                      <SelectItem key={mes.value} value={mes.value}>
+                        {mes.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {proyecto.trabajadoresAsignados.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500">No hay trabajadores asignados a este proyecto.</p>
+            </div>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Trabajador</TableHead>
                   <TableHead>Fecha Entrada</TableHead>
                   <TableHead>Fecha Salida</TableHead>
-                  <TableHead className="text-right">Horas Laborales</TableHead>
-                  <TableHead className="text-right">Horas Extras</TableHead>
-                  <TableHead className="text-right">Horas Festivas</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead>Horas en {format(mesSeleccionado, 'MMMM yyyy', { locale: es })}</TableHead>
+                  {proyecto.tipo === 'administracion' && <TableHead>Precio/Hora</TableHead>}
+                  {proyecto.tipo === 'administracion' && <TableHead>Total Mes</TableHead>}
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {proyecto.trabajadoresAsignados.map((trabajador) => {
-                  const horas = calcularHorasTrabajador(trabajador);
-                  const totalHoras = horas.horasLaborales + horas.horasExtras + horas.horasFestivas;
-                  
+                  const horasDelMes = calcularHorasTrabajador(trabajador, mesSeleccionado);
+                  const totalMes = proyecto.tipo === 'administracion' && trabajador.precioHora 
+                    ? horasDelMes * trabajador.precioHora 
+                    : null;
+
                   return (
                     <TableRow key={trabajador.id}>
                       <TableCell className="font-medium">
                         {trabajador.nombre} {trabajador.apellidos}
                       </TableCell>
                       <TableCell>
-                        {trabajador.fechaEntrada ? 
-                          format(trabajador.fechaEntrada, "dd/MM/yyyy") : 
-                          <span className="text-red-500">No definida</span>
-                        }
+                        {trabajador.fechaEntrada 
+                          ? format(trabajador.fechaEntrada, 'dd/MM/yyyy') 
+                          : 'No especificada'}
                       </TableCell>
                       <TableCell>
-                        {trabajador.fechaSalida ? 
-                          format(trabajador.fechaSalida, "dd/MM/yyyy") : 
-                          <span className="text-green-600">Activo</span>
-                        }
+                        {trabajador.fechaSalida 
+                          ? format(trabajador.fechaSalida, 'dd/MM/yyyy') 
+                          : 'Activo'}
                       </TableCell>
-                      <TableCell className="text-right">{horas.horasLaborales}h</TableCell>
-                      <TableCell className="text-right">{horas.horasExtras}h</TableCell>
-                      <TableCell className="text-right">{horas.horasFestivas}h</TableCell>
-                      <TableCell className="text-right font-semibold">{totalHoras}h</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          {horasDelMes}h
+                        </div>
+                      </TableCell>
+                      {proyecto.tipo === 'administracion' && (
+                        <TableCell>
+                          {trabajador.precioHora ? `${trabajador.precioHora}€` : 'No especificado'}
+                        </TableCell>
+                      )}
+                      {proyecto.tipo === 'administracion' && (
+                        <TableCell>
+                          {totalMes ? `${totalMes.toFixed(2)}€` : '-'}
+                        </TableCell>
+                      )}
+                      <TableCell>
+                        <Badge variant={trabajador.fechaSalida ? "secondary" : "default"}>
+                          {trabajador.fechaSalida ? "Finalizado" : "Activo"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-red-600">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
             </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {proyecto.tipo === 'administracion' && proyecto.trabajadoresAsignados.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Resumen del Mes - {format(mesSeleccionado, 'MMMM yyyy', { locale: es })}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900">Total Horas</h3>
+                <p className="text-2xl font-bold text-blue-700">
+                  {proyecto.trabajadoresAsignados.reduce((total, trabajador) => 
+                    total + calcularHorasTrabajador(trabajador, mesSeleccionado), 0
+                  )}h
+                </p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-green-900">Total Coste</h3>
+                <p className="text-2xl font-bold text-green-700">
+                  €{proyecto.trabajadoresAsignados.reduce((total, trabajador) => {
+                    const horas = calcularHorasTrabajador(trabajador, mesSeleccionado);
+                    return total + (trabajador.precioHora ? horas * trabajador.precioHora : 0);
+                  }, 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-purple-900">Trabajadores Activos</h3>
+                <p className="text-2xl font-bold text-purple-700">
+                  {proyecto.trabajadoresAsignados.filter(t => !t.fechaSalida || t.fechaSalida >= startOfMonth(mesSeleccionado)).length}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
-
-      <div className="grid gap-4">
-        {proyecto.trabajadoresAsignados.map((trabajador) => {
-          const estado = getEstadoTrabajador(trabajador);
-          
-          return (
-            <Card key={trabajador.id}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium">
-                        {trabajador.nombre} {trabajador.apellidos}
-                      </h4>
-                      <Badge className={getEstadoBadgeColor(estado)}>
-                        {estado.charAt(0).toUpperCase() + estado.slice(1)}
-                      </Badge>
-                      {trabajador.precioHora && (
-                        <Badge variant="outline">{trabajador.precioHora}€/hora</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                      <div>
-                        <span className="font-medium">Fecha de entrada:</span>
-                        <br />
-                        {trabajador.fechaEntrada ? (
-                          format(trabajador.fechaEntrada, "dd/MM/yyyy")
-                        ) : (
-                          <span className="text-red-500">No definida</span>
-                        )}
-                      </div>
-                      <div>
-                        <span className="font-medium">Fecha de salida:</span>
-                        <br />
-                        {trabajador.fechaSalida ? (
-                          format(trabajador.fechaSalida, "dd/MM/yyyy")
-                        ) : (
-                          <span className="text-green-600">Activo en obra</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEditTrabajador(trabajador)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>
-                            Editar fechas - {trabajador.nombre} {trabajador.apellidos}
-                          </DialogTitle>
-                        </DialogHeader>
-                        
-                        <div className="space-y-4 py-4">
-                          <div>
-                            <Label>Fecha de entrada *</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !fechaEntrada && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {fechaEntrada ? format(fechaEntrada, "dd/MM/yyyy") : "Seleccionar fecha"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={fechaEntrada}
-                                  onSelect={setFechaEntrada}
-                                  initialFocus
-                                  className="pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          
-                          <div>
-                            <Label>Fecha de salida (opcional)</Label>
-                            <div className="flex gap-2">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "flex-1 justify-start text-left font-normal",
-                                      !fechaSalida && "text-muted-foreground"
-                                    )}
-                                  >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {fechaSalida ? format(fechaSalida, "dd/MM/yyyy") : "Sin fecha de salida"}
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={fechaSalida}
-                                    onSelect={setFechaSalida}
-                                    initialFocus
-                                    className="pointer-events-auto"
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              {fechaSalida && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setFechaSalida(undefined)}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  Quitar
-                                </Button>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Deja vacío si el trabajador sigue activo en la obra
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setEditingTrabajador(null)}>
-                            Cancelar
-                          </Button>
-                          <Button onClick={handleSaveFechas}>
-                            Guardar
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleRemoveTrabajador(trabajador.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <UserMinus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-        
-        {proyecto.trabajadoresAsignados.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-gray-500">No hay trabajadores asignados a este proyecto</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
     </div>
   );
 };
