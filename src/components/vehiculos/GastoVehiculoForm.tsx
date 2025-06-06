@@ -22,20 +22,69 @@ interface GastoVehiculoFormProps {
 
 export const GastoVehiculoForm = ({ vehiculos, gasto, onSave, onCancel, vehiculoPreseleccionado }: GastoVehiculoFormProps) => {
   const [formData, setFormData] = useState({
-    vehiculoId: gasto?.vehiculoId || vehiculoPreseleccionado || 0,
-    tipo: gasto?.tipo || "" as 'ITV' | 'revision' | 'reparacion' | 'otro',
+    vehiculoId: gasto?.vehiculoId || vehiculoPreseleccionado || "",
+    tipo: gasto?.tipo || "",
     concepto: gasto?.concepto || "",
     fecha: gasto?.fecha || undefined as Date | undefined,
-    importe: gasto?.importe || 0,
+    importe: gasto?.importe || "",
     descripcion: gasto?.descripcion || "",
     factura: gasto?.factura || ""
   });
 
   const handleSave = () => {
-    if (formData.vehiculoId && formData.tipo && formData.concepto && 
-        formData.fecha && formData.importe > 0) {
-      onSave(formData);
+    console.log("Datos del formulario:", formData);
+    
+    // Validación más específica
+    if (!formData.vehiculoId || formData.vehiculoId === "") {
+      console.log("Error: No hay vehículo seleccionado");
+      return;
     }
+    
+    if (!formData.tipo || formData.tipo === "") {
+      console.log("Error: No hay tipo seleccionado");
+      return;
+    }
+    
+    if (!formData.concepto || formData.concepto.trim() === "") {
+      console.log("Error: No hay concepto");
+      return;
+    }
+    
+    if (!formData.fecha) {
+      console.log("Error: No hay fecha seleccionada");
+      return;
+    }
+    
+    const importeNum = typeof formData.importe === 'string' ? parseFloat(formData.importe) : formData.importe;
+    if (!importeNum || importeNum <= 0) {
+      console.log("Error: Importe inválido");
+      return;
+    }
+
+    const gastoData = {
+      vehiculoId: typeof formData.vehiculoId === 'string' ? parseInt(formData.vehiculoId) : formData.vehiculoId,
+      tipo: formData.tipo as 'ITV' | 'revision' | 'reparacion' | 'otro',
+      concepto: formData.concepto,
+      fecha: formData.fecha,
+      importe: importeNum,
+      descripcion: formData.descripcion,
+      factura: formData.factura
+    };
+
+    console.log("Guardando gasto:", gastoData);
+    onSave(gastoData);
+  };
+
+  const isFormValid = () => {
+    return formData.vehiculoId && 
+           formData.vehiculoId !== "" && 
+           formData.tipo && 
+           formData.tipo !== "" && 
+           formData.concepto && 
+           formData.concepto.trim() !== "" && 
+           formData.fecha && 
+           formData.importe && 
+           parseFloat(formData.importe.toString()) > 0;
   };
 
   return (
@@ -44,7 +93,10 @@ export const GastoVehiculoForm = ({ vehiculos, gasto, onSave, onCancel, vehiculo
         <Label>Vehículo</Label>
         <Select 
           value={formData.vehiculoId.toString()} 
-          onValueChange={(value) => setFormData(prev => ({ ...prev, vehiculoId: parseInt(value) }))}
+          onValueChange={(value) => {
+            console.log("Vehículo seleccionado:", value);
+            setFormData(prev => ({ ...prev, vehiculoId: value }));
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar vehículo" />
@@ -62,7 +114,10 @@ export const GastoVehiculoForm = ({ vehiculos, gasto, onSave, onCancel, vehiculo
         <Label>Tipo de Gasto</Label>
         <Select 
           value={formData.tipo} 
-          onValueChange={(value: 'ITV' | 'revision' | 'reparacion' | 'otro') => setFormData(prev => ({ ...prev, tipo: value }))}
+          onValueChange={(value) => {
+            console.log("Tipo seleccionado:", value);
+            setFormData(prev => ({ ...prev, tipo: value }));
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Tipo de gasto" />
@@ -79,7 +134,10 @@ export const GastoVehiculoForm = ({ vehiculos, gasto, onSave, onCancel, vehiculo
         <Label>Concepto</Label>
         <Input 
           value={formData.concepto}
-          onChange={(e) => setFormData(prev => ({ ...prev, concepto: e.target.value }))}
+          onChange={(e) => {
+            console.log("Concepto:", e.target.value);
+            setFormData(prev => ({ ...prev, concepto: e.target.value }));
+          }}
           placeholder="Descripción del gasto"
         />
       </div>
@@ -96,7 +154,10 @@ export const GastoVehiculoForm = ({ vehiculos, gasto, onSave, onCancel, vehiculo
             <Calendar
               mode="single"
               selected={formData.fecha}
-              onSelect={(fecha) => setFormData(prev => ({ ...prev, fecha }))}
+              onSelect={(fecha) => {
+                console.log("Fecha seleccionada:", fecha);
+                setFormData(prev => ({ ...prev, fecha }));
+              }}
               initialFocus
             />
           </PopoverContent>
@@ -108,7 +169,10 @@ export const GastoVehiculoForm = ({ vehiculos, gasto, onSave, onCancel, vehiculo
           type="number"
           step="0.01"
           value={formData.importe}
-          onChange={(e) => setFormData(prev => ({ ...prev, importe: parseFloat(e.target.value) || 0 }))}
+          onChange={(e) => {
+            console.log("Importe:", e.target.value);
+            setFormData(prev => ({ ...prev, importe: e.target.value }));
+          }}
           placeholder="0.00"
         />
       </div>
@@ -120,6 +184,7 @@ export const GastoVehiculoForm = ({ vehiculos, gasto, onSave, onCancel, vehiculo
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
+              console.log("Archivo seleccionado:", file.name);
               setFormData(prev => ({ ...prev, factura: file.name }));
             }
           }}
@@ -137,7 +202,10 @@ export const GastoVehiculoForm = ({ vehiculos, gasto, onSave, onCancel, vehiculo
         <Button variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button onClick={handleSave}>
+        <Button 
+          onClick={handleSave}
+          disabled={!isFormValid()}
+        >
           {gasto ? 'Guardar Cambios' : 'Registrar Gasto'}
         </Button>
       </div>
