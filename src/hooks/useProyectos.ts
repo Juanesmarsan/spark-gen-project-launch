@@ -1,15 +1,11 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Proyecto, ProyectoFormData } from '@/types/proyecto';
 
 export const useProyectos = () => {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   // Cargar proyectos desde localStorage
   useEffect(() => {
-    if (isLoaded) return;
-    
     console.log('useProyectos: Cargando proyectos desde localStorage...');
     
     try {
@@ -42,14 +38,13 @@ export const useProyectos = () => {
         setProyectos(proyectosProcesados);
       } else {
         console.log('useProyectos: No se encontraron proyectos en localStorage');
+        setProyectos([]);
       }
-      
-      setIsLoaded(true);
     } catch (error) {
       console.error("Error al cargar proyectos:", error);
-      setIsLoaded(true);
+      setProyectos([]);
     }
-  }, [isLoaded]);
+  }, []); // Se ejecuta en cada montaje del componente
 
   // Función para guardar en localStorage
   const saveToLocalStorage = useCallback((newProyectos: Proyecto[]) => {
