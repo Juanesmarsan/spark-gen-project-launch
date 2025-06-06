@@ -35,8 +35,22 @@ export const cargarEmpleadosDesdeStorage = (): Empleado[] | null => {
 
 export const guardarEmpleadosEnStorage = (empleados: Empleado[]) => {
   try {
-    localStorage.setItem('empleados', JSON.stringify(empleados));
-    console.log('useEmpleados: Empleados guardados en localStorage');
+    // Procesar los empleados antes de guardar para evitar problemas con las fechas
+    const empleadosParaGuardar = empleados.map(empleado => ({
+      ...empleado,
+      fechaIngreso: empleado.fechaIngreso.toISOString(),
+      historialSalarios: empleado.historialSalarios?.map(hist => ({
+        ...hist,
+        fechaCambio: hist.fechaCambio.toISOString()
+      })) || [],
+      gastosVariables: empleado.gastosVariables?.map(gasto => ({
+        ...gasto,
+        fecha: gasto.fecha.toISOString()
+      })) || [],
+    }));
+    
+    localStorage.setItem('empleados', JSON.stringify(empleadosParaGuardar));
+    console.log('useEmpleados: Empleados guardados correctamente en localStorage');
   } catch (error) {
     console.error("Error al guardar empleados:", error);
   }

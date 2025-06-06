@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Proyecto, ProyectoFormData } from '@/types/proyecto';
 
@@ -22,8 +21,12 @@ export const useProyectos = () => {
           fechaCreacion: new Date(proyecto.fechaCreacion),
           trabajadoresAsignados: proyecto.trabajadoresAsignados?.map((trabajador: any) => ({
             ...trabajador,
-            fechaEntrada: trabajador.fechaEntrada && trabajador.fechaEntrada !== 'undefined' && trabajador.fechaEntrada !== null ? new Date(trabajador.fechaEntrada) : undefined,
-            fechaSalida: trabajador.fechaSalida && trabajador.fechaSalida !== 'undefined' && trabajador.fechaSalida !== null ? new Date(trabajador.fechaSalida) : undefined,
+            fechaEntrada: trabajador.fechaEntrada && trabajador.fechaEntrada !== 'undefined' && trabajador.fechaEntrada !== null 
+              ? new Date(trabajador.fechaEntrada) 
+              : undefined,
+            fechaSalida: trabajador.fechaSalida && trabajador.fechaSalida !== 'undefined' && trabajador.fechaSalida !== null 
+              ? new Date(trabajador.fechaSalida) 
+              : undefined,
           })) || [],
           gastosVariables: proyecto.gastosVariables?.map((gasto: any) => ({
             ...gasto,
@@ -35,11 +38,7 @@ export const useProyectos = () => {
           })) || [],
         }));
         
-        console.log('useProyectos: Proyectos procesados:', proyectosProcesados);
-        proyectosProcesados.forEach((p: any, index: number) => {
-          console.log(`Proyecto ${index + 1}: ${p.nombre} - ID: ${p.id} - Ciudad: ${p.ciudad}`);
-        });
-        
+        console.log('useProyectos: Proyectos procesados correctamente:', proyectosProcesados.length);
         setProyectos(proyectosProcesados);
       } else {
         console.log('useProyectos: No se encontraron proyectos en localStorage');
@@ -54,8 +53,27 @@ export const useProyectos = () => {
   // Función para guardar en localStorage
   const saveToLocalStorage = useCallback((newProyectos: Proyecto[]) => {
     try {
-      localStorage.setItem('proyectos', JSON.stringify(newProyectos));
-      console.log('useProyectos: Proyectos guardados en localStorage');
+      // Procesar los datos antes de guardar para evitar problemas con las fechas
+      const proyectosParaGuardar = newProyectos.map(proyecto => ({
+        ...proyecto,
+        fechaCreacion: proyecto.fechaCreacion.toISOString(),
+        trabajadoresAsignados: proyecto.trabajadoresAsignados.map(trabajador => ({
+          ...trabajador,
+          fechaEntrada: trabajador.fechaEntrada ? trabajador.fechaEntrada.toISOString() : undefined,
+          fechaSalida: trabajador.fechaSalida ? trabajador.fechaSalida.toISOString() : undefined,
+        })),
+        gastosVariables: proyecto.gastosVariables?.map(gasto => ({
+          ...gasto,
+          fecha: gasto.fecha.toISOString()
+        })) || [],
+        certificaciones: proyecto.certificaciones?.map(cert => ({
+          ...cert,
+          fechaRegistro: cert.fechaRegistro.toISOString()
+        })) || [],
+      }));
+      
+      localStorage.setItem('proyectos', JSON.stringify(proyectosParaGuardar));
+      console.log('useProyectos: Proyectos guardados correctamente en localStorage');
     } catch (error) {
       console.error("Error al guardar proyectos:", error);
     }
