@@ -191,6 +191,7 @@ export const ProyectoDetails = ({
           <TabsContent value="trabajadores">
             <TrabajadoresTab
               proyecto={proyecto}
+              empleados={empleados}
               onUpdateProyecto={onUpdateProyecto}
             />
           </TabsContent>
