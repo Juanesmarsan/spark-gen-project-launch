@@ -10,6 +10,7 @@ import { DocumentosTab } from "./empleado/DocumentosTab";
 import { ProyectosTab } from "./empleado/ProyectosTab";
 import { VehiculoTab } from "./empleado/VehiculoTab";
 import { GastosVariablesTab } from "./empleado/GastosVariablesTab";
+import { HistorialSalariosTab } from "./empleado/HistorialSalariosTab";
 
 interface EmpleadoDetailsProps {
   empleado: Empleado;

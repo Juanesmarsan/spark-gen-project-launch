@@ -129,6 +129,15 @@ export const useEmpleados = () => {
     guardarEmpleadosEnStorage(nuevosEmpleados);
   };
 
+  const habilitarEmpleado = (empleadoId: number) => {
+    console.log('useEmpleados: Habilitando empleado...');
+    const nuevosEmpleados = empleados.map(emp => 
+      emp.id === empleadoId ? { ...emp, activo: true } : emp
+    );
+    setEmpleados(nuevosEmpleados);
+    guardarEmpleadosEnStorage(nuevosEmpleados);
+  };
+
   const agregarCambioSalario = (empleadoId: number, nuevosSalarios: Omit<HistorialSalario, 'id' | 'fechaCambio'>) => {
     console.log('useEmpleados: Agregando cambio de salario...');
     const nuevosEmpleados = empleados.map(emp => {
@@ -180,6 +189,7 @@ export const useEmpleados = () => {
     updateEmpleado,
     eliminarEmpleado,
     deshabilitarEmpleado,
+    habilitarEmpleado,
     agregarCambioSalario,
     agregarGastoVariable
   };

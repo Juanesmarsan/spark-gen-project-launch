@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
@@ -15,7 +14,7 @@ const Empleados = () => {
   console.log('Empleados: Renderizando componente');
   
   const { toast } = useToast();
-  const { empleados, agregarEmpleado, updateEmpleado, eliminarEmpleado, deshabilitarEmpleado, agregarCambioSalario, agregarGastoVariable } = useEmpleados();
+  const { empleados, agregarEmpleado, updateEmpleado, eliminarEmpleado, deshabilitarEmpleado, habilitarEmpleado, agregarCambioSalario, agregarGastoVariable } = useEmpleados();
   const { inventarioEpis, inventarioHerramientas, inventarioVehiculos } = useInventarios();
   
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
@@ -64,6 +63,24 @@ const Empleados = () => {
       description: "El empleado ha sido marcado como inactivo.",
     });
   }, [deshabilitarEmpleado, empleadoSeleccionado, empleados, toast]);
+
+  const handleHabilitarEmpleado = useCallback((empleadoId: number) => {
+    console.log('Empleados: Habilitando empleado');
+    habilitarEmpleado(empleadoId);
+    
+    // Actualizar empleado seleccionado si es el que se está habilitando
+    if (empleadoSeleccionado?.id === empleadoId) {
+      const empleadoActualizado = empleados.find(emp => emp.id === empleadoId);
+      if (empleadoActualizado) {
+        setEmpleadoSeleccionado({ ...empleadoActualizado, activo: true });
+      }
+    }
+    
+    toast({
+      title: "Empleado habilitado",
+      description: "El empleado ha sido reactivado correctamente.",
+    });
+  }, [habilitarEmpleado, empleadoSeleccionado, empleados, toast]);
 
   const handleUpdateEmpleado = useCallback((empleadoActualizado: Empleado) => {
     console.log('Empleados: Actualizando empleado');
@@ -197,6 +214,7 @@ const Empleados = () => {
           onSelectEmpleado={setEmpleadoSeleccionado}
           onEliminarEmpleado={handleEliminarEmpleado}
           onDeshabilitarEmpleado={handleDeshabilitarEmpleado}
+          onHabilitarEmpleado={handleHabilitarEmpleado}
         />
 
         {empleadoSeleccionado && (

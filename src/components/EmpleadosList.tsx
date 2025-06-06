@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, UserX } from "lucide-react";
+import { Edit, Trash2, UserX, UserCheck } from "lucide-react";
 import { Empleado } from "@/types/empleado";
 
 interface EmpleadosListProps {
@@ -12,9 +12,10 @@ interface EmpleadosListProps {
   onSelectEmpleado: (empleado: Empleado) => void;
   onEliminarEmpleado: (empleadoId: number) => void;
   onDeshabilitarEmpleado: (empleadoId: number) => void;
+  onHabilitarEmpleado: (empleadoId: number) => void;
 }
 
-export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado, onDeshabilitarEmpleado }: EmpleadosListProps) => {
+export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado, onDeshabilitarEmpleado, onHabilitarEmpleado }: EmpleadosListProps) => {
   return (
     <Card>
       <CardHeader>
@@ -60,7 +61,7 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado,
                       <Edit className="w-4 h-4" />
                     </Button>
                     
-                    {empleado.activo && (
+                    {empleado.activo ? (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="outline" size="sm">
@@ -79,6 +80,29 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado,
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
                             <AlertDialogAction onClick={() => onDeshabilitarEmpleado(empleado.id)}>
                               Deshabilitar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-green-600">
+                            <UserCheck className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Habilitar Empleado</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              ¿Estás seguro de que quieres reactivar a {empleado.nombre} {empleado.apellidos}? 
+                              El empleado volverá a estar activo y disponible para nuevas asignaciones.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onHabilitarEmpleado(empleado.id)}>
+                              Habilitar
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
