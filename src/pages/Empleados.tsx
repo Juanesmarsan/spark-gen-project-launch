@@ -1,110 +1,26 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { EmpleadoForm } from "@/components/EmpleadoForm";
 import { EmpleadosList } from "@/components/EmpleadosList";
 import { EmpleadoDetails } from "@/components/EmpleadoDetails";
-import { Empleado, Epi, Herramienta, Vehiculo } from "@/types/empleado";
+import { Empleado } from "@/types/empleado";
 import { useToast } from "@/hooks/use-toast";
+import { useEmpleados } from "@/hooks/useEmpleados";
+import { useInventarios } from "@/hooks/useInventarios";
 
 const Empleados = () => {
-  const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const { toast } = useToast();
-
-  // Cargar empleados desde localStorage al iniciar
-  useEffect(() => {
-    console.log("Cargando empleados desde localStorage...");
-    const empleadosGuardados = localStorage.getItem('empleados');
-    if (empleadosGuardados) {
-      const empleadosParseados = JSON.parse(empleadosGuardados);
-      console.log("Empleados cargados:", empleadosParseados);
-      setEmpleados(empleadosParseados.map((emp: any) => ({
-        ...emp,
-        fechaIngreso: new Date(emp.fechaIngreso)
-      })));
-    } else {
-      // Datos de ejemplo si no hay empleados
-      const empleadoEjemplo: Empleado = {
-        id: 1,
-        nombre: "Juan",
-        apellidos: "García López",
-        dni: "12345678A",
-        telefono: "666123456",
-        email: "juan.garcia@empresa.com",
-        direccion: "Calle Principal 123, Madrid",
-        fechaIngreso: new Date("2023-01-15"),
-        salarioBruto: 2500,
-        seguridadSocialTrabajador: 150,
-        seguridadSocialEmpresa: 750,
-        retenciones: 375,
-        embargo: 0,
-        adelantos: [],
-        epis: [],
-        herramientas: [],
-        documentos: [],
-        proyectos: [],
-      };
-      setEmpleados([empleadoEjemplo]);
-    }
-  }, []);
-
-  // Guardar empleados en localStorage cuando cambien
-  useEffect(() => {
-    if (empleados.length > 0) {
-      console.log("Guardando empleados en localStorage:", empleados);
-      localStorage.setItem('empleados', JSON.stringify(empleados));
-    }
-  }, [empleados]);
-
-  // Estados para inventarios - obtenemos los datos del localStorage o valores por defecto
-  const [inventarioEpis] = useState<Epi[]>(() => {
-    const stored = localStorage.getItem('epis');
-    return stored ? JSON.parse(stored) : [
-      { id: 1, nombre: "Casco de seguridad", precio: 25, disponible: true },
-      { id: 2, nombre: "Chaleco reflectante", precio: 15, disponible: true },
-      { id: 3, nombre: "Botas de seguridad", precio: 85, disponible: true },
-      { id: 4, nombre: "Guantes de trabajo", precio: 12, disponible: true },
-    ];
-  });
-
-  const [inventarioHerramientas] = useState<Herramienta[]>(() => {
-    const stored = localStorage.getItem('herramientas');
-    return stored ? JSON.parse(stored) : [
-      { id: 1, tipo: "Taladro", marca: "Bosch", coste: 120, disponible: true },
-      { id: 2, tipo: "Martillo", marca: "Stanley", coste: 35, disponible: true },
-      { id: 3, tipo: "Destornillador eléctrico", marca: "Makita", coste: 75, disponible: true },
-      { id: 4, tipo: "Sierra circular", marca: "DeWalt", coste: 250, disponible: true },
-    ];
-  });
-
-  const [inventarioVehiculos] = useState<Vehiculo[]>(() => {
-    const stored = localStorage.getItem('vehiculos');
-    return stored ? JSON.parse(stored) : [
-      { id: 1, matricula: "1234-ABC", tipo: "Furgoneta", marca: "Ford", modelo: "Transit", asignado: false },
-      { id: 2, matricula: "5678-DEF", tipo: "Camión", marca: "Mercedes", modelo: "Sprinter", asignado: false },
-    ];
-  });
-
+  const { empleados, agregarEmpleado, updateEmpleado } = useEmpleados();
+  const { inventarioEpis, inventarioHerramientas, inventarioVehiculos } = useInventarios();
+  
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
-  const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo'>) => {
-    console.log("Agregando nuevo empleado:", nuevoEmpleadoData);
-    
-    const nuevoEmpleado: Empleado = {
-      ...nuevoEmpleadoData,
-      id: Date.now(),
-      adelantos: [],
-      epis: [],
-      herramientas: [],
-      documentos: [],
-      proyectos: [],
-    };
-    
-    console.log("Empleado creado:", nuevoEmpleado);
-    setEmpleados(prev => [...prev, nuevoEmpleado]);
+  const handleAgregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo'>) => {
+    const nuevoEmpleado = agregarEmpleado(nuevoEmpleadoData);
     setMostrarFormulario(false);
     
     toast({
@@ -113,11 +29,8 @@ const Empleados = () => {
     });
   };
 
-  const updateEmpleado = (empleadoActualizado: Empleado) => {
-    console.log("Actualizando empleado:", empleadoActualizado);
-    setEmpleados(prev => prev.map(emp => 
-      emp.id === empleadoActualizado.id ? empleadoActualizado : emp
-    ));
+  const handleUpdateEmpleado = (empleadoActualizado: Empleado) => {
+    updateEmpleado(empleadoActualizado);
     setEmpleadoSeleccionado(empleadoActualizado);
   };
 
@@ -136,7 +49,7 @@ const Empleados = () => {
       adelantos: [...empleadoSeleccionado.adelantos, nuevoAdelantoObj]
     };
 
-    updateEmpleado(empleadoActualizado);
+    handleUpdateEmpleado(empleadoActualizado);
   };
 
   const asignarEpi = (epiId: number, fecha: Date) => {
@@ -156,7 +69,7 @@ const Empleados = () => {
         epis: [...empleadoSeleccionado.epis, nuevoEpiAsignado]
       };
 
-      updateEmpleado(empleadoActualizado);
+      handleUpdateEmpleado(empleadoActualizado);
     }
   };
 
@@ -177,7 +90,7 @@ const Empleados = () => {
         herramientas: [...empleadoSeleccionado.herramientas, nuevaHerramientaAsignada]
       };
 
-      updateEmpleado(empleadoActualizado);
+      handleUpdateEmpleado(empleadoActualizado);
     }
   };
 
@@ -191,7 +104,7 @@ const Empleados = () => {
         vehiculo: `${vehiculo.tipo} ${vehiculo.matricula}`
       };
 
-      updateEmpleado(empleadoActualizado);
+      handleUpdateEmpleado(empleadoActualizado);
     }
   };
 
@@ -213,7 +126,7 @@ const Empleados = () => {
             </Button>
           </DialogTrigger>
           <EmpleadoForm
-            onSubmit={agregarEmpleado}
+            onSubmit={handleAgregarEmpleado}
             onCancel={() => setMostrarFormulario(false)}
           />
         </Dialog>
@@ -231,7 +144,7 @@ const Empleados = () => {
             inventarioEpis={inventarioEpis}
             inventarioHerramientas={inventarioHerramientas}
             inventarioVehiculos={inventarioVehiculos}
-            onUpdateEmpleado={updateEmpleado}
+            onUpdateEmpleado={handleUpdateEmpleado}
             onAgregarAdelanto={agregarAdelanto}
             onAsignarEpi={asignarEpi}
             onAsignarHerramienta={asignarHerramienta}
