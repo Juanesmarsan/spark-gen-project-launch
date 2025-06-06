@@ -15,7 +15,7 @@ const esFestivo = (fecha: Date): boolean => {
   return diasFestivos.includes(fechaStr);
 };
 
-const calcularHorasTrabajadorEnPeriodo = (fechaEntrada?: Date, fechaSalida?: Date, inicioMes: Date, finMes: Date): number => {
+const calcularHorasTrabajadorEnPeriodo = (inicioMes: Date, finMes: Date, fechaEntrada?: Date, fechaSalida?: Date): number => {
   // Determinar fecha de inicio para el cálculo
   let fechaInicio = inicioMes;
   if (fechaEntrada && fechaEntrada > inicioMes) {
@@ -61,10 +61,10 @@ export const useCalculosBeneficios = () => {
         const finMes = endOfMonth(new Date(añoActual, mes - 1, 1));
         
         const horasDelMes = calcularHorasTrabajadorEnPeriodo(
-          trabajador.fechaEntrada,
-          trabajador.fechaSalida,
           inicioMes,
-          finMes
+          finMes,
+          trabajador.fechaEntrada,
+          trabajador.fechaSalida
         );
         
         totalHoras += horasDelMes;
@@ -122,10 +122,10 @@ export const useCalculosBeneficios = () => {
 
     proyecto.trabajadoresAsignados.forEach(trabajador => {
       const horasDelMes = calcularHorasTrabajadorEnPeriodo(
-        trabajador.fechaEntrada,
-        trabajador.fechaSalida,
         inicioMes,
-        finMes
+        finMes,
+        trabajador.fechaEntrada,
+        trabajador.fechaSalida
       );
       totalHoras += horasDelMes;
     });
