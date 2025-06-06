@@ -19,9 +19,12 @@ const Proyectos = () => {
 
   // Cargar empleados desde localStorage o datos de ejemplo
   useEffect(() => {
+    console.log("Cargando empleados...");
     const empleadosGuardados = localStorage.getItem('empleados');
     if (empleadosGuardados) {
-      setEmpleados(JSON.parse(empleadosGuardados));
+      const empleadosParseados = JSON.parse(empleadosGuardados);
+      console.log("Empleados cargados:", empleadosParseados);
+      setEmpleados(empleadosParseados);
     } else {
       // Datos de ejemplo si no hay empleados
       const empleadosEjemplo: Empleado[] = [
@@ -53,6 +56,7 @@ const Proyectos = () => {
     const proyectosGuardados = localStorage.getItem('proyectos');
     if (proyectosGuardados) {
       const proyectosParseados = JSON.parse(proyectosGuardados);
+      console.log("Proyectos cargados:", proyectosParseados);
       setProyectos(proyectosParseados.map((p: any) => ({
         ...p,
         fechaCreacion: new Date(p.fechaCreacion)
@@ -63,11 +67,14 @@ const Proyectos = () => {
   // Guardar proyectos en localStorage cuando cambien
   useEffect(() => {
     if (proyectos.length > 0) {
+      console.log("Guardando proyectos:", proyectos);
       localStorage.setItem('proyectos', JSON.stringify(proyectos));
     }
   }, [proyectos]);
 
   const agregarProyecto = (proyectoData: ProyectoFormData) => {
+    console.log("Agregando nuevo proyecto:", proyectoData);
+    
     const trabajadoresAsignados = empleados
       .filter(emp => proyectoData.trabajadoresAsignados.includes(emp.id))
       .map(emp => ({
@@ -83,6 +90,7 @@ const Proyectos = () => {
       fechaCreacion: new Date(),
     };
 
+    console.log("Nuevo proyecto creado:", nuevoProyecto);
     setProyectos(prev => [...prev, nuevoProyecto]);
     setMostrarFormulario(false);
     toast({
@@ -92,7 +100,12 @@ const Proyectos = () => {
   };
 
   const editarProyecto = (proyectoData: ProyectoFormData) => {
-    if (!proyectoEditando) return;
+    if (!proyectoEditando) {
+      console.error("No hay proyecto en edición");
+      return;
+    }
+
+    console.log("Editando proyecto:", proyectoEditando.id, proyectoData);
 
     const trabajadoresAsignados = empleados
       .filter(emp => proyectoData.trabajadoresAsignados.includes(emp.id))
@@ -108,6 +121,7 @@ const Proyectos = () => {
       trabajadoresAsignados,
     };
 
+    console.log("Proyecto actualizado:", proyectoActualizado);
     setProyectos(prev => prev.map(p => 
       p.id === proyectoEditando.id ? proyectoActualizado : p
     ));
@@ -120,6 +134,7 @@ const Proyectos = () => {
   };
 
   const eliminarProyecto = (id: number) => {
+    console.log("Eliminando proyecto:", id);
     setProyectos(prev => prev.filter(p => p.id !== id));
     toast({
       title: "Proyecto eliminado",
@@ -128,25 +143,22 @@ const Proyectos = () => {
   };
 
   const iniciarEdicion = (proyecto: Proyecto) => {
+    console.log("Iniciando edición del proyecto:", proyecto);
     setProyectoEditando(proyecto);
     setMostrarFormulario(true);
   };
 
   const cerrarFormulario = () => {
+    console.log("Cerrando formulario");
     setMostrarFormulario(false);
     setProyectoEditando(null);
   };
 
-  const proyectoFormData = proyectoEditando ? {
-    nombre: proyectoEditando.nombre,
-    ciudad: proyectoEditando.ciudad,
-    tipo: proyectoEditando.tipo,
-    estado: proyectoEditando.estado,
-    presupuestoTotal: proyectoEditando.presupuestoTotal,
-    precioHora: proyectoEditando.precioHora,
-    descripcion: proyectoEditando.descripcion || "",
-    trabajadoresAsignados: proyectoEditando.trabajadoresAsignados.map(t => t.id),
-  } : undefined;
+  const iniciarNuevoProyecto = () => {
+    console.log("Iniciando nuevo proyecto");
+    setProyectoEditando(null);
+    setMostrarFormulario(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -158,7 +170,7 @@ const Proyectos = () => {
         <Dialog open={mostrarFormulario} onOpenChange={setMostrarFormulario}>
           <DialogTrigger asChild>
             <Button 
-              onClick={() => setMostrarFormulario(true)}
+              onClick={iniciarNuevoProyecto}
               className="bg-omenar-green hover:bg-omenar-dark-green"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -169,7 +181,8 @@ const Proyectos = () => {
             onSubmit={proyectoEditando ? editarProyecto : agregarProyecto}
             onCancel={cerrarFormulario}
             empleados={empleados}
-            proyecto={proyectoFormData}
+            proyecto={proyectoEditando}
+            isEditing={!!proyectoEditando}
           />
         </Dialog>
       </div>
