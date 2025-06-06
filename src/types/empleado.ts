@@ -19,7 +19,9 @@ export interface Empleado {
   documentos: Documento[];
   proyectos: string[];
   gastosVariables: GastoVariableEmpleado[];
+  historialSalarios: HistorialSalario[];
   vehiculo?: string;
+  activo: boolean;
 }
 
 export interface Adelanto {
@@ -57,6 +59,18 @@ export interface GastoVariableEmpleado {
   descripcion?: string;
   importe: number;
   fecha: Date;
+}
+
+export interface HistorialSalario {
+  id: number;
+  mes: number;
+  anio: number;
+  salarioBruto: number;
+  seguridadSocialTrabajador: number;
+  seguridadSocialEmpresa: number;
+  retenciones: number;
+  embargo: number;
+  fechaCambio: Date;
 }
 
 export interface Epi {

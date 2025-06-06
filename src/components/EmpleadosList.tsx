@@ -3,15 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Edit, Trash2, UserX } from "lucide-react";
 import { Empleado } from "@/types/empleado";
 
 interface EmpleadosListProps {
   empleados: Empleado[];
   onSelectEmpleado: (empleado: Empleado) => void;
+  onEliminarEmpleado: (empleadoId: number) => void;
+  onDeshabilitarEmpleado: (empleadoId: number) => void;
 }
 
-export const EmpleadosList = ({ empleados, onSelectEmpleado }: EmpleadosListProps) => {
+export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado, onDeshabilitarEmpleado }: EmpleadosListProps) => {
   return (
     <Card>
       <CardHeader>
@@ -24,6 +27,7 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado }: EmpleadosListProp
               <TableHead>Nombre</TableHead>
               <TableHead>Teléfono</TableHead>
               <TableHead>Salario Bruto</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead>Vehículo</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
@@ -35,6 +39,11 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado }: EmpleadosListProp
                 <TableCell>{empleado.telefono}</TableCell>
                 <TableCell>€{empleado.salarioBruto}</TableCell>
                 <TableCell>
+                  <Badge variant={empleado.activo ? "default" : "secondary"}>
+                    {empleado.activo ? "Activo" : "Inactivo"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
                   {empleado.vehiculo ? (
                     <Badge variant="secondary">{empleado.vehiculo}</Badge>
                   ) : (
@@ -42,13 +51,63 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado }: EmpleadosListProp
                   )}
                 </TableCell>
                 <TableCell>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => onSelectEmpleado(empleado)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => onSelectEmpleado(empleado)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    
+                    {empleado.activo && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <UserX className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Deshabilitar Empleado</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              ¿Estás seguro de que quieres deshabilitar a {empleado.nombre} {empleado.apellidos}? 
+                              El empleado será marcado como inactivo pero se mantendrán todos sus datos.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDeshabilitarEmpleado(empleado.id)}>
+                              Deshabilitar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Eliminar Empleado</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            ¿Estás seguro de que quieres eliminar permanentemente a {empleado.nombre} {empleado.apellidos}? 
+                            Esta acción no se puede deshacer y se perderán todos los datos del empleado.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onEliminarEmpleado(empleado.id)}>
+                            Eliminar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

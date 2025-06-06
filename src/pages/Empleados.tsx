@@ -15,13 +15,13 @@ const Empleados = () => {
   console.log('Empleados: Renderizando componente');
   
   const { toast } = useToast();
-  const { empleados, agregarEmpleado, updateEmpleado, agregarGastoVariable } = useEmpleados();
+  const { empleados, agregarEmpleado, updateEmpleado, eliminarEmpleado, deshabilitarEmpleado, agregarCambioSalario, agregarGastoVariable } = useEmpleados();
   const { inventarioEpis, inventarioHerramientas, inventarioVehiculos } = useInventarios();
   
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
-  const handleAgregarEmpleado = useCallback((nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables'>) => {
+  const handleAgregarEmpleado = useCallback((nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables' | 'historialSalarios' | 'activo'>) => {
     console.log('Empleados: Agregando empleado');
     const nuevoEmpleado = agregarEmpleado(nuevoEmpleadoData);
     setMostrarFormulario(false);
@@ -31,6 +31,39 @@ const Empleados = () => {
       description: "El empleado se ha añadido correctamente.",
     });
   }, [agregarEmpleado, toast]);
+
+  const handleEliminarEmpleado = useCallback((empleadoId: number) => {
+    console.log('Empleados: Eliminando empleado');
+    eliminarEmpleado(empleadoId);
+    
+    if (empleadoSeleccionado?.id === empleadoId) {
+      setEmpleadoSeleccionado(null);
+    }
+    
+    toast({
+      title: "Empleado eliminado",
+      description: "El empleado ha sido eliminado permanentemente.",
+      variant: "destructive"
+    });
+  }, [eliminarEmpleado, empleadoSeleccionado, toast]);
+
+  const handleDeshabilitarEmpleado = useCallback((empleadoId: number) => {
+    console.log('Empleados: Deshabilitando empleado');
+    deshabilitarEmpleado(empleadoId);
+    
+    // Actualizar empleado seleccionado si es el que se está deshabilitando
+    if (empleadoSeleccionado?.id === empleadoId) {
+      const empleadoActualizado = empleados.find(emp => emp.id === empleadoId);
+      if (empleadoActualizado) {
+        setEmpleadoSeleccionado({ ...empleadoActualizado, activo: false });
+      }
+    }
+    
+    toast({
+      title: "Empleado deshabilitado",
+      description: "El empleado ha sido marcado como inactivo.",
+    });
+  }, [deshabilitarEmpleado, empleadoSeleccionado, empleados, toast]);
 
   const handleUpdateEmpleado = useCallback((empleadoActualizado: Empleado) => {
     console.log('Empleados: Actualizando empleado');
@@ -162,6 +195,8 @@ const Empleados = () => {
         <EmpleadosList 
           empleados={empleados}
           onSelectEmpleado={setEmpleadoSeleccionado}
+          onEliminarEmpleado={handleEliminarEmpleado}
+          onDeshabilitarEmpleado={handleDeshabilitarEmpleado}
         />
 
         {empleadoSeleccionado && (
@@ -176,6 +211,7 @@ const Empleados = () => {
             onAsignarHerramienta={asignarHerramienta}
             onAsignarVehiculo={asignarVehiculo}
             onAgregarGastoVariable={handleAgregarGastoVariable}
+            onAgregarCambioSalario={agregarCambioSalario}
           />
         )}
       </div>

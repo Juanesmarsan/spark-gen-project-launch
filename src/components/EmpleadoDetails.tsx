@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Empleado, Epi, Herramienta, Vehiculo, GastoVariableEmpleado } from "@/types/empleado";
+import { Empleado, Epi, Herramienta, Vehiculo, GastoVariableEmpleado, HistorialSalario } from "@/types/empleado";
 import { CalendarioMensual } from "./CalendarioMensual";
 import { DatosPersonalesTab } from "./empleado/DatosPersonalesTab";
 import { EpisTab } from "./empleado/EpisTab";
@@ -22,6 +22,7 @@ interface EmpleadoDetailsProps {
   onAsignarHerramienta: (herramientaId: number, fecha: Date) => void;
   onAsignarVehiculo: (vehiculoId: number) => void;
   onAgregarGastoVariable: (gasto: Omit<GastoVariableEmpleado, 'id'>) => void;
+  onAgregarCambioSalario: (empleadoId: number, nuevosSalarios: Omit<HistorialSalario, 'id' | 'fechaCambio'>) => void;
 }
 
 export const EmpleadoDetails = ({
@@ -34,20 +35,23 @@ export const EmpleadoDetails = ({
   onAsignarEpi,
   onAsignarHerramienta,
   onAsignarVehiculo,
-  onAgregarGastoVariable
+  onAgregarGastoVariable,
+  onAgregarCambioSalario
 }: EmpleadoDetailsProps) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle>
           {empleado.nombre} {empleado.apellidos}
+          {!empleado.activo && <span className="text-muted-foreground ml-2">(Inactivo)</span>}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="datos" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="datos">Datos Personales</TabsTrigger>
             <TabsTrigger value="calendario">Calendario</TabsTrigger>
+            <TabsTrigger value="salarios">Historial Salarios</TabsTrigger>
             <TabsTrigger value="epis">EPIs</TabsTrigger>
             <TabsTrigger value="herramientas">Herramientas</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
@@ -66,6 +70,13 @@ export const EmpleadoDetails = ({
 
           <TabsContent value="calendario">
             <CalendarioMensual empleado={empleado} />
+          </TabsContent>
+
+          <TabsContent value="salarios">
+            <HistorialSalariosTab
+              empleado={empleado}
+              onAgregarCambioSalario={onAgregarCambioSalario}
+            />
           </TabsContent>
 
           <TabsContent value="epis">

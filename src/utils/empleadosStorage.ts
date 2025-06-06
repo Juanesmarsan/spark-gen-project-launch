@@ -14,6 +14,11 @@ export const cargarEmpleadosDesdeStorage = (): Empleado[] | null => {
         categoria: emp.categoria || 'peon',
         precioHoraExtra: emp.precioHoraExtra || 20,
         precioHoraFestiva: emp.precioHoraFestiva || 25,
+        activo: emp.activo !== undefined ? emp.activo : true,
+        historialSalarios: emp.historialSalarios?.map((hist: any) => ({
+          ...hist,
+          fechaCambio: new Date(hist.fechaCambio)
+        })) || [],
         gastosVariables: emp.gastosVariables?.map((gasto: any) => ({
           ...gasto,
           fecha: new Date(gasto.fecha)
