@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetricCard } from "@/components/MetricCard";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { useVehiculosGastos } from "@/hooks/useVehiculosGastos";
 import { useCalculosBeneficios } from "@/hooks/useCalculosBeneficios";
 import { Euro, TrendingUp, Building, Percent, Calendar, Users, Clock, BarChart3, UserCheck, PieChart } from "lucide-react";
 import { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, LineChart, Line, ComposedChart } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { generarCalendarioMesPuro } from "@/utils/calendarioUtils";
 
@@ -76,43 +77,84 @@ const AnalisisFinanciero = () => {
       })
   ).reduce((total, gasto) => total + gasto.importe, 0);
 
-  // Datos para gráfico de gastos fijos
+  // Cálculo del mínimo viable anual
+  const gastosFijosMensuales = resumenGastosFijos.totalBruto;
+  const gastosVariablesMensuales = totalGastosVehiculos + gastosEmpleadosDelMes + 
+    proyectos.reduce((sum, proyecto) => {
+      return sum + (proyecto.gastosVariables?.reduce((catSum, g) => catSum + g.importe, 0) || 0);
+    }, 0);
+  
+  const gastosTotalesMensuales = gastosFijosMensuales + gastosVariablesMensuales;
+  const gastosTotalesAnuales = gastosTotalesMensuales * 12;
+  
+  // Considerando un margen de seguridad del 20% y margen de beneficio del 15%
+  const margenSeguridad = 0.20;
+  const margenBeneficio = 0.15;
+  const facturacionMinimaViable = gastosTotalesAnuales * (1 + margenSeguridad + margenBeneficio);
+
+  // Datos para gráficos de gastos fijos mejorados
   const datosGastosFijos = gastosFijos.map(gasto => ({
-    concepto: gasto.concepto.length > 20 ? gasto.concepto.substring(0, 20) + "..." : gasto.concepto,
+    concepto: gasto.concepto.length > 15 ? gasto.concepto.substring(0, 15) + "..." : gasto.concepto,
     conceptoCompleto: gasto.concepto,
     importe: gasto.totalBruto,
     baseImponible: gasto.baseImponible,
     tieneIva: gasto.tieneIva,
     iva: gasto.iva || 0
-  }));
+  })).sort((a, b) => b.importe - a.importe);
 
-  // Datos para gráfico de gastos variables
+  // Datos para gráfico de gastos variables mejorados
   const datosGastosVariables = [
     {
       categoria: "Vehículos",
       importe: totalGastosVehiculos,
-      color: "#3b82f6"
+      color: "#3b82f6",
+      porcentaje: 0
     },
     {
       categoria: "Empleados",
       importe: gastosEmpleadosDelMes,
-      color: "#8b5cf6"
+      color: "#8b5cf6",
+      porcentaje: 0
     },
     {
       categoria: "Material",
       importe: proyectos.reduce((sum, proyecto) => {
         return sum + (proyecto.gastosVariables?.filter(g => g.categoria === 'material').reduce((catSum, g) => catSum + g.importe, 0) || 0);
       }, 0),
-      color: "#10b981"
+      color: "#10b981",
+      porcentaje: 0
     },
     {
       categoria: "Otros",
       importe: proyectos.reduce((sum, proyecto) => {
         return sum + (proyecto.gastosVariables?.filter(g => g.categoria === 'otro').reduce((catSum, g) => catSum + g.importe, 0) || 0);
       }, 0),
-      color: "#f59e0b"
+      color: "#f59e0b",
+      porcentaje: 0
     }
   ].filter(item => item.importe > 0);
+
+  // Calcular porcentajes
+  const totalGastosVariables = datosGastosVariables.reduce((sum, item) => sum + item.importe, 0);
+  datosGastosVariables.forEach(item => {
+    item.porcentaje = totalGastosVariables > 0 ? (item.importe / totalGastosVariables) * 100 : 0;
+  });
+
+  // Datos comparativos gastos fijos vs variables
+  const datosComparativos = [
+    {
+      tipo: "Gastos Fijos",
+      importe: gastosFijosMensuales,
+      porcentaje: gastosTotalesMensuales > 0 ? (gastosFijosMensuales / gastosTotalesMensuales) * 100 : 0,
+      color: "#ef4444"
+    },
+    {
+      tipo: "Gastos Variables",
+      importe: gastosVariablesMensuales,
+      porcentaje: gastosTotalesMensuales > 0 ? (gastosVariablesMensuales / gastosTotalesMensuales) * 100 : 0,
+      color: "#3b82f6"
+    }
+  ];
 
   // Calcular rendimiento de trabajadores
   const calcularRendimientoTrabajador = (empleadoId: number) => {
@@ -335,18 +377,30 @@ const AnalisisFinanciero = () => {
 
       {vistaActual === 'gastos' && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <MetricCard
-              title="Gastos Fijos Totales"
-              value={`${resumenGastosFijos.totalBruto.toLocaleString()}€`}
+              title="Gastos Fijos Mensuales"
+              value={`${gastosFijosMensuales.toLocaleString()}€`}
               icon="📋"
               color="red"
             />
             <MetricCard
-              title="Gastos Variables del Mes"
-              value={`${datosGastosVariables.reduce((sum, item) => sum + item.importe, 0).toLocaleString()}€`}
+              title="Gastos Variables Mensuales"
+              value={`${gastosVariablesMensuales.toLocaleString()}€`}
               icon="📊"
-              color="orange"
+              color="blue"
+            />
+            <MetricCard
+              title="Total Gastos Anuales"
+              value={`${gastosTotalesAnuales.toLocaleString()}€`}
+              icon="💰"
+              color="purple"
+            />
+            <MetricCard
+              title="Facturación Mínima Viable"
+              value={`${facturacionMinimaViable.toLocaleString()}€`}
+              icon="🎯"
+              color="green"
             />
             <MetricCard
               title="Coeficiente por Operario"
@@ -354,18 +408,76 @@ const AnalisisFinanciero = () => {
               icon="👷"
               color="blue"
             />
-            <MetricCard
-              title="Número de Operarios"
-              value={resumenGastosFijos.numeroOperarios.toString()}
-              icon="👥"
-              color="purple"
-            />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Gastos Fijos Mensuales</CardTitle>
+                <CardTitle>Distribución Gastos Fijos vs Variables</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RechartsPieChart>
+                    <Pie
+                      data={datosComparativos}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="importe"
+                      label={({ tipo, porcentaje }) => `${tipo} ${porcentaje.toFixed(0)}%`}
+                    >
+                      {datosComparativos.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${Number(value).toLocaleString()}€`, 'Importe']} />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Análisis de Viabilidad Económica</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded">
+                    <h4 className="font-semibold text-red-800 mb-2">Gastos Totales Anuales</h4>
+                    <p className="text-2xl font-bold text-red-600">{gastosTotalesAnuales.toLocaleString()}€</p>
+                    <p className="text-sm text-red-600">Mínimo para cubrir gastos</p>
+                  </div>
+                  
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                    <h4 className="font-semibold text-yellow-800 mb-2">Con Margen de Seguridad (20%)</h4>
+                    <p className="text-xl font-bold text-yellow-600">
+                      {(gastosTotalesAnuales * 1.20).toLocaleString()}€
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 bg-green-50 border border-green-200 rounded">
+                    <h4 className="font-semibold text-green-800 mb-2">Facturación Mínima Viable</h4>
+                    <p className="text-2xl font-bold text-green-600">{facturacionMinimaViable.toLocaleString()}€</p>
+                    <p className="text-sm text-green-600">Incluye 20% seguridad + 15% beneficio</p>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+                    <h4 className="font-semibold text-blue-800 mb-2">Objetivo Mensual</h4>
+                    <p className="text-xl font-bold text-blue-600">
+                      {(facturacionMinimaViable / 12).toLocaleString()}€
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Top 10 Gastos Fijos</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={chartConfig} className="h-80">
@@ -387,7 +499,7 @@ const AnalisisFinanciero = () => {
                             return (
                               <div className="bg-white p-3 border rounded shadow-lg">
                                 <p className="font-medium">{data.conceptoCompleto}</p>
-                                <p className="text-blue-600">Importe: {data.importe.toLocaleString()}€</p>
+                                <p className="text-blue-600">Total: {data.importe.toLocaleString()}€</p>
                                 <p className="text-green-600">Base: {data.baseImponible.toLocaleString()}€</p>
                                 {data.tieneIva && <p className="text-orange-600">IVA: {data.iva.toLocaleString()}€</p>}
                               </div>
@@ -396,7 +508,7 @@ const AnalisisFinanciero = () => {
                           return null;
                         }}
                       />
-                      <Bar dataKey="importe" fill="#3b82f6" name="Importe Total" />
+                      <Bar dataKey="importe" fill="#ef4444" name="Importe Total" />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -417,7 +529,7 @@ const AnalisisFinanciero = () => {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="importe"
-                      label={({ categoria, percent }) => `${categoria} ${(percent * 100).toFixed(0)}%`}
+                      label={({ categoria, porcentaje }) => `${categoria} ${porcentaje.toFixed(0)}%`}
                     >
                       {datosGastosVariables.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -433,7 +545,7 @@ const AnalisisFinanciero = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Detalle de Gastos Fijos</CardTitle>
+              <CardTitle>Detalle Completo de Gastos Fijos</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -444,13 +556,14 @@ const AnalisisFinanciero = () => {
                     <TableHead className="text-right">Base Imponible</TableHead>
                     <TableHead className="text-center">IVA</TableHead>
                     <TableHead className="text-right">Importe IVA</TableHead>
+                    <TableHead className="text-right">% del Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {gastosFijos.map((gasto) => (
+                  {gastosFijos.sort((a, b) => b.totalBruto - a.totalBruto).map((gasto) => (
                     <TableRow key={gasto.id}>
                       <TableCell className="font-medium">{gasto.concepto}</TableCell>
-                      <TableCell className="text-right">{gasto.totalBruto.toLocaleString()}€</TableCell>
+                      <TableCell className="text-right font-medium">{gasto.totalBruto.toLocaleString()}€</TableCell>
                       <TableCell className="text-right">{gasto.baseImponible.toLocaleString()}€</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={gasto.tieneIva ? "default" : "secondary"}>
@@ -459,6 +572,11 @@ const AnalisisFinanciero = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         {gasto.iva ? `${gasto.iva.toLocaleString()}€` : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline">
+                          {((gasto.totalBruto / gastosFijosMensuales) * 100).toFixed(1)}%
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
