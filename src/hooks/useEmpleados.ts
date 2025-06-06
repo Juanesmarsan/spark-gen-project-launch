@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Empleado, GastoVariableEmpleado, HistorialSalario } from '@/types/empleado';
 import { empleadosEjemplo } from '@/data/empleadosEjemplo';
@@ -16,46 +15,14 @@ export const useEmpleados = () => {
     
     const empleadosGuardados = cargarEmpleadosDesdeStorage();
     
-    if (empleadosGuardados && empleadosGuardados.length > 0) {
-      console.log('useEmpleados: Empleados cargados:', empleadosGuardados.length);
-      
-      // Filtrar Juan Garcia Lopez
-      const empleadosFiltrados = empleadosGuardados.filter(emp => 
-        !(emp.nombre === 'Juan' && emp.apellidos === 'García López')
-      );
-      
-      // Verificar si Mohammed ya está en la lista
-      const mohammedExists = empleadosFiltrados.some(emp => 
-        emp.nombre === 'Mohammed' && emp.apellidos === 'Soumat Mehrroun'
-      );
-      
-      if (!mohammedExists) {
-        // Agregar Mohammed a los empleados existentes
-        const mohammed = empleadosEjemplo.find(emp => 
-          emp.nombre === 'Mohammed' && emp.apellidos === 'Soumat Mehrroun'
-        );
-        if (mohammed) {
-          const empleadosActualizados = [...empleadosFiltrados, mohammed];
-          setEmpleados(empleadosActualizados);
-          guardarEmpleadosEnStorage(empleadosActualizados);
-        } else {
-          setEmpleados(empleadosFiltrados);
-          guardarEmpleadosEnStorage(empleadosFiltrados);
-        }
-      } else {
-        setEmpleados(empleadosFiltrados);
-        if (empleadosFiltrados.length !== empleadosGuardados.length) {
-          guardarEmpleadosEnStorage(empleadosFiltrados);
-        }
-      }
+    // Si hay menos empleados guardados que en los ejemplos, cargar los ejemplos completos
+    if (!empleadosGuardados || empleadosGuardados.length < empleadosEjemplo.length) {
+      console.log('useEmpleados: Cargando empleados de ejemplo completos');
+      setEmpleados(empleadosEjemplo);
+      guardarEmpleadosEnStorage(empleadosEjemplo);
     } else {
-      console.log('useEmpleados: Creando empleados de ejemplo');
-      // Filtrar Juan Garcia Lopez de los ejemplos también
-      const ejemplosFiltrados = empleadosEjemplo.filter(emp => 
-        !(emp.nombre === 'Juan' && emp.apellidos === 'García López')
-      );
-      setEmpleados(ejemplosFiltrados);
-      guardarEmpleadosEnStorage(ejemplosFiltrados);
+      console.log('useEmpleados: Empleados cargados desde storage:', empleadosGuardados.length);
+      setEmpleados(empleadosGuardados);
     }
     
     setIsLoaded(true);
