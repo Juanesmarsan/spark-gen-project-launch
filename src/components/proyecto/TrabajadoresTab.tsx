@@ -5,12 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Edit, UserMinus } from "lucide-react";
+import { CalendarIcon, Edit, UserMinus, UserPlus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Proyecto, Trabajador } from "@/types/proyecto";
+import { useEmpleados } from "@/hooks/useEmpleados";
 
 interface TrabajadoresTabProps {
   proyecto: Proyecto;
@@ -21,6 +24,16 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
   const [editingTrabajador, setEditingTrabajador] = useState<Trabajador | null>(null);
   const [fechaEntrada, setFechaEntrada] = useState<Date | undefined>();
   const [fechaSalida, setFechaSalida] = useState<Date | undefined>();
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedEmpleados, setSelectedEmpleados] = useState<number[]>([]);
+  const [fechaEntradaNuevos, setFechaEntradaNuevos] = useState<Date | undefined>(new Date());
+
+  const { empleados } = useEmpleados();
+
+  // Filtrar empleados que no están ya asignados al proyecto
+  const empleadosDisponibles = empleados.filter(emp => 
+    emp.activo && !proyecto.trabajadoresAsignados.some(t => t.id === emp.id)
+  );
 
   const handleEditTrabajador = (trabajador: Trabajador) => {
     setEditingTrabajador(trabajador);
@@ -55,6 +68,41 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
     });
   };
 
+  const handleAddTrabajadores = () => {
+    if (selectedEmpleados.length === 0 || !fechaEntradaNuevos) return;
+
+    const nuevosTrabajadores = selectedEmpleados.map(empleadoId => {
+      const empleado = empleados.find(e => e.id === empleadoId);
+      if (!empleado) return null;
+
+      return {
+        id: empleado.id,
+        nombre: empleado.nombre,
+        apellidos: empleado.apellidos,
+        precioHora: proyecto.tipo === 'administracion' ? proyecto.precioHora : undefined,
+        fechaEntrada: fechaEntradaNuevos,
+        fechaSalida: undefined
+      };
+    }).filter(Boolean) as Trabajador[];
+
+    onUpdateProyecto({
+      ...proyecto,
+      trabajadoresAsignados: [...proyecto.trabajadoresAsignados, ...nuevosTrabajadores]
+    });
+
+    setShowAddDialog(false);
+    setSelectedEmpleados([]);
+    setFechaEntradaNuevos(new Date());
+  };
+
+  const handleEmpleadoToggle = (empleadoId: number, checked: boolean) => {
+    setSelectedEmpleados(prev => 
+      checked 
+        ? [...prev, empleadoId]
+        : prev.filter(id => id !== empleadoId)
+    );
+  };
+
   const getEstadoTrabajador = (trabajador: Trabajador) => {
     const hoy = new Date();
     
@@ -83,9 +131,93 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Trabajadores del Proyecto</h3>
-        <span className="text-sm text-gray-500">
-          {proyecto.trabajadoresAsignados.length} trabajadores asignados
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">
+            {proyecto.trabajadoresAsignados.length} trabajadores asignados
+          </span>
+          {empleadosDisponibles.length > 0 && (
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="bg-omenar-green hover:bg-omenar-dark-green">
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  Añadir Trabajadores
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Añadir Trabajadores al Proyecto</DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-4 py-4">
+                  <div>
+                    <Label>Fecha de entrada a la obra *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !fechaEntradaNuevos && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {fechaEntradaNuevos ? format(fechaEntradaNuevos, "dd/MM/yyyy") : "Seleccionar fecha"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={fechaEntradaNuevos}
+                          onSelect={setFechaEntradaNuevos}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div>
+                    <Label>Seleccionar Empleados</Label>
+                    <div className="border rounded-md p-4 max-h-64 overflow-y-auto space-y-2">
+                      {empleadosDisponibles.map((empleado) => (
+                        <div key={empleado.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`nuevo-trabajador-${empleado.id}`}
+                            checked={selectedEmpleados.includes(empleado.id)}
+                            onCheckedChange={(checked) => 
+                              handleEmpleadoToggle(empleado.id, checked as boolean)
+                            }
+                          />
+                          <label htmlFor={`nuevo-trabajador-${empleado.id}`} className="text-sm">
+                            {empleado.nombre} {empleado.apellidos}
+                          </label>
+                        </div>
+                      ))}
+                      {empleadosDisponibles.length === 0 && (
+                        <p className="text-sm text-gray-500">
+                          Todos los empleados activos ya están asignados al proyecto
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={handleAddTrabajadores}
+                    disabled={selectedEmpleados.length === 0 || !fechaEntradaNuevos}
+                    className="bg-omenar-green hover:bg-omenar-dark-green"
+                  >
+                    Añadir Trabajadores
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4">
