@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
@@ -5,7 +6,7 @@ import { Plus } from "lucide-react";
 import { ProyectoForm } from "@/components/ProyectoForm";
 import { ProyectosList } from "@/components/ProyectosList";
 import { ProyectoDetails } from "@/components/ProyectoDetails";
-import { Proyecto } from "@/types/proyecto";
+import { Proyecto, ProyectoFormData } from "@/types/proyecto";
 import { useToast } from "@/hooks/use-toast";
 import { Empleado } from "@/types/empleado";
 
@@ -43,7 +44,22 @@ const Proyectos = () => {
 
   const { toast } = useToast();
 
-  const handleAgregarProyecto = (nuevoProyecto: Proyecto) => {
+  const handleAgregarProyecto = (data: ProyectoFormData) => {
+    const nuevoProyecto: Proyecto = {
+      ...data,
+      id: Date.now(), // Simple ID generation
+      fechaCreacion: new Date(),
+      trabajadoresAsignados: data.trabajadoresAsignados.map(empleadoId => {
+        const empleado = empleadosEjemplo.find(e => e.id === empleadoId);
+        return empleado ? {
+          id: empleado.id,
+          nombre: empleado.nombre,
+          apellidos: empleado.apellidos,
+          precioHora: data.tipo === 'administracion' ? data.precioHora : undefined
+        } : { id: empleadoId, nombre: '', apellidos: '' };
+      })
+    };
+
     setProyectos([...proyectos, nuevoProyecto]);
     setShowForm(false);
     toast({
@@ -63,7 +79,7 @@ const Proyectos = () => {
     });
   };
 
-  const handleEliminarProyecto = (id: string) => {
+  const handleEliminarProyecto = (id: number) => {
     setProyectos(proyectos.filter(proyecto => proyecto.id !== id));
     setSelectedProyecto(null);
     toast({
@@ -92,6 +108,7 @@ const Proyectos = () => {
           <ProyectoForm
             onSubmit={handleAgregarProyecto}
             onCancel={() => setShowForm(false)}
+            empleados={empleadosEjemplo}
           />
         </Dialog>
       </div>
