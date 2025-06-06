@@ -105,10 +105,10 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
     }));
 
     if (checked) {
-      // Agregar trabajador con fechas vacías
+      // Agregar trabajador con fecha de entrada por defecto (hoy) y sin fecha de salida
       setTrabajadoresConFechas(prev => [
         ...prev,
-        { id: empleadoId, fechaEntrada: undefined, fechaSalida: undefined }
+        { id: empleadoId, fechaEntrada: new Date(), fechaSalida: undefined }
       ]);
     } else {
       // Remover trabajador
@@ -246,7 +246,7 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
                 const trabajadorFechas = trabajadoresConFechas.find(t => t.id === empleado.id);
                 
                 return (
-                  <div key={empleado.id} className="space-y-2 p-3 border rounded">
+                  <div key={empleado.id} className="space-y-3 p-3 border rounded">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={`trabajador-${empleado.id}`}
@@ -261,9 +261,9 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
                     </div>
                     
                     {isSelected && (
-                      <div className="grid grid-cols-2 gap-3 mt-2 pl-6">
+                      <div className="space-y-3 pl-6">
                         <div>
-                          <Label className="text-xs">Fecha de entrada</Label>
+                          <Label className="text-xs text-gray-600">Fecha de entrada a la obra *</Label>
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button
@@ -277,7 +277,7 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {trabajadorFechas?.fechaEntrada 
                                   ? format(trabajadorFechas.fechaEntrada, "dd/MM/yyyy") 
-                                  : "Seleccionar"
+                                  : "Seleccionar fecha"
                                 }
                               </Button>
                             </PopoverTrigger>
@@ -287,39 +287,57 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
                                 selected={trabajadorFechas?.fechaEntrada}
                                 onSelect={(fecha) => updateTrabajadorFecha(empleado.id, 'entrada', fecha)}
                                 initialFocus
+                                className="pointer-events-auto"
                               />
                             </PopoverContent>
                           </Popover>
                         </div>
                         
                         <div>
-                          <Label className="text-xs">Fecha de salida</Label>
-                          <Popover>
-                            <PopoverTrigger asChild>
+                          <Label className="text-xs text-gray-600">Fecha de salida de la obra (opcional)</Label>
+                          <div className="flex gap-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={cn(
+                                    "flex-1 justify-start text-left font-normal",
+                                    !trabajadorFechas?.fechaSalida && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {trabajadorFechas?.fechaSalida 
+                                    ? format(trabajadorFechas.fechaSalida, "dd/MM/yyyy") 
+                                    : "Sin fecha de salida"
+                                  }
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={trabajadorFechas?.fechaSalida}
+                                  onSelect={(fecha) => updateTrabajadorFecha(empleado.id, 'salida', fecha)}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            {trabajadorFechas?.fechaSalida && (
                               <Button
+                                type="button"
                                 variant="outline"
                                 size="sm"
-                                className={cn(
-                                  "w-full justify-start text-left font-normal",
-                                  !trabajadorFechas?.fechaSalida && "text-muted-foreground"
-                                )}
+                                onClick={() => updateTrabajadorFecha(empleado.id, 'salida', undefined)}
+                                className="text-red-600 hover:text-red-700"
                               >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {trabajadorFechas?.fechaSalida 
-                                  ? format(trabajadorFechas.fechaSalida, "dd/MM/yyyy") 
-                                  : "Seleccionar"
-                                }
+                                Quitar
                               </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={trabajadorFechas?.fechaSalida}
-                                onSelect={(fecha) => updateTrabajadorFecha(empleado.id, 'salida', fecha)}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Deja vacío si el trabajador sigue activo en la obra
+                          </p>
                         </div>
                       </div>
                     )}

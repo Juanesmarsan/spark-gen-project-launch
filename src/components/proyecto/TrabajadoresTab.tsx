@@ -116,7 +116,7 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
                         {trabajador.fechaEntrada ? (
                           format(trabajador.fechaEntrada, "dd/MM/yyyy")
                         ) : (
-                          <span className="text-gray-400">No definida</span>
+                          <span className="text-red-500">No definida</span>
                         )}
                       </div>
                       <div>
@@ -125,7 +125,7 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
                         {trabajador.fechaSalida ? (
                           format(trabajador.fechaSalida, "dd/MM/yyyy")
                         ) : (
-                          <span className="text-gray-400">No definida</span>
+                          <span className="text-green-600">Activo en obra</span>
                         )}
                       </div>
                     </div>
@@ -151,7 +151,7 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
                         
                         <div className="space-y-4 py-4">
                           <div>
-                            <Label>Fecha de entrada</Label>
+                            <Label>Fecha de entrada *</Label>
                             <Popover>
                               <PopoverTrigger asChild>
                                 <Button
@@ -178,30 +178,45 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
                           </div>
                           
                           <div>
-                            <Label>Fecha de salida</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
+                            <Label>Fecha de salida (opcional)</Label>
+                            <div className="flex gap-2">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "flex-1 justify-start text-left font-normal",
+                                      !fechaSalida && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {fechaSalida ? format(fechaSalida, "dd/MM/yyyy") : "Sin fecha de salida"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={fechaSalida}
+                                    onSelect={setFechaSalida}
+                                    initialFocus
+                                    className="pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              {fechaSalida && (
                                 <Button
                                   variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !fechaSalida && "text-muted-foreground"
-                                  )}
+                                  size="sm"
+                                  onClick={() => setFechaSalida(undefined)}
+                                  className="text-red-600 hover:text-red-700"
                                 >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {fechaSalida ? format(fechaSalida, "dd/MM/yyyy") : "Seleccionar fecha"}
+                                  Quitar
                                 </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={fechaSalida}
-                                  onSelect={setFechaSalida}
-                                  initialFocus
-                                  className="pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Deja vacío si el trabajador sigue activo en la obra
+                            </p>
                           </div>
                         </div>
                         
