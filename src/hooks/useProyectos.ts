@@ -25,8 +25,8 @@ export const useProyectos = () => {
           fechaCreacion: new Date(proyecto.fechaCreacion),
           trabajadoresAsignados: proyecto.trabajadoresAsignados?.map((trabajador: any) => ({
             ...trabajador,
-            fechaEntrada: trabajador.fechaEntrada ? new Date(trabajador.fechaEntrada) : undefined,
-            fechaSalida: trabajador.fechaSalida ? new Date(trabajador.fechaSalida) : undefined,
+            fechaEntrada: trabajador.fechaEntrada && trabajador.fechaEntrada !== 'undefined' ? new Date(trabajador.fechaEntrada) : undefined,
+            fechaSalida: trabajador.fechaSalida && trabajador.fechaSalida !== 'undefined' ? new Date(trabajador.fechaSalida) : undefined,
           })) || [],
           gastosVariables: proyecto.gastosVariables?.map((gasto: any) => ({
             ...gasto,
