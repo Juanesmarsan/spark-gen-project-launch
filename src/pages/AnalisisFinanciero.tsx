@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -287,7 +288,7 @@ const AnalisisFinanciero = () => {
               </div>
               <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                 <span className="font-medium">Salarios Anuales:</span>
-                <span className="font-bold text-green-700">€{salarioAnualEmpleados.toLocaleString('es-ES', { maximumFraction Digits: 2 })}</span>
+                <span className="font-bold text-green-700">€{salarioAnualEmpleados.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                 <span className="font-medium">Gastos Variables:</span>
