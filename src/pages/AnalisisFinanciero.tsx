@@ -39,13 +39,13 @@ const AnalisisFinanciero = () => {
 
   // Calcular gastos fijos totales anuales
   const totalGastosFijosAnual = gastosFijos.reduce((total, gasto) => {
-    const importeAnual = gasto.frecuencia === 'mensual' 
-      ? gasto.importe * 12 
-      : gasto.frecuencia === 'trimestral' 
-        ? gasto.importe * 4 
-        : gasto.frecuencia === 'semestral' 
-          ? gasto.importe * 2 
-          : gasto.importe;
+    const importeAnual = gasto.frecuenciaPago === 'mensual' 
+      ? gasto.importeMensual * 12 
+      : gasto.frecuenciaPago === 'trimestral' 
+        ? gasto.importeMensual * 4 
+        : gasto.frecuenciaPago === 'semestral' 
+          ? gasto.importeMensual * 2 
+          : gasto.importeMensual;
     return total + importeAnual;
   }, 0);
 
@@ -58,7 +58,7 @@ const AnalisisFinanciero = () => {
   }, 0);
 
   // Calcular el salario total de los empleados
-  const salarioTotalEmpleados = empleados.reduce((acc, empleado) => acc + (empleado.salarioActual || 0), 0);
+  const salarioTotalEmpleados = empleados.reduce((acc, empleado) => acc + (empleado.salarioBruto || 0), 0);
 
   // Calcular salarios anuales
   const salarioAnualEmpleados = salarioTotalEmpleados * 12;
@@ -69,14 +69,14 @@ const AnalisisFinanciero = () => {
   // Top 10 gastos fijos
   const top10GastosFijos = gastosFijos
     .map(gasto => ({
-      descripcion: gasto.descripcion,
-      importe: gasto.frecuencia === 'mensual' 
-        ? gasto.importe * 12 
-        : gasto.frecuencia === 'trimestral' 
-          ? gasto.importe * 4 
-          : gasto.frecuencia === 'semestral' 
-            ? gasto.importe * 2 
-            : gasto.importe,
+      descripcion: gasto.concepto,
+      importe: gasto.frecuenciaPago === 'mensual' 
+        ? gasto.importeMensual * 12 
+        : gasto.frecuenciaPago === 'trimestral' 
+          ? gasto.importeMensual * 4 
+          : gasto.frecuenciaPago === 'semestral' 
+            ? gasto.importeMensual * 2 
+            : gasto.importeMensual,
       fill: `hsl(${Math.random() * 360}, 70%, 50%)`
     }))
     .sort((a, b) => b.importe - a.importe)
