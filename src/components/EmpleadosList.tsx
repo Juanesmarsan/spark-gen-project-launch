@@ -22,9 +22,7 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado }: EmpleadosListProp
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
-              <TableHead>DNI</TableHead>
               <TableHead>Teléfono</TableHead>
-              <TableHead>Email</TableHead>
               <TableHead>Salario Bruto</TableHead>
               <TableHead>Vehículo</TableHead>
               <TableHead>Acciones</TableHead>
@@ -34,9 +32,7 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado }: EmpleadosListProp
             {empleados.map((empleado) => (
               <TableRow key={empleado.id}>
                 <TableCell>{empleado.nombre} {empleado.apellidos}</TableCell>
-                <TableCell>{empleado.dni}</TableCell>
                 <TableCell>{empleado.telefono}</TableCell>
-                <TableCell>{empleado.email}</TableCell>
                 <TableCell>€{empleado.salarioBruto}</TableCell>
                 <TableCell>
                   {empleado.vehiculo ? (

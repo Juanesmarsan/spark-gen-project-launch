@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +14,7 @@ interface Empleado {
   id: number;
   nombre: string;
   apellidos: string;
-  dni: string;
   telefono: string;
-  email: string;
-  direccion: string;
   fechaIngreso: Date;
   salarioBruto: number;
   seguridadSocialTrabajador: number;
@@ -43,10 +41,7 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
   const [formData, setFormData] = useState({
     nombre: "",
     apellidos: "",
-    dni: "",
     telefono: "",
-    email: "",
-    direccion: "",
     fechaIngreso: initialDate,
     salarioBruto: 0,
     seguridadSocialTrabajador: 0,
@@ -92,30 +87,11 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dni">DNI</Label>
-            <Input
-              id="dni"
-              value={formData.dni}
-              onChange={(e) => setFormData(prev => ({ ...prev, dni: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="telefono">Teléfono</Label>
             <Input
               id="telefono"
               value={formData.telefono}
               onChange={(e) => setFormData(prev => ({ ...prev, telefono: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               required
             />
           </div>
@@ -138,16 +114,6 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
               </PopoverContent>
             </Popover>
           </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="direccion">Dirección</Label>
-          <Input
-            id="direccion"
-            value={formData.direccion}
-            onChange={(e) => setFormData(prev => ({ ...prev, direccion: e.target.value }))}
-            required
-          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">

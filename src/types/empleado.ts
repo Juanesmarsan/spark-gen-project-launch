@@ -1,12 +1,8 @@
-
 export interface Empleado {
   id: number;
   nombre: string;
   apellidos: string;
-  dni: string;
   telefono: string;
-  email: string;
-  direccion: string;
   fechaIngreso: Date;
   salarioBruto: number;
   seguridadSocialTrabajador: number;
