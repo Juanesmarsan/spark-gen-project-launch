@@ -17,6 +17,9 @@ export const useProyectos = () => {
       
       if (proyectosGuardados) {
         const proyectosParseados = JSON.parse(proyectosGuardados);
+        console.log('useProyectos: Datos crudos encontrados:', proyectosParseados);
+        console.log('useProyectos: Número de proyectos encontrados:', proyectosParseados.length);
+        
         const proyectosProcesados = proyectosParseados.map((proyecto: any) => ({
           ...proyecto,
           fechaCreacion: new Date(proyecto.fechaCreacion),
@@ -31,8 +34,14 @@ export const useProyectos = () => {
           })) || [],
         }));
         
-        console.log('useProyectos: Proyectos cargados:', proyectosProcesados.length);
+        console.log('useProyectos: Proyectos procesados:', proyectosProcesados);
+        proyectosProcesados.forEach((p: any, index: number) => {
+          console.log(`Proyecto ${index + 1}: ${p.nombre} - ID: ${p.id} - Ciudad: ${p.ciudad}`);
+        });
+        
         setProyectos(proyectosProcesados);
+      } else {
+        console.log('useProyectos: No se encontraron proyectos en localStorage');
       }
       
       setIsLoaded(true);

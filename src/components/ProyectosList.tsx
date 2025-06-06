@@ -8,6 +8,9 @@ interface ProyectosListProps {
 }
 
 export const ProyectosList = ({ proyectos, onSelectProyecto }: ProyectosListProps) => {
+  console.log('ProyectosList: Recibidos', proyectos.length, 'proyectos');
+  console.log('ProyectosList: Proyectos recibidos:', proyectos.map(p => ({ nombre: p.nombre, id: p.id })));
+
   if (proyectos.length === 0) {
     return (
       <div className="text-center py-8">
