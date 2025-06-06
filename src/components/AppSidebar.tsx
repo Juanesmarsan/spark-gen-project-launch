@@ -32,6 +32,11 @@ const menuItems = [
     icon: "📦",
   },
   {
+    title: "EPIs",
+    url: "/epis",
+    icon: "🦺",
+  },
+  {
     title: "Vehículos",
     url: "/vehiculos",
     icon: "🚗",
