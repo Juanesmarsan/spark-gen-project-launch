@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
 import { useToast } from "@/hooks/use-toast";
@@ -12,16 +11,20 @@ export const usePersonalActions = () => {
   const { empleados: todosEmpleados, agregarEmpleado, updateEmpleado, eliminarEmpleado, deshabilitarEmpleado, habilitarEmpleado, agregarCambioSalario, agregarGastoVariable } = useEmpleados();
   const { inventarioEpis, inventarioHerramientas, inventarioVehiculos } = useInventarios();
   
-  // Filtrar solo el personal de gerencia (Esteban Márquez y Nuria Playan)
+  // Filtrar solo el personal de gerencia - buscar por departamento 'gerencia' o categoria 'gerencia'
   const empleados = todosEmpleados.filter(emp => {
-    const esEsteban = emp.nombre === 'Esteban' && emp.apellidos === 'Márquez';
-    const esNuria = emp.nombre === 'Nuria' && emp.apellidos === 'Playan';
-    console.log(`Revisando empleado: ${emp.nombre} ${emp.apellidos} - Es Esteban: ${esEsteban}, Es Nuria: ${esNuria}`);
-    return esEsteban || esNuria;
+    const esGerencia = emp.departamento === 'gerencia' || emp.categoria === 'gerencia';
+    const esEsteban = emp.nombre.toLowerCase().includes('esteban');
+    const esNuria = emp.nombre.toLowerCase().includes('nuria') || emp.apellidos.toLowerCase().includes('nuria');
+    
+    console.log(`Revisando empleado: ${emp.nombre} ${emp.apellidos} - Departamento: ${emp.departamento}, Categoría: ${emp.categoria}`);
+    console.log(`Es gerencia: ${esGerencia}, Es Esteban: ${esEsteban}, Es Nuria: ${esNuria}`);
+    
+    return esGerencia || esEsteban || esNuria;
   });
   
   console.log('usePersonalActions: Personal de gerencia encontrado:', empleados.length);
-  
+
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
