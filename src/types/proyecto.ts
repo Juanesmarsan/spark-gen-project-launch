@@ -16,6 +16,15 @@ export interface GastoVariableProyecto {
   factura?: string;
 }
 
+export interface CertificacionMensual {
+  id: number;
+  mes: number;
+  anio: number;
+  importe: number;
+  descripcion?: string;
+  fechaRegistro: Date;
+}
+
 export interface Proyecto {
   id: number;
   nombre: string;
@@ -28,6 +37,7 @@ export interface Proyecto {
   trabajadoresAsignados: Trabajador[];
   fechaCreacion: Date;
   gastosVariables?: GastoVariableProyecto[];
+  certificaciones?: CertificacionMensual[]; // Para proyectos por presupuesto
 }
 
 export interface ProyectoFormData {

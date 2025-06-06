@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Proyecto, ProyectoFormData } from '@/types/proyecto';
 
@@ -62,7 +61,8 @@ export const useProyectos = () => {
           precioHora: data.tipo === 'administracion' ? data.precioHora : undefined
         } : { id: empleadoId, nombre: '', apellidos: '' };
       }),
-      gastosVariables: []
+      gastosVariables: [],
+      certificaciones: []
     };
 
     const nuevosProyectos = [...proyectos, nuevoProyecto];
@@ -103,11 +103,31 @@ export const useProyectos = () => {
     saveToLocalStorage(nuevosProyectos);
   }, [proyectos, saveToLocalStorage]);
 
+  const agregarCertificacion = useCallback((proyectoId: number, certificacion: any) => {
+    console.log('useProyectos: Agregando certificación a proyecto...');
+    const nuevosProyectos = proyectos.map(proyecto => {
+      if (proyecto.id === proyectoId) {
+        return {
+          ...proyecto,
+          certificaciones: [...(proyecto.certificaciones || []), { 
+            ...certificacion, 
+            id: Date.now(),
+            fechaRegistro: new Date()
+          }]
+        };
+      }
+      return proyecto;
+    });
+    setProyectos(nuevosProyectos);
+    saveToLocalStorage(nuevosProyectos);
+  }, [proyectos, saveToLocalStorage]);
+
   return {
     proyectos,
     agregarProyecto,
     updateProyecto,
     eliminarProyecto,
-    agregarGastoProyecto
+    agregarGastoProyecto,
+    agregarCertificacion
   };
 };

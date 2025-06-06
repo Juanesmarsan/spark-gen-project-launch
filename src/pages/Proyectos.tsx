@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
@@ -11,13 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useEmpleados } from "@/hooks/useEmpleados";
 import { useProyectos } from "@/hooks/useProyectos";
 
-const Proyectos = () => {
+export const Proyectos = () => {
   const [selectedProyecto, setSelectedProyecto] = useState<Proyecto | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const { toast } = useToast();
   const { empleados } = useEmpleados();
-  const { proyectos, agregarProyecto, updateProyecto, eliminarProyecto, agregarGastoProyecto } = useProyectos();
+  const { proyectos, agregarProyecto, updateProyecto, eliminarProyecto, agregarGastoProyecto, agregarCertificacion } = useProyectos();
 
   const handleAgregarProyecto = (data: ProyectoFormData) => {
     const nuevoProyecto = agregarProyecto(data, empleados);
@@ -63,6 +62,23 @@ const Proyectos = () => {
     });
   };
 
+  const handleAgregarCertificacion = (proyectoId: number, certificacion: any) => {
+    agregarCertificacion(proyectoId, certificacion);
+    
+    // Actualizar proyecto seleccionado si es el mismo
+    if (selectedProyecto && selectedProyecto.id === proyectoId) {
+      const proyectoActualizado = proyectos.find(p => p.id === proyectoId);
+      if (proyectoActualizado) {
+        setSelectedProyecto(proyectoActualizado);
+      }
+    }
+
+    toast({
+      title: "Certificación añadida",
+      description: "La certificación se ha añadido al proyecto correctamente.",
+    });
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -101,6 +117,7 @@ const Proyectos = () => {
             onUpdateProyecto={handleUpdateProyecto}
             onEliminarProyecto={handleEliminarProyecto}
             onAgregarGasto={handleAgregarGastoProyecto}
+            onAgregarCertificacion={handleAgregarCertificacion}
           />
         )}
       </div>

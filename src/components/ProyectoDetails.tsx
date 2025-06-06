@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Proyecto } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
 import { ProyectoForm } from "./ProyectoForm";
 import { GastosVariablesProyectoTab } from "./proyecto/GastosVariablesProyectoTab";
+import { CertificacionesTab } from "./proyecto/CertificacionesTab";
 
 interface ProyectoDetailsProps {
   proyecto: Proyecto;
@@ -17,6 +17,7 @@ interface ProyectoDetailsProps {
   onUpdateProyecto: (proyecto: Proyecto) => void;
   onEliminarProyecto: (id: number) => void;
   onAgregarGasto: (proyectoId: number, gasto: any) => void;
+  onAgregarCertificacion: (proyectoId: number, certificacion: any) => void;
 }
 
 export const ProyectoDetails = ({ 
@@ -24,7 +25,8 @@ export const ProyectoDetails = ({
   empleados, 
   onUpdateProyecto, 
   onEliminarProyecto,
-  onAgregarGasto
+  onAgregarGasto,
+  onAgregarCertificacion
 }: ProyectoDetailsProps) => {
   const [showEditForm, setShowEditForm] = useState(false);
 
@@ -110,9 +112,12 @@ export const ProyectoDetails = ({
       
       <CardContent>
         <Tabs defaultValue="detalles" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="detalles">Detalles del Proyecto</TabsTrigger>
             <TabsTrigger value="gastos">Gastos Variables</TabsTrigger>
+            <TabsTrigger value="certificaciones">
+              {proyecto.tipo === 'presupuesto' ? 'Certificaciones' : 'Facturación'}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="detalles" className="space-y-6">
@@ -174,6 +179,19 @@ export const ProyectoDetails = ({
               proyecto={proyecto}
               onAgregarGasto={(gasto) => onAgregarGasto(proyecto.id, gasto)}
             />
+          </TabsContent>
+
+          <TabsContent value="certificaciones">
+            {proyecto.tipo === 'presupuesto' ? (
+              <CertificacionesTab
+                proyecto={proyecto}
+                onAgregarCertificacion={(certificacion) => onAgregarCertificacion(proyecto.id, certificacion)}
+              />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Funcionalidad de facturación por administración próximamente...</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
