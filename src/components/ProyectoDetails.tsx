@@ -4,23 +4,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, Trash2, MapPin, Users, Euro, Clock, Calendar } from "lucide-react";
 import { Proyecto } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
 import { ProyectoForm } from "./ProyectoForm";
+import { GastosVariablesProyectoTab } from "./proyecto/GastosVariablesProyectoTab";
 
 interface ProyectoDetailsProps {
   proyecto: Proyecto;
   empleados: Empleado[];
   onUpdateProyecto: (proyecto: Proyecto) => void;
   onEliminarProyecto: (id: number) => void;
+  onAgregarGasto: (proyectoId: number, gasto: any) => void;
 }
 
 export const ProyectoDetails = ({ 
   proyecto, 
   empleados, 
   onUpdateProyecto, 
-  onEliminarProyecto 
+  onEliminarProyecto,
+  onAgregarGasto
 }: ProyectoDetailsProps) => {
   const [showEditForm, setShowEditForm] = useState(false);
 
@@ -104,58 +108,74 @@ export const ProyectoDetails = ({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-gray-500" />
-            <span><strong>Ciudad:</strong> {proyecto.ciudad}</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-gray-500" />
-            <span><strong>Creado:</strong> {proyecto.fechaCreacion.toLocaleDateString()}</span>
-          </div>
-          
-          {proyecto.tipo === 'presupuesto' ? (
-            <div className="flex items-center gap-2">
-              <Euro className="w-5 h-5 text-gray-500" />
-              <span><strong>Presupuesto:</strong> {proyecto.presupuestoTotal?.toLocaleString()}€</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-gray-500" />
-              <span><strong>Precio/hora:</strong> {proyecto.precioHora}€</span>
-            </div>
-          )}
-          
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-gray-500" />
-            <span><strong>Trabajadores:</strong> {proyecto.trabajadoresAsignados.length}</span>
-          </div>
-        </div>
+      <CardContent>
+        <Tabs defaultValue="detalles" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="detalles">Detalles del Proyecto</TabsTrigger>
+            <TabsTrigger value="gastos">Gastos Variables</TabsTrigger>
+          </TabsList>
 
-        {proyecto.descripcion && (
-          <div>
-            <h4 className="font-semibold mb-2">Descripción</h4>
-            <p className="text-gray-600">{proyecto.descripcion}</p>
-          </div>
-        )}
-
-        {proyecto.trabajadoresAsignados.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-2">Trabajadores Asignados</h4>
-            <div className="grid gap-2">
-              {proyecto.trabajadoresAsignados.map((trabajador) => (
-                <div key={trabajador.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <span>{trabajador.nombre} {trabajador.apellidos}</span>
-                  {trabajador.precioHora && (
-                    <Badge variant="outline">{trabajador.precioHora}€/hora</Badge>
-                  )}
+          <TabsContent value="detalles" className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-gray-500" />
+                <span><strong>Ciudad:</strong> {proyecto.ciudad}</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-gray-500" />
+                <span><strong>Creado:</strong> {proyecto.fechaCreacion.toLocaleDateString()}</span>
+              </div>
+              
+              {proyecto.tipo === 'presupuesto' ? (
+                <div className="flex items-center gap-2">
+                  <Euro className="w-5 h-5 text-gray-500" />
+                  <span><strong>Presupuesto:</strong> {proyecto.presupuestoTotal?.toLocaleString()}€</span>
                 </div>
-              ))}
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-gray-500" />
+                  <span><strong>Precio/hora:</strong> {proyecto.precioHora}€</span>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-gray-500" />
+                <span><strong>Trabajadores:</strong> {proyecto.trabajadoresAsignados.length}</span>
+              </div>
             </div>
-          </div>
-        )}
+
+            {proyecto.descripcion && (
+              <div>
+                <h4 className="font-semibold mb-2">Descripción</h4>
+                <p className="text-gray-600">{proyecto.descripcion}</p>
+              </div>
+            )}
+
+            {proyecto.trabajadoresAsignados.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Trabajadores Asignados</h4>
+                <div className="grid gap-2">
+                  {proyecto.trabajadoresAsignados.map((trabajador) => (
+                    <div key={trabajador.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span>{trabajador.nombre} {trabajador.apellidos}</span>
+                      {trabajador.precioHora && (
+                        <Badge variant="outline">{trabajador.precioHora}€/hora</Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="gastos">
+            <GastosVariablesProyectoTab
+              proyecto={proyecto}
+              onAgregarGasto={(gasto) => onAgregarGasto(proyecto.id, gasto)}
+            />
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

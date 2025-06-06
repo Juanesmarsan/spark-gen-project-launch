@@ -6,6 +6,16 @@ export interface Trabajador {
   precioHora?: number; // Solo para proyectos por administración
 }
 
+export interface GastoVariableProyecto {
+  id: number;
+  concepto: string;
+  importe: number;
+  fecha: Date;
+  categoria: 'material' | 'transporte' | 'herramienta' | 'otro';
+  descripcion?: string;
+  factura?: string;
+}
+
 export interface Proyecto {
   id: number;
   nombre: string;
@@ -17,6 +27,7 @@ export interface Proyecto {
   descripcion?: string;
   trabajadoresAsignados: Trabajador[];
   fechaCreacion: Date;
+  gastosVariables?: GastoVariableProyecto[];
 }
 
 export interface ProyectoFormData {

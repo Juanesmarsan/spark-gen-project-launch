@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
@@ -39,6 +38,7 @@ const Proyectos = () => {
       herramientas: [],
       documentos: [],
       proyectos: [],
+      gastosVariables: [],
     }
   ];
 
@@ -57,7 +57,8 @@ const Proyectos = () => {
           apellidos: empleado.apellidos,
           precioHora: data.tipo === 'administracion' ? data.precioHora : undefined
         } : { id: empleadoId, nombre: '', apellidos: '' };
-      })
+      }),
+      gastosVariables: []
     };
 
     setProyectos([...proyectos, nuevoProyecto]);
@@ -85,6 +86,34 @@ const Proyectos = () => {
     toast({
       title: "Proyecto eliminado",
       description: "El proyecto se ha eliminado correctamente.",
+    });
+  };
+
+  const handleAgregarGastoProyecto = (proyectoId: number, gasto: any) => {
+    setProyectos(proyectos.map(proyecto => {
+      if (proyecto.id === proyectoId) {
+        return {
+          ...proyecto,
+          gastosVariables: [...(proyecto.gastosVariables || []), { ...gasto, id: Date.now() }]
+        };
+      }
+      return proyecto;
+    }));
+    
+    // Actualizar proyecto seleccionado si es el mismo
+    if (selectedProyecto && selectedProyecto.id === proyectoId) {
+      const proyectoActualizado = proyectos.find(p => p.id === proyectoId);
+      if (proyectoActualizado) {
+        setSelectedProyecto({
+          ...proyectoActualizado,
+          gastosVariables: [...(proyectoActualizado.gastosVariables || []), { ...gasto, id: Date.now() }]
+        });
+      }
+    }
+
+    toast({
+      title: "Gasto añadido",
+      description: "El gasto se ha añadido al proyecto correctamente.",
     });
   };
 
@@ -125,6 +154,7 @@ const Proyectos = () => {
             empleados={empleadosEjemplo}
             onUpdateProyecto={handleUpdateProyecto}
             onEliminarProyecto={handleEliminarProyecto}
+            onAgregarGasto={handleAgregarGastoProyecto}
           />
         )}
       </div>
