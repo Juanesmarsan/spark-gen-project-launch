@@ -5,20 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useProyectos } from "@/hooks/useProyectos";
 import { useEmpleados } from "@/hooks/useEmpleados";
+import { useGastosFijos } from "@/hooks/useGastosFijos";
+import { useVehiculosGastos } from "@/hooks/useVehiculosGastos";
 import { useCalculosBeneficios } from "@/hooks/useCalculosBeneficios";
-import { Euro, TrendingUp, Building, Percent, Calendar, Users, Clock, BarChart3, UserCheck } from "lucide-react";
+import { Euro, TrendingUp, Building, Percent, Calendar, Users, Clock, BarChart3, UserCheck, PieChart } from "lucide-react";
 import { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { generarCalendarioMesPuro } from "@/utils/calendarioUtils";
 
 const AnalisisFinanciero = () => {
   const { proyectos } = useProyectos();
   const { empleados } = useEmpleados();
+  const { gastosFijos, calcularResumen } = useGastosFijos();
+  const { gastosVehiculos, getTotalGastosPorMes } = useVehiculosGastos();
   const { calcularBeneficioNeto, calcularMargenProyecto, calcularAnalisisMensual, calcularBeneficioBrutoAdministracion, calcularBeneficioBrutoPresupuesto, calcularGastosTotales } = useCalculosBeneficios();
   
   const [añoSeleccionado, setAñoSeleccionado] = useState(new Date().getFullYear());
-  const [vistaActual, setVistaActual] = useState<'general' | 'mensual' | 'obras' | 'trabajadores'>('general');
+  const [vistaActual, setVistaActual] = useState<'general' | 'mensual' | 'obras' | 'trabajadores' | 'gastos'>('general');
 
   // Calcular métricas globales
   const proyectosActivos = proyectos.filter(p => p.estado === 'activo');
@@ -56,6 +60,59 @@ const AnalisisFinanciero = () => {
       margen: beneficioBruto > 0 ? ((beneficioBruto - gastos) / beneficioBruto) * 100 : 0
     };
   });
+
+  // Datos de gastos fijos y variables
+  const resumenGastosFijos = calcularResumen();
+  const fechaActual = new Date();
+  const mesActual = fechaActual.getMonth();
+  const añoActual = fechaActual.getFullYear();
+  
+  const totalGastosVehiculos = getTotalGastosPorMes(añoActual, mesActual);
+  const gastosEmpleadosDelMes = empleados.flatMap(empleado => 
+    (empleado.gastosVariables || [])
+      .filter(gasto => {
+        const fechaGasto = new Date(gasto.fecha);
+        return fechaGasto.getFullYear() === añoActual && fechaGasto.getMonth() === mesActual;
+      })
+  ).reduce((total, gasto) => total + gasto.importe, 0);
+
+  // Datos para gráfico de gastos fijos
+  const datosGastosFijos = gastosFijos.map(gasto => ({
+    concepto: gasto.concepto.length > 20 ? gasto.concepto.substring(0, 20) + "..." : gasto.concepto,
+    conceptoCompleto: gasto.concepto,
+    importe: gasto.totalBruto,
+    baseImponible: gasto.baseImponible,
+    tieneIva: gasto.tieneIva,
+    iva: gasto.iva || 0
+  }));
+
+  // Datos para gráfico de gastos variables
+  const datosGastosVariables = [
+    {
+      categoria: "Vehículos",
+      importe: totalGastosVehiculos,
+      color: "#3b82f6"
+    },
+    {
+      categoria: "Empleados",
+      importe: gastosEmpleadosDelMes,
+      color: "#8b5cf6"
+    },
+    {
+      categoria: "Material",
+      importe: proyectos.reduce((sum, proyecto) => {
+        return sum + (proyecto.gastosVariables?.filter(g => g.categoria === 'material').reduce((catSum, g) => catSum + g.importe, 0) || 0);
+      }, 0),
+      color: "#10b981"
+    },
+    {
+      categoria: "Otros",
+      importe: proyectos.reduce((sum, proyecto) => {
+        return sum + (proyecto.gastosVariables?.filter(g => g.categoria === 'otro').reduce((catSum, g) => catSum + g.importe, 0) || 0);
+      }, 0),
+      color: "#f59e0b"
+    }
+  ].filter(item => item.importe > 0);
 
   // Calcular rendimiento de trabajadores
   const calcularRendimientoTrabajador = (empleadoId: number) => {
@@ -125,6 +182,10 @@ const AnalisisFinanciero = () => {
       label: "Beneficio",
       color: "#3b82f6",
     },
+    importe: {
+      label: "Importe",
+      color: "#3b82f6",
+    },
   };
 
   return (
@@ -144,6 +205,13 @@ const AnalisisFinanciero = () => {
           >
             <BarChart3 className="w-4 h-4 mr-2" />
             Por Obras
+          </Button>
+          <Button
+            variant={vistaActual === 'gastos' ? 'default' : 'outline'}
+            onClick={() => setVistaActual('gastos')}
+          >
+            <PieChart className="w-4 h-4 mr-2" />
+            Gastos
           </Button>
           <Button
             variant={vistaActual === 'trabajadores' ? 'default' : 'outline'}
@@ -262,6 +330,142 @@ const AnalisisFinanciero = () => {
               </CardContent>
             </Card>
           </div>
+        </>
+      )}
+
+      {vistaActual === 'gastos' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <MetricCard
+              title="Gastos Fijos Totales"
+              value={`${resumenGastosFijos.totalBruto.toLocaleString()}€`}
+              icon="📋"
+              color="red"
+            />
+            <MetricCard
+              title="Gastos Variables del Mes"
+              value={`${datosGastosVariables.reduce((sum, item) => sum + item.importe, 0).toLocaleString()}€`}
+              icon="📊"
+              color="orange"
+            />
+            <MetricCard
+              title="Coeficiente por Operario"
+              value={`${resumenGastosFijos.coeficienteEmpresa.toLocaleString()}€`}
+              icon="👷"
+              color="blue"
+            />
+            <MetricCard
+              title="Número de Operarios"
+              value={resumenGastosFijos.numeroOperarios.toString()}
+              icon="👥"
+              color="purple"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gastos Fijos Mensuales</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={datosGastosFijos.slice(0, 10)} margin={{ bottom: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="concepto" 
+                        angle={-45} 
+                        textAnchor="end" 
+                        height={100}
+                        fontSize={10}
+                      />
+                      <YAxis />
+                      <ChartTooltip 
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white p-3 border rounded shadow-lg">
+                                <p className="font-medium">{data.conceptoCompleto}</p>
+                                <p className="text-blue-600">Importe: {data.importe.toLocaleString()}€</p>
+                                <p className="text-green-600">Base: {data.baseImponible.toLocaleString()}€</p>
+                                {data.tieneIva && <p className="text-orange-600">IVA: {data.iva.toLocaleString()}€</p>}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="importe" fill="#3b82f6" name="Importe Total" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Gastos Variables por Categoría</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={320}>
+                  <RechartsPieChart>
+                    <Pie
+                      data={datosGastosVariables}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="importe"
+                      label={({ categoria, percent }) => `${categoria} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {datosGastosVariables.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${Number(value).toLocaleString()}€`, 'Importe']} />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Detalle de Gastos Fijos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Concepto</TableHead>
+                    <TableHead className="text-right">Total Bruto</TableHead>
+                    <TableHead className="text-right">Base Imponible</TableHead>
+                    <TableHead className="text-center">IVA</TableHead>
+                    <TableHead className="text-right">Importe IVA</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gastosFijos.map((gasto) => (
+                    <TableRow key={gasto.id}>
+                      <TableCell className="font-medium">{gasto.concepto}</TableCell>
+                      <TableCell className="text-right">{gasto.totalBruto.toLocaleString()}€</TableCell>
+                      <TableCell className="text-right">{gasto.baseImponible.toLocaleString()}€</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={gasto.tieneIva ? "default" : "secondary"}>
+                          {gasto.tieneIva ? "Sí" : "No"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {gasto.iva ? `${gasto.iva.toLocaleString()}€` : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </>
       )}
 
@@ -388,7 +592,7 @@ const AnalisisFinanciero = () => {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
+                  <RechartsPieChart>
                     <Pie
                       data={['material', 'transporte', 'herramienta', 'otro'].map(categoria => {
                         const total = proyectos.reduce((sum, proyecto) => {
@@ -411,7 +615,7 @@ const AnalisisFinanciero = () => {
                       ))}
                     </Pie>
                     <Tooltip formatter={(value) => [`${Number(value).toLocaleString()}€`, 'Importe']} />
-                  </PieChart>
+                  </RechartsPieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
