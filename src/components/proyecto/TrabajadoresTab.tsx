@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CalendarIcon, Edit, UserMinus, UserPlus, Clock } from "lucide-react";
+import { CalendarIcon, Edit, UserMinus, UserPlus, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +28,7 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
   const [selectedEmpleados, setSelectedEmpleados] = useState<number[]>([]);
   const [fechaEntradaNuevos, setFechaEntradaNuevos] = useState<Date | undefined>(new Date());
   const [mostrarHoras, setMostrarHoras] = useState(false);
+  const [mesSeleccionado, setMesSeleccionado] = useState(new Date());
 
   const { empleados } = useEmpleados();
 
@@ -57,7 +58,17 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
     return 'laborable';
   };
 
-  // Calcular horas trabajadas para un trabajador específico
+  const cambiarMes = (direccion: 'anterior' | 'siguiente') => {
+    const nuevoMes = new Date(mesSeleccionado);
+    if (direccion === 'anterior') {
+      nuevoMes.setMonth(nuevoMes.getMonth() - 1);
+    } else {
+      nuevoMes.setMonth(nuevoMes.getMonth() + 1);
+    }
+    setMesSeleccionado(nuevoMes);
+  };
+
+  // Calcular horas trabajadas para un trabajador específico EN EL MES SELECCIONADO
   const calcularHorasTrabajador = (trabajador: Trabajador) => {
     if (!trabajador.fechaEntrada) {
       console.log(`Trabajador ${trabajador.nombre}: Sin fecha de entrada`);
@@ -66,13 +77,26 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
 
     let horasLaborales = 0;
 
-    // Determinar fecha de fin: fecha de salida o fecha actual
-    const fechaFin = trabajador.fechaSalida || new Date();
-    const fechaInicio = new Date(trabajador.fechaEntrada);
+    // Determinar el rango de fechas del mes seleccionado
+    const inicioMes = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth(), 1);
+    const finMes = new Date(mesSeleccionado.getFullYear(), mesSeleccionado.getMonth() + 1, 0);
+
+    // Determinar fecha de inicio: la mayor entre fecha de entrada del trabajador y inicio del mes
+    const fechaInicio = new Date(Math.max(trabajador.fechaEntrada.getTime(), inicioMes.getTime()));
     
-    console.log(`Calculando horas para ${trabajador.nombre}: ${fechaInicio.toDateString()} hasta ${fechaFin.toDateString()}`);
+    // Determinar fecha de fin: la menor entre fecha de salida (o hoy) y fin del mes
+    let fechaFin = trabajador.fechaSalida ? new Date(trabajador.fechaSalida) : new Date();
+    fechaFin = new Date(Math.min(fechaFin.getTime(), finMes.getTime()));
+
+    console.log(`Calculando horas para ${trabajador.nombre} en ${format(mesSeleccionado, 'MM/yyyy')}: ${fechaInicio.toDateString()} hasta ${fechaFin.toDateString()}`);
     
-    // Iterar día a día desde la fecha de entrada hasta la fecha de fin
+    // Solo calcular si hay días válidos en el mes
+    if (fechaInicio > fechaFin) {
+      console.log(`${trabajador.nombre}: No trabajó en ${format(mesSeleccionado, 'MM/yyyy')}`);
+      return { horasLaborales: 0, horasExtras: 0, horasFestivas: 0 };
+    }
+    
+    // Iterar día a día desde la fecha de inicio hasta la fecha de fin
     const fechaActual = new Date(fechaInicio);
     let diasLaborables = 0;
     
@@ -89,7 +113,7 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
       fechaActual.setDate(fechaActual.getDate() + 1);
     }
 
-    console.log(`${trabajador.nombre}: ${diasLaborables} días laborables = ${horasLaborales} horas`);
+    console.log(`${trabajador.nombre} en ${format(mesSeleccionado, 'MM/yyyy')}: ${diasLaborables} días laborables = ${horasLaborales} horas`);
 
     return { 
       horasLaborales, 
@@ -294,10 +318,33 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
       {mostrarHoras && proyecto.trabajadoresAsignados.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Resumen de Horas por Trabajador</CardTitle>
-            <p className="text-sm text-gray-600">
-              Cálculo desde el día de entrada hasta el día de salida (o hoy). 8 horas por día laborable, 0 horas sábados, domingos y festivos.
-            </p>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-base">Resumen de Horas por Trabajador</CardTitle>
+                <p className="text-sm text-gray-600">
+                  Cálculo mensual: 8 horas por día laborable, 0 horas sábados, domingos y festivos.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => cambiarMes('anterior')}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <div className="text-sm font-semibold min-w-[120px] text-center">
+                  {format(mesSeleccionado, 'MMMM yyyy', { locale: { name: 'es' } })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => cambiarMes('siguiente')}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
