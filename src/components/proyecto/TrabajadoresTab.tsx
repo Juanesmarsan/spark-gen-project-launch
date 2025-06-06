@@ -75,7 +75,7 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
   const [mesSeleccionado, setMesSeleccionado] = useState<Date>(new Date());
   const [trabajadorEditando, setTrabajadorEditando] = useState<Trabajador | null>(null);
   const [fechaEntrada, setFechaEntrada] = useState<Date | undefined>();
-  const [fechaSalida, setFechaS alida] = useState<Date | undefined>();
+  const [fechaSalida, setFechaSalida] = useState<Date | undefined>();
   const [precioHora, setPrecioHora] = useState<number | undefined>();
 
   const mesesDisponibles = [
@@ -407,7 +407,7 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
               </div>
             </div>
           </CardContent>
-        </CardContent>
+        </Card>
       )}
     </div>
   );
