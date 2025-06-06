@@ -13,10 +13,14 @@ export const usePersonalActions = () => {
   const { inventarioEpis, inventarioHerramientas, inventarioVehiculos } = useInventarios();
   
   // Filtrar solo el personal de gerencia (Esteban Márquez y Nuria Playan)
-  const empleados = todosEmpleados.filter(emp => 
-    emp.nombre === 'Esteban' && emp.apellidos === 'Márquez' ||
-    emp.nombre === 'Nuria' && emp.apellidos === 'Playan'
-  );
+  const empleados = todosEmpleados.filter(emp => {
+    const esEsteban = emp.nombre === 'Esteban' && emp.apellidos === 'Márquez';
+    const esNuria = emp.nombre === 'Nuria' && emp.apellidos === 'Playan';
+    console.log(`Revisando empleado: ${emp.nombre} ${emp.apellidos} - Es Esteban: ${esEsteban}, Es Nuria: ${esNuria}`);
+    return esEsteban || esNuria;
+  });
+  
+  console.log('usePersonalActions: Personal de gerencia encontrado:', empleados.length);
   
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
