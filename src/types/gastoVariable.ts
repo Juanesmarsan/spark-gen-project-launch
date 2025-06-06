@@ -4,12 +4,15 @@ export interface GastoVariable {
   concepto: string;
   importe: number;
   fecha: Date;
-  categoria: 'material' | 'vehiculo' | 'otros';
+  categoria: 'material' | 'vehiculo' | 'empleado' | 'otros';
   descripcion?: string;
   factura?: string;
   // Para gastos de vehículo
   vehiculoId?: number;
   tipoGastoVehiculo?: 'ITV' | 'revision' | 'reparacion' | 'otro';
+  // Para gastos de empleado
+  empleadoId?: number;
+  tipoGastoEmpleado?: 'dieta' | 'alojamiento' | 'transporte' | 'otro';
 }
 
 export interface ResumenGastosVariables {
@@ -17,7 +20,9 @@ export interface ResumenGastosVariables {
   gastosPorCategoria: {
     material: number;
     vehiculo: number;
+    empleado: number;
     otros: number;
   };
   gastosVehiculos: GastoVariable[];
+  gastosEmpleados: GastoVariable[];
 }

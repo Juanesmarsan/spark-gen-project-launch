@@ -22,6 +22,7 @@ export interface Empleado {
   herramientas: HerramientaAsignada[];
   documentos: Documento[];
   proyectos: string[];
+  gastosVariables: GastoVariableEmpleado[];
   vehiculo?: string;
 }
 
@@ -52,6 +53,14 @@ export interface Documento {
   nombre: string;
   fechaCaducidad?: Date;
   archivo: string;
+}
+
+export interface GastoVariableEmpleado {
+  id: number;
+  concepto: 'dieta' | 'alojamiento' | 'transporte' | 'otro';
+  descripcion?: string;
+  importe: number;
+  fecha: Date;
 }
 
 export interface Epi {

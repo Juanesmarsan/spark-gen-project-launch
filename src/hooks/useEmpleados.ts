@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Empleado, Epi, Herramienta, Vehiculo } from '@/types/empleado';
+import { Empleado, Epi, Herramienta, Vehiculo, GastoVariableEmpleado } from '@/types/empleado';
 
 export const useEmpleados = () => {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
@@ -20,6 +20,10 @@ export const useEmpleados = () => {
         categoria: emp.categoria || 'peon',
         precioHoraExtra: emp.precioHoraExtra || 20,
         precioHoraFestiva: emp.precioHoraFestiva || 25,
+        gastosVariables: emp.gastosVariables?.map((gasto: any) => ({
+          ...gasto,
+          fecha: new Date(gasto.fecha)
+        })) || [],
       })));
     } else {
       // Datos de ejemplo si no hay empleados
@@ -46,6 +50,7 @@ export const useEmpleados = () => {
         herramientas: [],
         documentos: [],
         proyectos: [],
+        gastosVariables: [],
       };
       setEmpleados([empleadoEjemplo]);
     }
@@ -59,7 +64,7 @@ export const useEmpleados = () => {
     }
   }, [empleados]);
 
-  const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo'>) => {
+  const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables'>) => {
     console.log("Agregando nuevo empleado:", nuevoEmpleadoData);
     
     const nuevoEmpleado: Empleado = {
@@ -74,6 +79,7 @@ export const useEmpleados = () => {
       herramientas: [],
       documentos: [],
       proyectos: [],
+      gastosVariables: [],
     };
     
     console.log("Empleado creado:", nuevoEmpleado);
@@ -89,9 +95,27 @@ export const useEmpleados = () => {
     ));
   };
 
+  const agregarGastoVariable = (empleadoId: number, gasto: Omit<GastoVariableEmpleado, 'id'>) => {
+    console.log("Agregando gasto variable:", gasto);
+    setEmpleados(prev => prev.map(emp => {
+      if (emp.id === empleadoId) {
+        const nuevoGasto: GastoVariableEmpleado = {
+          ...gasto,
+          id: Date.now()
+        };
+        return {
+          ...emp,
+          gastosVariables: [...(emp.gastosVariables || []), nuevoGasto]
+        };
+      }
+      return emp;
+    }));
+  };
+
   return {
     empleados,
     agregarEmpleado,
-    updateEmpleado
+    updateEmpleado,
+    agregarGastoVariable
   };
 };

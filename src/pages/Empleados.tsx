@@ -6,20 +6,20 @@ import { Plus } from "lucide-react";
 import { EmpleadoForm } from "@/components/EmpleadoForm";
 import { EmpleadosList } from "@/components/EmpleadosList";
 import { EmpleadoDetails } from "@/components/EmpleadoDetails";
-import { Empleado } from "@/types/empleado";
+import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
 import { useToast } from "@/hooks/use-toast";
 import { useEmpleados } from "@/hooks/useEmpleados";
 import { useInventarios } from "@/hooks/useInventarios";
 
 const Empleados = () => {
   const { toast } = useToast();
-  const { empleados, agregarEmpleado, updateEmpleado } = useEmpleados();
+  const { empleados, agregarEmpleado, updateEmpleado, agregarGastoVariable } = useEmpleados();
   const { inventarioEpis, inventarioHerramientas, inventarioVehiculos } = useInventarios();
   
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
-  const handleAgregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo'>) => {
+  const handleAgregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables'>) => {
     const nuevoEmpleado = agregarEmpleado(nuevoEmpleadoData);
     setMostrarFormulario(false);
     
@@ -108,6 +108,23 @@ const Empleados = () => {
     }
   };
 
+  const handleAgregarGastoVariable = (gasto: Omit<GastoVariableEmpleado, 'id'>) => {
+    if (!empleadoSeleccionado) return;
+
+    agregarGastoVariable(empleadoSeleccionado.id, gasto);
+    
+    // Actualizar el empleado seleccionado para reflejar los cambios
+    const empleadoActualizado = empleados.find(emp => emp.id === empleadoSeleccionado.id);
+    if (empleadoActualizado) {
+      setEmpleadoSeleccionado(empleadoActualizado);
+    }
+
+    toast({
+      title: "Gasto añadido",
+      description: "El gasto variable se ha registrado correctamente.",
+    });
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -149,6 +166,7 @@ const Empleados = () => {
             onAsignarEpi={asignarEpi}
             onAsignarHerramienta={asignarHerramienta}
             onAsignarVehiculo={asignarVehiculo}
+            onAgregarGastoVariable={handleAgregarGastoVariable}
           />
         )}
       </div>

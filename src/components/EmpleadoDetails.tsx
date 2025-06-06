@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Empleado, Epi, Herramienta, Vehiculo } from "@/types/empleado";
+import { Empleado, Epi, Herramienta, Vehiculo, GastoVariableEmpleado } from "@/types/empleado";
 import { CalendarioMensual } from "./CalendarioMensual";
 import { DatosPersonalesTab } from "./empleado/DatosPersonalesTab";
 import { EpisTab } from "./empleado/EpisTab";
@@ -9,6 +9,7 @@ import { HerramientasTab } from "./empleado/HerramientasTab";
 import { DocumentosTab } from "./empleado/DocumentosTab";
 import { ProyectosTab } from "./empleado/ProyectosTab";
 import { VehiculoTab } from "./empleado/VehiculoTab";
+import { GastosVariablesTab } from "./empleado/GastosVariablesTab";
 
 interface EmpleadoDetailsProps {
   empleado: Empleado;
@@ -20,6 +21,7 @@ interface EmpleadoDetailsProps {
   onAsignarEpi: (epiId: number, fecha: Date) => void;
   onAsignarHerramienta: (herramientaId: number, fecha: Date) => void;
   onAsignarVehiculo: (vehiculoId: number) => void;
+  onAgregarGastoVariable: (gasto: Omit<GastoVariableEmpleado, 'id'>) => void;
 }
 
 export const EmpleadoDetails = ({
@@ -31,7 +33,8 @@ export const EmpleadoDetails = ({
   onAgregarAdelanto,
   onAsignarEpi,
   onAsignarHerramienta,
-  onAsignarVehiculo
+  onAsignarVehiculo,
+  onAgregarGastoVariable
 }: EmpleadoDetailsProps) => {
   return (
     <Card>
@@ -42,7 +45,7 @@ export const EmpleadoDetails = ({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="datos" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="datos">Datos Personales</TabsTrigger>
             <TabsTrigger value="calendario">Calendario</TabsTrigger>
             <TabsTrigger value="epis">EPIs</TabsTrigger>
@@ -50,6 +53,7 @@ export const EmpleadoDetails = ({
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
             <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
             <TabsTrigger value="vehiculo">Vehículo</TabsTrigger>
+            <TabsTrigger value="gastos">Gastos Variables</TabsTrigger>
           </TabsList>
 
           <TabsContent value="datos">
@@ -93,6 +97,13 @@ export const EmpleadoDetails = ({
               empleado={empleado}
               inventarioVehiculos={inventarioVehiculos}
               onAsignarVehiculo={onAsignarVehiculo}
+            />
+          </TabsContent>
+
+          <TabsContent value="gastos">
+            <GastosVariablesTab
+              empleado={empleado}
+              onAgregarGasto={onAgregarGastoVariable}
             />
           </TabsContent>
         </Tabs>
