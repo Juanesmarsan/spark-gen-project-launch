@@ -5,12 +5,99 @@ import html2canvas from 'html2canvas';
 import { useProyectos } from './useProyectos';
 import { useEmpleados } from './useEmpleados';
 import { useCalculosBeneficios } from './useCalculosBeneficios';
+import { useCalendario } from './useCalendario';
 import { toast } from 'sonner';
 
 export const usePdfGenerator = () => {
   const { proyectos } = useProyectos();
   const { empleados } = useEmpleados();
   const { calcularAnalisisMensual } = useCalculosBeneficios();
+
+  const generarReporteMensualTrabajadores = useCallback(async () => {
+    try {
+      toast.info('Generando reporte mensual de trabajadores...');
+      
+      const doc = new jsPDF();
+      const fechaActual = new Date();
+      const mes = fechaActual.getMonth() + 1;
+      const año = fechaActual.getFullYear();
+      const nombreMes = fechaActual.toLocaleDateString('es-ES', { month: 'long' });
+      
+      // Título
+      doc.setFontSize(20);
+      doc.text(`Reporte Mensual de Trabajadores: ${nombreMes.toUpperCase()} ${año}`, 105, 20, { align: 'center' });
+      
+      // Fecha del reporte
+      doc.setFontSize(10);
+      doc.text(`Generado el ${fechaActual.toLocaleDateString('es-ES')}`, 105, 30, { align: 'center' });
+      
+      doc.setLineWidth(0.5);
+      doc.line(20, 35, 190, 35);
+      
+      let y = 45;
+      
+      const empleadosActivos = empleados.filter(e => e.activo);
+      
+      if (empleadosActivos.length === 0) {
+        doc.setFontSize(12);
+        doc.text('No hay empleados activos registrados', 20, y);
+      } else {
+        empleadosActivos.forEach((empleado, index) => {
+          if (y > 250) { // Comprobación de salto de página
+            doc.addPage();
+            y = 20;
+          }
+          
+          // Nombre del empleado
+          doc.setFontSize(14);
+          doc.text(`${index + 1}. ${empleado.nombre} ${empleado.apellidos}`, 20, y);
+          y += 10;
+          
+          // Información básica
+          doc.setFontSize(10);
+          doc.text(`Departamento: ${empleado.departamento} | Categoría: ${empleado.categoria}`, 25, y);
+          y += 7;
+          
+          // Proyectos asignados en el mes
+          const proyectosAsignados = proyectos.filter(p => 
+            p.trabajadoresAsignados.some(t => t.id === empleado.id)
+          );
+          
+          if (proyectosAsignados.length > 0) {
+            doc.text('Proyectos asignados:', 25, y);
+            y += 5;
+            proyectosAsignados.forEach(proyecto => {
+              doc.text(`- ${proyecto.nombre} (${proyecto.tipo})`, 30, y);
+              y += 5;
+            });
+            y += 3;
+          } else {
+            doc.text('Sin proyectos asignados este mes', 25, y);
+            y += 7;
+          }
+          
+          // Resumen de horas y días
+          doc.text('Resumen del mes:', 25, y);
+          y += 5;
+          doc.text('- Días trabajados: [Pendiente de calcular]', 30, y);
+          y += 5;
+          doc.text('- Días de vacaciones: [Pendiente de calcular]', 30, y);
+          y += 5;
+          doc.text('- Días de baja/ausencia: [Pendiente de calcular]', 30, y);
+          y += 5;
+          doc.text('- Total horas trabajadas: [Pendiente de calcular]', 30, y);
+          y += 15;
+        });
+      }
+      
+      // Guardar PDF
+      doc.save(`Reporte_Mensual_Trabajadores_${nombreMes}_${año}.pdf`);
+      toast.success('Reporte mensual de trabajadores generado correctamente');
+    } catch (error) {
+      console.error('Error al generar el reporte:', error);
+      toast.error('Error al generar el reporte mensual de trabajadores');
+    }
+  }, [empleados, proyectos]);
 
   const generarReporteMensual = useCallback(async () => {
     try {
@@ -76,7 +163,7 @@ export const usePdfGenerator = () => {
           y += 7;
           
           doc.setFontSize(10);
-          doc.text(`Cliente: ${proyecto.cliente}`, 25, y);
+          doc.text(`Ciudad: ${proyecto.ciudad}`, 25, y);
           y += 7;
           
           doc.text(`Trabajadores asignados: ${proyecto.trabajadoresAsignados.length}`, 25, y);
@@ -154,7 +241,7 @@ export const usePdfGenerator = () => {
           y += 7;
           
           doc.setFontSize(10);
-          doc.text(`DNI: ${empleado.dni || 'No registrado'}`, 25, y);
+          doc.text(`Teléfono: ${empleado.telefono || 'No registrado'}`, 25, y);
           y += 7;
           
           doc.text(`Departamento: ${empleado.departamento}`, 25, y);
@@ -262,6 +349,7 @@ export const usePdfGenerator = () => {
   }, [proyectos, calcularAnalisisMensual]);
 
   return {
+    generarReporteMensualTrabajadores,
     generarReporteMensual,
     generarReporteEmpleados,
     generarReporteFinanciero

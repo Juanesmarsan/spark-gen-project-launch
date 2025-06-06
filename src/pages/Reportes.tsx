@@ -2,12 +2,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePdfGenerator } from "@/hooks/usePdfGenerator";
-import { FileText, Users, TrendingUp, Download } from "lucide-react";
+import { FileText, Users, TrendingUp, Download, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 
 const Reportes = () => {
-  const { generarReporteMensual, generarReporteEmpleados, generarReporteFinanciero } = usePdfGenerator();
+  const { 
+    generarReporteMensualTrabajadores,
+    generarReporteMensual, 
+    generarReporteEmpleados, 
+    generarReporteFinanciero 
+  } = usePdfGenerator();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reporteSeleccionado, setReporteSeleccionado] = useState<string | null>(null);
 
@@ -16,7 +21,9 @@ const Reportes = () => {
   };
 
   const generarReporte = () => {
-    if (reporteSeleccionado === 'mensual') {
+    if (reporteSeleccionado === 'mensual-trabajadores') {
+      generarReporteMensualTrabajadores();
+    } else if (reporteSeleccionado === 'mensual') {
       generarReporteMensual();
     } else if (reporteSeleccionado === 'empleados') {
       generarReporteEmpleados();
@@ -45,6 +52,14 @@ const Reportes = () => {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
+                <Button
+                  variant={reporteSeleccionado === 'mensual-trabajadores' ? 'default' : 'outline'}
+                  className="w-full justify-start"
+                  onClick={() => setReporteSeleccionado('mensual-trabajadores')}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Reporte Mensual de Trabajadores
+                </Button>
                 <Button
                   variant={reporteSeleccionado === 'mensual' ? 'default' : 'outline'}
                   className="w-full justify-start"
@@ -81,7 +96,25 @@ const Reportes = () => {
         </Dialog>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Calendar className="w-5 h-5 mr-2" />
+              Reporte Mensual de Trabajadores
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Detalle completo de todos los trabajadores del mes: días trabajados, vacaciones, bajas, ausencias y proyectos asignados
+            </p>
+            <Button variant="outline" className="w-full" onClick={generarReporteMensualTrabajadores}>
+              <Download className="w-4 h-4 mr-2" />
+              Descargar PDF
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
