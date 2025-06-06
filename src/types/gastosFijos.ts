@@ -6,6 +6,8 @@ export interface GastoFijo {
   baseImponible: number;
   tieneIva: boolean;
   iva?: number;
+  importe: number;
+  frecuencia: 'mensual' | 'trimestral' | 'semestral' | 'anual';
 }
 
 export interface ResumenGastosFijos {

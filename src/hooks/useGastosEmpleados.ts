@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { GastoEmpleadoProyecto, CalculoCosteEmpleado, AsignacionProyectoEmpleado, GastoVariableEmpleadoProyecto } from '@/types/gastoEmpleado';
 import { useEmpleados } from './useEmpleados';
@@ -128,6 +127,12 @@ export const useGastosEmpleados = () => {
     const importeHorasExtras = asignacion.horasExtras * empleado.precioHoraExtra;
     const importeHorasFestivas = asignacion.horasFestivas * empleado.precioHoraFestiva;
 
+    // Convertir gastos sin ID a gastos con ID
+    const gastosConId: GastoVariableEmpleadoProyecto[] = asignacion.gastos.map(gasto => ({
+      ...gasto,
+      id: gasto.id || Date.now() + Math.random()
+    }));
+
     const nuevoGasto: GastoEmpleadoProyecto = {
       id: Date.now(),
       empleadoId: asignacion.empleadoId,
@@ -145,7 +150,7 @@ export const useGastosEmpleados = () => {
       horasFestivas: asignacion.horasFestivas,
       importeHorasExtras,
       importeHorasFestivas,
-      gastos: asignacion.gastos,
+      gastos: gastosConId,
       fechaRegistro: new Date()
     };
 

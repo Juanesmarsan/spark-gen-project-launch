@@ -36,7 +36,7 @@ export const GastosEmpleadosForm = ({ empleados, proyectos, onClose }: GastosEmp
   const [diasAsignados, setDiasAsignados] = useState<number>(1);
   const [horasExtras, setHorasExtras] = useState<number>(0);
   const [horasFestivas, setHorasFestivas] = useState<number>(0);
-  const [gastosVariables, setGastosVariables] = useState<Omit<GastoVariableEmpleadoProyecto, 'id'>[]>([]);
+  const [gastosVariables, setGastosVariables] = useState<GastoVariableEmpleadoProyecto[]>([]);
 
   // Estado para nuevo gasto variable
   const [nuevoGasto, setNuevoGasto] = useState({
@@ -67,7 +67,12 @@ export const GastosEmpleadosForm = ({ empleados, proyectos, onClose }: GastosEmp
       return;
     }
 
-    setGastosVariables([...gastosVariables, { ...nuevoGasto }]);
+    const gastoConId: GastoVariableEmpleadoProyecto = {
+      ...nuevoGasto,
+      id: Date.now()
+    };
+
+    setGastosVariables([...gastosVariables, gastoConId]);
     setNuevoGasto({
       tipo: 'dieta',
       concepto: '',
