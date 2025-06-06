@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { GastoFijo, ResumenGastosFijos } from '@/types/gastosFijos';
 import { useEmpleados } from './useEmpleados';
@@ -78,11 +77,15 @@ export const useGastosFijos = () => {
     // Contar operarios (empleados con departamento 'operario')
     const numeroOperarios = empleados.filter(emp => emp.departamento === 'operario').length;
     const coeficienteEmpresa = numeroOperarios > 0 ? totalBruto / numeroOperarios : 0;
+    
+    // Calcular coeficiente diario (asumiendo 30 días por mes)
+    const coeficienteEmpresaDiario = coeficienteEmpresa / 30;
 
     return {
       totalBruto,
       totalBaseImponible,
       coeficienteEmpresa,
+      coeficienteEmpresaDiario,
       numeroOperarios
     };
   };

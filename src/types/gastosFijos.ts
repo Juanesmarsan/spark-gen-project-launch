@@ -12,5 +12,6 @@ export interface ResumenGastosFijos {
   totalBruto: number;
   totalBaseImponible: number;
   coeficienteEmpresa: number;
+  coeficienteEmpresaDiario: number;
   numeroOperarios: number;
 }
