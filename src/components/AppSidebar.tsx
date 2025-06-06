@@ -26,7 +26,8 @@ import {
   BarChart3, 
   FileText,
   Shield,
-  ChevronRight
+  ChevronRight,
+  UserCog
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -78,6 +79,11 @@ const gerenciaItems = [
     title: "Gastos Fijos",
     url: "/gerencia/gastos-fijos",
     icon: CreditCard,
+  },
+  {
+    title: "Personal",
+    url: "/gerencia/personal",
+    icon: UserCog,
   },
   {
     title: "Reportes",
