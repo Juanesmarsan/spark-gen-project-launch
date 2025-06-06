@@ -2,6 +2,20 @@
 import { useState, useEffect } from 'react';
 import { VehiculoCompleto, GastoVehiculo } from '@/types/vehiculo';
 
+const isValidDate = (dateString: any): boolean => {
+  if (!dateString) return false;
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date.getTime());
+};
+
+const safeParseDate = (dateString: any): Date => {
+  if (isValidDate(dateString)) {
+    return new Date(dateString);
+  }
+  console.warn('Invalid date found, using current date as fallback:', dateString);
+  return new Date();
+};
+
 export const useVehiculosGastos = () => {
   const [vehiculos, setVehiculos] = useState<VehiculoCompleto[]>([]);
   const [gastosVehiculos, setGastosVehiculos] = useState<GastoVehiculo[]>([]);
@@ -12,13 +26,45 @@ export const useVehiculosGastos = () => {
     const gastosGuardados = localStorage.getItem('gastosVehiculos');
     
     if (vehiculosGuardados) {
-      const vehiculosParseados = JSON.parse(vehiculosGuardados).map((v: any) => ({
-        ...v,
-        caducidadITV: new Date(v.caducidadITV),
-        caducidadSeguro: new Date(v.caducidadSeguro),
-        gastos: []
-      }));
-      setVehiculos(vehiculosParseados);
+      try {
+        const vehiculosParseados = JSON.parse(vehiculosGuardados).map((v: any) => ({
+          ...v,
+          caducidadITV: safeParseDate(v.caducidadITV),
+          caducidadSeguro: safeParseDate(v.caducidadSeguro),
+          gastos: []
+        }));
+        setVehiculos(vehiculosParseados);
+      } catch (error) {
+        console.error('Error parsing vehicles from localStorage:', error);
+        // Usar datos por defecto si hay error
+        const vehiculosDefault: VehiculoCompleto[] = [
+          {
+            id: 1,
+            matricula: "1234-ABC",
+            tipo: "Furgoneta",
+            marca: "Ford",
+            modelo: "Transit",
+            caducidadITV: new Date("2024-08-15"),
+            caducidadSeguro: new Date("2024-12-31"),
+            kilometros: 125000,
+            asignado: false,
+            gastos: []
+          },
+          {
+            id: 2,
+            matricula: "5678-DEF",
+            tipo: "Camión",
+            marca: "Mercedes",
+            modelo: "Sprinter",
+            caducidadITV: new Date("2024-11-20"),
+            caducidadSeguro: new Date("2025-03-15"),
+            kilometros: 89000,
+            asignado: false,
+            gastos: []
+          }
+        ];
+        setVehiculos(vehiculosDefault);
+      }
     } else {
       // Datos por defecto
       const vehiculosDefault: VehiculoCompleto[] = [
@@ -51,11 +97,16 @@ export const useVehiculosGastos = () => {
     }
 
     if (gastosGuardados) {
-      const gastosParseados = JSON.parse(gastosGuardados).map((g: any) => ({
-        ...g,
-        fecha: new Date(g.fecha)
-      }));
-      setGastosVehiculos(gastosParseados);
+      try {
+        const gastosParseados = JSON.parse(gastosGuardados).map((g: any) => ({
+          ...g,
+          fecha: safeParseDate(g.fecha)
+        }));
+        setGastosVehiculos(gastosParseados);
+      } catch (error) {
+        console.error('Error parsing vehicle expenses from localStorage:', error);
+        setGastosVehiculos([]);
+      }
     }
   }, []);
 
