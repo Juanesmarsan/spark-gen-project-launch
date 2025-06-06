@@ -23,7 +23,9 @@ export const AnalisisFinancieroTab: React.FC<AnalisisFinancieroTabProps> = ({
     calcularGastosTotales,
     calcularBeneficioNeto,
     calcularMargenProyecto,
-    calcularAnalisisMensual
+    calcularBeneficioMensualAdministracion,
+    calcularBeneficioMensualPresupuesto,
+    calcularGastosMensuales
   } = useCalculosBeneficios();
 
   const beneficioBruto = proyecto.tipo === 'administracion' 
@@ -34,7 +36,30 @@ export const AnalisisFinancieroTab: React.FC<AnalisisFinancieroTabProps> = ({
   const beneficioNeto = calcularBeneficioNeto(proyecto);
   const margenProyecto = calcularMargenProyecto(proyecto);
 
-  const analisisMensual = calcularAnalisisMensual(proyecto);
+  // Calcular análisis mensual para el proyecto individual
+  const calcularAnalisisMensualProyecto = (año: number = new Date().getFullYear()) => {
+    const meses = Array.from({ length: 12 }, (_, i) => i + 1);
+    
+    return meses.map(mes => {
+      const beneficioBrutoMes = proyecto.tipo === 'administracion' 
+        ? calcularBeneficioMensualAdministracion(proyecto, mes, año)
+        : calcularBeneficioMensualPresupuesto(proyecto, mes, año);
+      
+      const gastosMes = calcularGastosMensuales(proyecto, mes, año);
+      const beneficioNeto = beneficioBrutoMes - gastosMes;
+
+      return {
+        mes,
+        nombreMes: new Date(año, mes - 1).toLocaleDateString('es-ES', { month: 'long' }),
+        beneficioBruto: beneficioBrutoMes,
+        gastos: gastosMes,
+        beneficioNeto,
+        margen: beneficioBrutoMes > 0 ? (beneficioNeto / beneficioBrutoMes) * 100 : 0
+      };
+    });
+  };
+
+  const analisisMensual = calcularAnalisisMensualProyecto();
 
   return (
     <div className="space-y-6">
@@ -222,12 +247,12 @@ export const AnalisisFinancieroTab: React.FC<AnalisisFinancieroTabProps> = ({
             <div className="space-y-2">
               {analisisMensual.map((mes, index) => (
                 <div key={index} className="flex justify-between items-center p-3 border rounded">
-                  <span className="font-medium">{mes.mes}</span>
+                  <span className="font-medium">{mes.nombreMes}</span>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-green-600">Ingresos: €{mes.ingresos.toLocaleString()}</span>
+                    <span className="text-green-600">Ingresos: €{mes.beneficioBruto.toLocaleString()}</span>
                     <span className="text-red-600">Gastos: €{mes.gastos.toLocaleString()}</span>
-                    <span className={`font-medium ${mes.beneficio >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      Beneficio: €{mes.beneficio.toLocaleString()}
+                    <span className={`font-medium ${mes.beneficioNeto >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      Beneficio: €{mes.beneficioNeto.toLocaleString()}
                     </span>
                   </div>
                 </div>
