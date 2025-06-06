@@ -1,5 +1,4 @@
 
-
 import { useCallback } from 'react';
 import { Proyecto } from '@/types/proyecto';
 import { generarCalendarioMesPuro } from '@/utils/calendarioUtils';
@@ -12,14 +11,22 @@ export const useCalculosBeneficios = () => {
 
     let totalHoras = 0;
     const añoActual = new Date().getFullYear();
+    const fechaActual = new Date();
 
     // Para cada trabajador asignado al proyecto
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      // Si no hay fecha de entrada, usar inicio de año como valor por defecto
-      const fechaEntrada = trabajador.fechaEntrada || new Date(añoActual, 0, 1);
-      const fechaSalida = trabajador.fechaSalida || new Date(añoActual, 11, 31);
+      console.log(`Calculando para ${trabajador.nombre}:`);
       
-      console.log(`Calculando para ${trabajador.nombre}: ${fechaEntrada.toLocaleDateString()} - ${fechaSalida.toLocaleDateString()}`);
+      // Si no hay fecha de entrada, no contar horas
+      if (!trabajador.fechaEntrada) {
+        console.log(`${trabajador.nombre}: Sin fecha de entrada, no se cuentan horas`);
+        return;
+      }
+
+      const fechaEntrada = trabajador.fechaEntrada;
+      const fechaSalida = trabajador.fechaSalida || fechaActual;
+      
+      console.log(`${trabajador.nombre}: ${fechaEntrada.toLocaleDateString()} - ${fechaSalida.toLocaleDateString()}`);
       
       // Determinar el rango de meses a procesar
       const mesInicio = fechaEntrada.getMonth() + 1;
@@ -120,9 +127,14 @@ export const useCalculosBeneficios = () => {
     const ultimoDiaMes = new Date(año, mes, 0);
 
     proyecto.trabajadoresAsignados.forEach(trabajador => {
+      // Solo procesar si tiene fecha de entrada
+      if (!trabajador.fechaEntrada) {
+        return;
+      }
+
       // Fechas de trabajo del empleado
-      const fechaEntrada = trabajador.fechaEntrada || new Date(año, 0, 1);
-      const fechaSalida = trabajador.fechaSalida || new Date(año, 11, 31);
+      const fechaEntrada = trabajador.fechaEntrada;
+      const fechaSalida = trabajador.fechaSalida || new Date();
 
       // Verificar si el trabajador estaba activo durante ese mes
       if (fechaEntrada <= ultimoDiaMes && fechaSalida >= primerDiaMes) {
@@ -208,4 +220,3 @@ export const useCalculosBeneficios = () => {
     calcularGastosMensuales
   };
 };
-

@@ -33,18 +33,58 @@ export const AnalisisFinancieroTab = ({ proyecto, onUpdateProyecto }: AnalisisFi
 
     let totalHoras = 0;
     const añoActual = new Date().getFullYear();
+    const fechaActual = new Date();
 
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      for (let mes = 1; mes <= 12; mes++) {
-        const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
-        
-        calendario.dias.forEach(dia => {
-          if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
-            if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
-              totalHoras += dia.horasReales || 0;
+      // Si no hay fecha de entrada, no contar horas
+      if (!trabajador.fechaEntrada) {
+        return;
+      }
+
+      const fechaEntrada = trabajador.fechaEntrada;
+      const fechaSalida = trabajador.fechaSalida || fechaActual;
+      
+      // Determinar el rango de meses a procesar
+      const mesInicio = fechaEntrada.getMonth() + 1;
+      const añoInicio = fechaEntrada.getFullYear();
+      const mesFin = fechaSalida.getMonth() + 1;
+      const añoFin = fechaSalida.getFullYear();
+
+      // Solo calcular si hay intersección con el año actual
+      if (añoFin >= añoActual && añoInicio <= añoActual) {
+        const mesInicioReal = añoInicio === añoActual ? mesInicio : 1;
+        const mesFinReal = añoFin === añoActual ? mesFin : 12;
+
+        for (let mes = mesInicioReal; mes <= mesFinReal; mes++) {
+          const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
+          
+          // Determinar fechas límite para este mes específico
+          const primerDiaMes = new Date(añoActual, mes - 1, 1);
+          const ultimoDiaMes = new Date(añoActual, mes, 0);
+          
+          // Fecha efectiva de inicio para este mes
+          const fechaInicioMes = mes === mesInicio && añoInicio === añoActual 
+            ? fechaEntrada 
+            : primerDiaMes;
+            
+          // Fecha efectiva de fin para este mes
+          const fechaFinMes = mes === mesFin && añoFin === añoActual 
+            ? fechaSalida 
+            : ultimoDiaMes;
+          
+          calendario.dias.forEach(dia => {
+            const fechaDia = new Date(añoActual, mes - 1, dia.fecha.getDate());
+            
+            // Solo contar días dentro del período efectivo del trabajador para este mes
+            if (fechaDia >= fechaInicioMes && fechaDia <= fechaFinMes) {
+              if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+                if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+                  totalHoras += dia.horasReales || 0;
+                }
+              }
             }
-          }
-        });
+          });
+        }
       }
     });
 

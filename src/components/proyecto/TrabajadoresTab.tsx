@@ -28,12 +28,18 @@ interface TrabajadoresTabProps {
 const calcularHorasTrabajador = (trabajador: Trabajador, mesSeleccionado: Date): number => {
   console.log(`Calculando horas para ${trabajador.nombre} en ${format(mesSeleccionado, 'MMMM yyyy', { locale: es })}`);
   
+  // Si no hay fecha de entrada, no contar horas
+  if (!trabajador.fechaEntrada) {
+    console.log(`${trabajador.nombre}: Sin fecha de entrada, 0 horas`);
+    return 0;
+  }
+  
   const mes = mesSeleccionado.getMonth() + 1;
   const año = mesSeleccionado.getFullYear();
   
   // Fechas de trabajo del empleado
-  const fechaEntrada = trabajador.fechaEntrada || new Date(año, 0, 1);
-  const fechaSalida = trabajador.fechaSalida || new Date(año, 11, 31);
+  const fechaEntrada = trabajador.fechaEntrada;
+  const fechaSalida = trabajador.fechaSalida || new Date();
   
   // Fechas límite del mes seleccionado
   const primerDiaMes = new Date(año, mes - 1, 1);
