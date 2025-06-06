@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,7 @@ import { AdelantoDialog } from "./AdelantoDialog";
 import { EpiDialog } from "./EpiDialog";
 import { HerramientaDialog } from "./HerramientaDialog";
 import { VehiculoDialog } from "./VehiculoDialog";
+import { CalendarioMensual } from "./CalendarioMensual";
 
 interface EmpleadoDetailsProps {
   empleado: Empleado;
@@ -54,8 +54,9 @@ export const EmpleadoDetails = ({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="datos" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="datos">Datos Personales</TabsTrigger>
+            <TabsTrigger value="calendario">Calendario</TabsTrigger>
             <TabsTrigger value="epis">EPIs</TabsTrigger>
             <TabsTrigger value="herramientas">Herramientas</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
@@ -140,6 +141,10 @@ export const EmpleadoDetails = ({
                 </Table>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="calendario" className="space-y-4">
+            <CalendarioMensual empleadoId={empleado.id} />
           </TabsContent>
 
           <TabsContent value="epis" className="space-y-4">
