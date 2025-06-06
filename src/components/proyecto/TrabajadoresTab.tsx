@@ -59,30 +59,43 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
 
   // Calcular horas trabajadas para un trabajador específico
   const calcularHorasTrabajador = (trabajador: Trabajador) => {
-    if (!trabajador.fechaEntrada) return { horasLaborales: 0, horasExtras: 0, horasFestivas: 0 };
+    if (!trabajador.fechaEntrada) {
+      console.log(`Trabajador ${trabajador.nombre}: Sin fecha de entrada`);
+      return { horasLaborales: 0, horasExtras: 0, horasFestivas: 0 };
+    }
 
     let horasLaborales = 0;
-    let horasExtras = 0;
-    let horasFestivas = 0;
 
     // Determinar fecha de fin: fecha de salida o fecha actual
     const fechaFin = trabajador.fechaSalida || new Date();
     const fechaInicio = new Date(trabajador.fechaEntrada);
     
+    console.log(`Calculando horas para ${trabajador.nombre}: ${fechaInicio.toDateString()} hasta ${fechaFin.toDateString()}`);
+    
     // Iterar día a día desde la fecha de entrada hasta la fecha de fin
-    for (let fecha = new Date(fechaInicio); fecha <= fechaFin; fecha.setDate(fecha.getDate() + 1)) {
-      const tipoDia = getTipoDia(fecha);
+    const fechaActual = new Date(fechaInicio);
+    let diasLaborables = 0;
+    
+    while (fechaActual <= fechaFin) {
+      const tipoDia = getTipoDia(fechaActual);
       
       if (tipoDia === 'laborable') {
         horasLaborales += 8; // 8 horas por día laborable
-      } else if (tipoDia === 'sabado') {
-        // Los sábados no se trabajan por defecto (0 horas)
-      } else if (tipoDia === 'festivo' || tipoDia === 'domingo') {
-        // Festivos y domingos no se trabajan por defecto (0 horas)
+        diasLaborables++;
       }
+      // Los sábados, domingos y festivos no suman horas (0 horas)
+      
+      // Avanzar al siguiente día
+      fechaActual.setDate(fechaActual.getDate() + 1);
     }
 
-    return { horasLaborales, horasExtras, horasFestivas };
+    console.log(`${trabajador.nombre}: ${diasLaborables} días laborables = ${horasLaborales} horas`);
+
+    return { 
+      horasLaborales, 
+      horasExtras: 0, 
+      horasFestivas: 0 
+    };
   };
 
   const handleEditTrabajador = (trabajador: Trabajador) => {
