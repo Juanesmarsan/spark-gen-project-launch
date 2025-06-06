@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +36,9 @@ interface EmpleadoFormProps {
   onCancel: () => void;
 }
 
+// Initialize date outside component to prevent re-renders
+const initialDate = new Date();
+
 export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -45,7 +47,7 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
     telefono: "",
     email: "",
     direccion: "",
-    fechaIngreso: new Date(),
+    fechaIngreso: initialDate,
     salarioBruto: 0,
     seguridadSocialTrabajador: 0,
     seguridadSocialEmpresa: 0,
