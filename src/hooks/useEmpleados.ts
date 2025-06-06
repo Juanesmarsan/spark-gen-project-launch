@@ -1,70 +1,94 @@
-
 import { useState, useEffect } from 'react';
-import { Empleado, Epi, Herramienta, Vehiculo, GastoVariableEmpleado } from '@/types/empleado';
+import { Empleado, GastoVariableEmpleado } from '@/types/empleado';
 
 export const useEmpleados = () => {
+  console.log("Inicializando hook useEmpleados");
+  
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  console.log("Estado inicial - empleados:", empleados.length, "isLoaded:", isLoaded);
+
   // Cargar empleados desde localStorage al iniciar - solo una vez
   useEffect(() => {
+    console.log("useEffect cargar empleados - isLoaded:", isLoaded);
+    
     if (!isLoaded) {
-      console.log("Cargando empleados desde localStorage...");
-      const empleadosGuardados = localStorage.getItem('empleados');
-      if (empleadosGuardados) {
-        const empleadosParseados = JSON.parse(empleadosGuardados);
-        console.log("Empleados cargados:", empleadosParseados);
-        setEmpleados(empleadosParseados.map((emp: any) => ({
-          ...emp,
-          fechaIngreso: new Date(emp.fechaIngreso),
-          // Valores por defecto para nuevos campos
-          departamento: emp.departamento || 'operario',
-          categoria: emp.categoria || 'peon',
-          precioHoraExtra: emp.precioHoraExtra || 20,
-          precioHoraFestiva: emp.precioHoraFestiva || 25,
-          gastosVariables: emp.gastosVariables?.map((gasto: any) => ({
-            ...gasto,
-            fecha: new Date(gasto.fecha)
-          })) || [],
-        })));
-      } else {
-        // Datos de ejemplo si no hay empleados
-        const empleadoEjemplo: Empleado = {
-          id: 1,
-          nombre: "Juan",
-          apellidos: "García López",
-          dni: "12345678A",
-          telefono: "666123456",
-          email: "juan.garcia@empresa.com",
-          direccion: "Calle Principal 123, Madrid",
-          fechaIngreso: new Date("2023-01-15"),
-          salarioBruto: 2500,
-          seguridadSocialTrabajador: 150,
-          seguridadSocialEmpresa: 750,
-          retenciones: 375,
-          embargo: 0,
-          departamento: 'operario',
-          categoria: 'oficial_2',
-          precioHoraExtra: 20,
-          precioHoraFestiva: 25,
-          adelantos: [],
-          epis: [],
-          herramientas: [],
-          documentos: [],
-          proyectos: [],
-          gastosVariables: [],
-        };
-        setEmpleados([empleadoEjemplo]);
+      try {
+        console.log("Cargando empleados desde localStorage...");
+        const empleadosGuardados = localStorage.getItem('empleados');
+        
+        if (empleadosGuardados) {
+          const empleadosParseados = JSON.parse(empleadosGuardados);
+          console.log("Empleados cargados desde localStorage:", empleadosParseados);
+          
+          const empleadosProcesados = empleadosParseados.map((emp: any) => ({
+            ...emp,
+            fechaIngreso: new Date(emp.fechaIngreso),
+            departamento: emp.departamento || 'operario',
+            categoria: emp.categoria || 'peon',
+            precioHoraExtra: emp.precioHoraExtra || 20,
+            precioHoraFestiva: emp.precioHoraFestiva || 25,
+            gastosVariables: emp.gastosVariables?.map((gasto: any) => ({
+              ...gasto,
+              fecha: new Date(gasto.fecha)
+            })) || [],
+          }));
+          
+          console.log("Empleados procesados:", empleadosProcesados);
+          setEmpleados(empleadosProcesados);
+        } else {
+          console.log("No hay empleados guardados, creando empleado de ejemplo");
+          // Datos de ejemplo si no hay empleados
+          const empleadoEjemplo: Empleado = {
+            id: 1,
+            nombre: "Juan",
+            apellidos: "García López",
+            dni: "12345678A",
+            telefono: "666123456",
+            email: "juan.garcia@empresa.com",
+            direccion: "Calle Principal 123, Madrid",
+            fechaIngreso: new Date("2023-01-15"),
+            salarioBruto: 2500,
+            seguridadSocialTrabajador: 150,
+            seguridadSocialEmpresa: 750,
+            retenciones: 375,
+            embargo: 0,
+            departamento: 'operario',
+            categoria: 'oficial_2',
+            precioHoraExtra: 20,
+            precioHoraFestiva: 25,
+            adelantos: [],
+            epis: [],
+            herramientas: [],
+            documentos: [],
+            proyectos: [],
+            gastosVariables: [],
+          };
+          setEmpleados([empleadoEjemplo]);
+        }
+        
+        setIsLoaded(true);
+        console.log("Carga de empleados completada");
+      } catch (error) {
+        console.error("Error al cargar empleados:", error);
+        setIsLoaded(true); // Evitar bucle infinito
       }
-      setIsLoaded(true);
     }
   }, [isLoaded]);
 
   // Guardar empleados en localStorage cuando cambien - solo si ya están cargados
   useEffect(() => {
+    console.log("useEffect guardar empleados - isLoaded:", isLoaded, "empleados.length:", empleados.length);
+    
     if (isLoaded && empleados.length > 0) {
-      console.log("Guardando empleados en localStorage:", empleados);
-      localStorage.setItem('empleados', JSON.stringify(empleados));
+      try {
+        console.log("Guardando empleados en localStorage:", empleados);
+        localStorage.setItem('empleados', JSON.stringify(empleados));
+        console.log("Empleados guardados correctamente");
+      } catch (error) {
+        console.error("Error al guardar empleados:", error);
+      }
     }
   }, [empleados, isLoaded]);
 
@@ -115,6 +139,8 @@ export const useEmpleados = () => {
       return emp;
     }));
   };
+
+  console.log("Hook useEmpleados completado - retornando:", { empleados: empleados.length });
 
   return {
     empleados,

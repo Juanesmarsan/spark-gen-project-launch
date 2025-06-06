@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,30 +19,43 @@ import Epis from "./pages/Epis";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/empleados" element={<Empleados />} />
-            <Route path="/proyectos" element={<Proyectos />} />
-            <Route path="/inventario" element={<Inventario />} />
-            <Route path="/epis" element={<Epis />} />
-            <Route path="/vehiculos" element={<Vehiculos />} />
-            <Route path="/gastos-fijos" element={<GastosFijos />} />
-            <Route path="/gastos-variables" element={<GastosVariables />} />
-            <Route path="/analisis-financiero" element={<AnalisisFinanciero />} />
-            <Route path="/reportes" element={<Reportes />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  console.log("Inicializando App component");
+  
+  try {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/empleados" element={<Empleados />} />
+                <Route path="/proyectos" element={<Proyectos />} />
+                <Route path="/inventario" element={<Inventario />} />
+                <Route path="/epis" element={<Epis />} />
+                <Route path="/vehiculos" element={<Vehiculos />} />
+                <Route path="/gastos-fijos" element={<GastosFijos />} />
+                <Route path="/gastos-variables" element={<GastosVariables />} />
+                <Route path="/analisis-financiero" element={<AnalisisFinanciero />} />
+                <Route path="/reportes" element={<Reportes />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  } catch (error) {
+    console.error("Error crítico en App:", error);
+    return (
+      <div className="p-4 text-red-600">
+        Error crítico en la aplicación. Revisa la consola para más detalles.
+      </div>
+    );
+  }
+};
 
 export default App;
