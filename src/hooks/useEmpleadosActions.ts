@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
 import { useToast } from "@/hooks/use-toast";
@@ -78,8 +77,16 @@ export const useEmpleadosActions = () => {
   const handleUpdateEmpleado = useCallback((empleadoActualizado: Empleado) => {
     console.log('useEmpleadosActions: Actualizando empleado');
     updateEmpleado(empleadoActualizado);
+    
+    // Actualizar inmediatamente el empleado seleccionado con los datos actualizados
     setEmpleadoSeleccionado(empleadoActualizado);
-  }, [updateEmpleado]);
+    
+    // También buscar el empleado actualizado en la lista para asegurar sincronización
+    const empleadoActualizadoEnLista = empleados.find(emp => emp.id === empleadoActualizado.id);
+    if (empleadoActualizadoEnLista) {
+      console.log('useEmpleadosActions: Empleado encontrado en lista, sincronizando');
+    }
+  }, [updateEmpleado, empleados]);
 
   const agregarAdelanto = useCallback((concepto: string, cantidad: number) => {
     if (!empleadoSeleccionado) return;
@@ -165,10 +172,13 @@ export const useEmpleadosActions = () => {
     console.log('useEmpleadosActions: Agregando gasto variable');
     agregarGastoVariable(empleadoSeleccionado.id, gasto);
     
-    const empleadoActualizado = empleados.find(emp => emp.id === empleadoSeleccionado.id);
-    if (empleadoActualizado) {
-      setEmpleadoSeleccionado(empleadoActualizado);
-    }
+    // Buscar el empleado actualizado y actualizar el estado local
+    setTimeout(() => {
+      const empleadoActualizado = empleados.find(emp => emp.id === empleadoSeleccionado.id);
+      if (empleadoActualizado) {
+        setEmpleadoSeleccionado(empleadoActualizado);
+      }
+    }, 100);
 
     toast({
       title: "Gasto añadido",
