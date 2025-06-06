@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { Proyecto } from '@/types/proyecto';
-import { useCalendario } from './useCalendario';
+import { generarCalendarioMesPuro } from '@/utils/calendarioUtils';
 
 export const useCalculosBeneficios = () => {
   const calcularBeneficioBrutoAdministracion = useCallback((proyecto: Proyecto) => {
@@ -13,15 +13,12 @@ export const useCalculosBeneficios = () => {
 
     // Para cada trabajador asignado al proyecto
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      // Crear instancia del hook para cada empleado
-      const { generarCalendarioMes } = useCalendario(trabajador.id);
-      
       // Por ahora, calculamos para el año actual
       const añoActual = new Date().getFullYear();
       
       // Iterar sobre todos los meses del año
       for (let mes = 1; mes <= 12; mes++) {
-        const calendario = generarCalendarioMes(mes, añoActual);
+        const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
         
         calendario.dias.forEach(dia => {
           // Solo contar días trabajados (excluir vacaciones y bajas)
@@ -82,8 +79,7 @@ export const useCalculosBeneficios = () => {
     let totalHoras = 0;
 
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      const { generarCalendarioMes } = useCalendario(trabajador.id);
-      const calendario = generarCalendarioMes(mes, año);
+      const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
       
       calendario.dias.forEach(dia => {
         if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
