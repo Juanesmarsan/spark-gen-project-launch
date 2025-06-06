@@ -52,14 +52,16 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
     retenciones: 0,
     embargo: 0
   });
-  const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(new Date());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      fechaIngreso: fechaSeleccionada
-    });
+    onSubmit(formData);
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, fechaIngreso: date }));
+    }
   };
 
   return (
@@ -121,14 +123,14 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {fechaSeleccionada ? format(fechaSeleccionada, "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
+                  {formData.fechaIngreso ? format(formData.fechaIngreso, "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={fechaSeleccionada}
-                  onSelect={(date) => date && setFechaSeleccionada(date)}
+                  selected={formData.fechaIngreso}
+                  onSelect={handleDateSelect}
                   initialFocus
                 />
               </PopoverContent>
