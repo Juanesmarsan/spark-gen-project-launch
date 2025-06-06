@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +39,7 @@ const calcularHorasTrabajador = (trabajador: Trabajador, mesSeleccionado: Date):
   
   let horasTotales = 0;
   calendario.dias.forEach(dia => {
-    const fechaDia = new Date(año, mes - 1, dia.dia);
+    const fechaDia = new Date(año, mes - 1, dia.fecha.getDate());
     
     // Solo contar días dentro del período de trabajo del empleado
     if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {

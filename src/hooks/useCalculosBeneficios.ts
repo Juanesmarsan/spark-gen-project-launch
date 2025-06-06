@@ -33,7 +33,7 @@ export const useCalculosBeneficios = () => {
           const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
           
           calendario.dias.forEach(dia => {
-            const fechaDia = new Date(añoActual, mes - 1, dia.dia);
+            const fechaDia = new Date(añoActual, mes - 1, dia.fecha.getDate());
             
             // Solo contar días dentro del período de trabajo del empleado
             if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {
@@ -108,7 +108,7 @@ export const useCalculosBeneficios = () => {
         const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
         
         calendario.dias.forEach(dia => {
-          const fechaDia = new Date(año, mes - 1, dia.dia);
+          const fechaDia = new Date(año, mes - 1, dia.fecha.getDate());
           
           // Solo contar días dentro del período de trabajo del empleado
           if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {
