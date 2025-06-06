@@ -24,13 +24,30 @@ const calcularHorasTrabajador = (trabajador: Trabajador, mesSeleccionado: Date):
   const mes = mesSeleccionado.getMonth() + 1;
   const año = mesSeleccionado.getFullYear();
   
+  // Verificar si el trabajador estaba activo en ese mes
+  const fechaEntrada = trabajador.fechaEntrada || new Date(año, 0, 1);
+  const fechaSalida = trabajador.fechaSalida || new Date(año, 11, 31);
+  const inicioMes = new Date(año, mes - 1, 1);
+  const finMes = new Date(año, mes, 0);
+
+  // Si el trabajador no estaba activo durante ese mes, devolver 0
+  if (fechaEntrada > finMes || fechaSalida < inicioMes) {
+    console.log(`${trabajador.nombre}: 0 horas (no activo en ${format(mesSeleccionado, 'MMMM yyyy', { locale: es })})`);
+    return 0;
+  }
+  
   const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
   
   let horasTotales = 0;
   calendario.dias.forEach(dia => {
-    if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
-      if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
-        horasTotales += dia.horasReales || 0;
+    const fechaDia = new Date(año, mes - 1, dia.dia);
+    
+    // Solo contar días dentro del período de trabajo del empleado
+    if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {
+      if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+        if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+          horasTotales += dia.horasReales || 0;
+        }
       }
     }
   });

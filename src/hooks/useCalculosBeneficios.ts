@@ -14,18 +14,38 @@ export const useCalculosBeneficios = () => {
 
     // Para cada trabajador asignado al proyecto
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      // Iterar sobre todos los meses del año
-      for (let mes = 1; mes <= 12; mes++) {
-        const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
-        
-        calendario.dias.forEach(dia => {
-          // Solo contar días laborables y sábados sin ausencias que impidan trabajar
-          if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
-            if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
-              totalHoras += dia.horasReales || 0;
+      // Determinar el rango de meses a considerar para este trabajador
+      const fechaEntrada = trabajador.fechaEntrada || new Date(añoActual, 0, 1); // Si no hay fecha de entrada, usar inicio de año
+      const fechaSalida = trabajador.fechaSalida || new Date(añoActual, 11, 31); // Si no hay fecha de salida, usar fin de año
+      
+      const mesInicio = Math.max(1, fechaEntrada.getMonth() + 1);
+      const mesFin = Math.min(12, fechaSalida.getMonth() + 1);
+      const añoInicio = fechaEntrada.getFullYear();
+      const añoFin = fechaSalida.getFullYear();
+
+      // Solo calcular si el trabajador estuvo activo en el año actual
+      if (añoFin >= añoActual && añoInicio <= añoActual) {
+        const mesInicioReal = añoInicio === añoActual ? mesInicio : 1;
+        const mesFinReal = añoFin === añoActual ? mesFin : 12;
+
+        // Iterar sobre los meses en que el trabajador estuvo activo
+        for (let mes = mesInicioReal; mes <= mesFinReal; mes++) {
+          const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
+          
+          calendario.dias.forEach(dia => {
+            const fechaDia = new Date(añoActual, mes - 1, dia.dia);
+            
+            // Solo contar días dentro del período de trabajo del empleado
+            if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {
+              // Solo contar días laborables y sábados sin ausencias que impidan trabajar
+              if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+                if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+                  totalHoras += dia.horasReales || 0;
+                }
+              }
             }
-          }
-        });
+          });
+        }
       }
     });
 
@@ -77,15 +97,29 @@ export const useCalculosBeneficios = () => {
     let totalHoras = 0;
 
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
-      
-      calendario.dias.forEach(dia => {
-        if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
-          if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
-            totalHoras += dia.horasReales || 0;
+      // Verificar si el trabajador estaba activo en ese mes
+      const fechaEntrada = trabajador.fechaEntrada || new Date(año, 0, 1);
+      const fechaSalida = trabajador.fechaSalida || new Date(año, 11, 31);
+      const inicioMes = new Date(año, mes - 1, 1);
+      const finMes = new Date(año, mes, 0);
+
+      // Solo calcular si el trabajador estuvo activo durante ese mes
+      if (fechaEntrada <= finMes && fechaSalida >= inicioMes) {
+        const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
+        
+        calendario.dias.forEach(dia => {
+          const fechaDia = new Date(año, mes - 1, dia.dia);
+          
+          // Solo contar días dentro del período de trabajo del empleado
+          if (fechaDia >= fechaEntrada && fechaDia <= fechaSalida) {
+            if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+              if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+                totalHoras += dia.horasReales || 0;
+              }
+            }
           }
-        }
-      });
+        });
+      }
     });
 
     return totalHoras * proyecto.precioHora;
