@@ -9,6 +9,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { useLocation, Link } from "react-router-dom";
 import { 
@@ -21,8 +24,11 @@ import {
   CreditCard, 
   TrendingUp, 
   BarChart3, 
-  FileText 
+  FileText,
+  Shield,
+  ChevronRight
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const menuItems = [
   {
@@ -56,46 +62,45 @@ const menuItems = [
     icon: Car,
   },
   {
-    title: "Gastos Fijos",
-    url: "/gastos-fijos",
-    icon: CreditCard,
-  },
-  {
     title: "Gastos Variables",
     url: "/gastos-variables",
     icon: TrendingUp,
   },
+];
+
+const gerenciaItems = [
   {
     title: "Análisis Financiero",
-    url: "/analisis-financiero",
+    url: "/gerencia/analisis-financiero",
     icon: BarChart3,
   },
   {
+    title: "Gastos Fijos",
+    url: "/gerencia/gastos-fijos",
+    icon: CreditCard,
+  },
+  {
     title: "Reportes",
-    url: "/reportes",
+    url: "/gerencia/reportes",
     icon: FileText,
   },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
+  const isGerenciaActive = location.pathname.startsWith('/gerencia');
 
   return (
     <Sidebar className="border-r">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <img 
-            src="/lovable-uploads/bf43a6d9-7197-4554-a13f-6d1494fd3041.png" 
-            alt="Omenar Logo" 
-            className="h-10 w-10"
-          />
           <div className="flex flex-col">
             <img 
               src="/lovable-uploads/ddfe097d-bd85-4f3c-a946-114fa0d379fe.png" 
               alt="Omenar" 
-              className="h-8 brightness-0 invert"
+              className="h-12 brightness-0 invert"
             />
-            <span className="text-xs text-sidebar-foreground/70 font-medium">Sistema de Gestión</span>
+            <span className="text-xs text-sidebar-foreground/70 font-medium mt-1">Sistema de Gestión</span>
           </div>
         </div>
       </SidebarHeader>
@@ -118,6 +123,35 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              <Collapsible defaultOpen={isGerenciaActive}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                      <Shield className="h-4 w-4" />
+                      <span>Gerencia</span>
+                      <ChevronRight className="ml-auto h-4 w-4 transition-transform data-[state=open]:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {gerenciaItems.map((item) => (
+                        <SidebarMenuSubItem key={item.title}>
+                          <SidebarMenuSubButton 
+                            asChild
+                            isActive={location.pathname === item.url}
+                          >
+                            <Link to={item.url} className="flex items-center gap-3">
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

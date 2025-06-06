@@ -10,12 +10,10 @@ import Empleados from "./pages/Empleados";
 import Proyectos from "./pages/Proyectos";
 import Inventario from "./pages/Inventario";
 import Vehiculos from "./pages/Vehiculos";
-import GastosFijos from "./pages/GastosFijos";
 import GastosVariables from "./pages/GastosVariables";
-import AnalisisFinanciero from "./pages/AnalisisFinanciero";
-import Reportes from "./pages/Reportes";
 import NotFound from "./pages/NotFound";
 import Epis from "./pages/Epis";
+import Gerencia from "./pages/Gerencia";
 
 const queryClient = new QueryClient();
 
@@ -34,10 +32,8 @@ const App = () => {
               <Route path="/inventario" element={<Inventario />} />
               <Route path="/epis" element={<Epis />} />
               <Route path="/vehiculos" element={<Vehiculos />} />
-              <Route path="/gastos-fijos" element={<GastosFijos />} />
               <Route path="/gastos-variables" element={<GastosVariables />} />
-              <Route path="/analisis-financiero" element={<AnalisisFinanciero />} />
-              <Route path="/reportes" element={<Reportes />} />
+              <Route path="/gerencia/*" element={<Gerencia />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

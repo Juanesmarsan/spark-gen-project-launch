@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetricCard } from "@/components/MetricCard";
 import { Badge } from "@/components/ui/badge";
@@ -416,25 +415,45 @@ const AnalisisFinanciero = () => {
                 <CardTitle>Distribución Gastos Fijos vs Variables</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={datosComparativos}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="importe"
-                      label={({ tipo, porcentaje }) => `${tipo} ${porcentaje.toFixed(0)}%`}
-                    >
-                      {datosComparativos.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${Number(value).toLocaleString()}€`, 'Importe']} />
-                    <Legend />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={datosComparativos}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="importe"
+                        label={({ tipo, porcentaje }) => `${tipo} ${porcentaje.toFixed(0)}%`}
+                      >
+                        {datosComparativos.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white p-3 border rounded-lg shadow-lg">
+                                <p className="font-medium text-gray-900">{data.tipo}</p>
+                                <p className="text-lg font-bold" style={{ color: data.color }}>
+                                  {data.importe.toLocaleString()}€
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {data.porcentaje.toFixed(1)}% del total
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
 
@@ -477,38 +496,67 @@ const AnalisisFinanciero = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Top 10 Gastos Fijos</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Top 10 Gastos Fijos
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={chartConfig} className="h-80">
+                <ChartContainer config={chartConfig} className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={datosGastosFijos.slice(0, 10)} margin={{ bottom: 60 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
+                    <BarChart 
+                      data={datosGastosFijos.slice(0, 10)} 
+                      margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                      layout="horizontal"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis 
-                        dataKey="concepto" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        height={100}
-                        fontSize={10}
+                        type="number"
+                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`}
+                        fontSize={12}
                       />
-                      <YAxis />
+                      <YAxis 
+                        type="category"
+                        dataKey="concepto" 
+                        width={120}
+                        fontSize={10}
+                        tick={{ textAnchor: 'end' }}
+                      />
                       <ChartTooltip 
-                        content={({ active, payload, label }) => {
+                        content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
                             return (
-                              <div className="bg-white p-3 border rounded shadow-lg">
-                                <p className="font-medium">{data.conceptoCompleto}</p>
-                                <p className="text-blue-600">Total: {data.importe.toLocaleString()}€</p>
-                                <p className="text-green-600">Base: {data.baseImponible.toLocaleString()}€</p>
-                                {data.tieneIva && <p className="text-orange-600">IVA: {data.iva.toLocaleString()}€</p>}
+                              <div className="bg-white p-4 border rounded-lg shadow-lg max-w-xs">
+                                <p className="font-semibold text-gray-900 mb-2">{data.conceptoCompleto}</p>
+                                <div className="space-y-1">
+                                  <p className="text-sm">
+                                    <span className="font-medium text-blue-600">Total: </span>
+                                    <span className="font-bold">{data.importe.toLocaleString()}€</span>
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium text-green-600">Base: </span>
+                                    {data.baseImponible.toLocaleString()}€
+                                  </p>
+                                  {data.tieneIva && (
+                                    <p className="text-sm">
+                                      <span className="font-medium text-orange-600">IVA: </span>
+                                      {data.iva.toLocaleString()}€
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             );
                           }
                           return null;
                         }}
                       />
-                      <Bar dataKey="importe" fill="#ef4444" name="Importe Total" />
+                      <Bar 
+                        dataKey="importe" 
+                        fill="#ef4444" 
+                        name="Importe Total"
+                        radius={[0, 4, 4, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -517,28 +565,58 @@ const AnalisisFinanciero = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Gastos Variables por Categoría</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Gastos Variables por Categoría
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={320}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={datosGastosVariables}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="importe"
-                      label={({ categoria, porcentaje }) => `${categoria} ${porcentaje.toFixed(0)}%`}
-                    >
-                      {datosGastosVariables.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${Number(value).toLocaleString()}€`, 'Importe']} />
-                    <Legend />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={datosGastosVariables}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={120}
+                        fill="#8884d8"
+                        dataKey="importe"
+                        label={({ categoria, porcentaje, importe }) => 
+                          importe > 0 ? `${categoria}\n${porcentaje.toFixed(0)}%` : ''
+                        }
+                        labelLine={false}
+                      >
+                        {datosGastosVariables.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white p-4 border rounded-lg shadow-lg">
+                                <p className="font-semibold text-gray-900 mb-2">{data.categoria}</p>
+                                <p className="text-lg font-bold" style={{ color: data.color }}>
+                                  {data.importe.toLocaleString()}€
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {data.porcentaje.toFixed(1)}% del total
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        height={36}
+                        formatter={(value, entry) => `${value}: ${entry.payload.importe.toLocaleString()}€`}
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
           </div>
