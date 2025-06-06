@@ -1,9 +1,13 @@
-
 import { useCallback } from 'react';
 import { Proyecto } from '@/types/proyecto';
 import { generarCalendarioMesPuro } from '@/utils/calendarioUtils';
+import { useGastosFijos } from './useGastosFijos';
+import { useGastosPersonalGerencia } from './useGastosPersonalGerencia';
 
 export const useCalculosBeneficios = () => {
+  const { calcularResumenSinPersonalGerencia } = useGastosFijos();
+  const { empleadosGerencia } = useGastosPersonalGerencia();
+
   const calcularBeneficioBrutoAdministracion = useCallback((proyecto: Proyecto) => {
     if (proyecto.tipo !== 'administracion' || !proyecto.precioHora) {
       return 0;
@@ -195,18 +199,29 @@ export const useCalculosBeneficios = () => {
 
       const beneficioBrutoTotal = beneficiosBrutos.reduce((sum, b) => sum + b, 0);
       const gastosTotal = gastosMensuales.reduce((sum, g) => sum + g, 0);
-      const beneficioNeto = beneficioBrutoTotal - gastosTotal;
+      
+      // Agregar gastos fijos mensuales sin personal de gerencia para evitar duplicación
+      const resumenGastosFijos = calcularResumenSinPersonalGerencia();
+      const gastosFijosMensuales = resumenGastosFijos.totalBruto;
+      
+      // Agregar gastos de personal de gerencia del mes específico
+      const gastosPersonalGerencia = empleadosGerencia.reduce((total, empleado) => {
+        return total + (empleado.salarioBruto || 0) + (empleado.seguridadSocialEmpresa || 0) + (empleado.retenciones || 0);
+      }, 0);
+      
+      const gastosTotalConFijos = gastosTotal + gastosFijosMensuales + gastosPersonalGerencia;
+      const beneficioNeto = beneficioBrutoTotal - gastosTotalConFijos;
 
       return {
         mes,
         nombreMes: new Date(año, mes - 1).toLocaleDateString('es-ES', { month: 'long' }),
         beneficioBruto: beneficioBrutoTotal,
-        gastos: gastosTotal,
+        gastos: gastosTotalConFijos,
         beneficioNeto,
         margen: beneficioBrutoTotal > 0 ? (beneficioNeto / beneficioBrutoTotal) * 100 : 0
       };
     });
-  }, [calcularBeneficioMensualAdministracion, calcularBeneficioMensualPresupuesto, calcularGastosMensuales]);
+  }, [calcularBeneficioMensualAdministracion, calcularBeneficioMensualPresupuesto, calcularGastosMensuales, calcularResumenSinPersonalGerencia, empleadosGerencia]);
 
   return {
     calcularBeneficioBrutoAdministracion,

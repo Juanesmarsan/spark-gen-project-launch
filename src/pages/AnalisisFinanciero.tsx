@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -7,13 +6,15 @@ import { useProyectos } from '@/hooks/useProyectos';
 import { useEmpleados } from '@/hooks/useEmpleados';
 import { useCalculosBeneficios } from '@/hooks/useCalculosBeneficios';
 import { useGastosFijos } from '@/hooks/useGastosFijos';
+import { useGastosPersonalGerencia } from '@/hooks/useGastosPersonalGerencia';
 import { CircleDollarSign, Users, BarChart3, TrendingUp, PieChart as PieChartIcon, Calculator } from "lucide-react";
 
 const AnalisisFinanciero = () => {
   const { gastosVariables } = useGastosVariables();
   const { proyectos } = useProyectos();
   const { empleados } = useEmpleados();
-  const { gastosFijos } = useGastosFijos();
+  const { calcularResumenSinPersonalGerencia } = useGastosFijos();
+  const { gastosFijosSinPersonalGerencia } = useGastosPersonalGerencia();
   const {
     calcularBeneficioBrutoAdministracion,
     calcularBeneficioBrutoPresupuesto
@@ -37,17 +38,9 @@ const AnalisisFinanciero = () => {
   // Calcular el total de gastos variables
   const totalGastosVariables = gastosVariables.reduce((acc, gasto) => acc + gasto.importe, 0);
 
-  // Calcular gastos fijos totales anuales
-  const totalGastosFijosAnual = gastosFijos.reduce((total, gasto) => {
-    const importeAnual = gasto.frecuencia === 'mensual' 
-      ? gasto.importe * 12 
-      : gasto.frecuencia === 'trimestral' 
-        ? gasto.importe * 4 
-        : gasto.frecuencia === 'semestral' 
-          ? gasto.importe * 2 
-          : gasto.importe;
-    return total + importeAnual;
-  }, 0);
+  // Usar gastos fijos sin personal de gerencia para evitar duplicaciones
+  const resumenGastosFijos = calcularResumenSinPersonalGerencia();
+  const totalGastosFijosAnual = resumenGastosFijos.totalBruto * 12;
 
   // Calcular el total de ingresos por proyecto
   const ingresosPorProyecto = proyectos.reduce((acc, proyecto) => {
@@ -66,8 +59,8 @@ const AnalisisFinanciero = () => {
   // Calcular el mínimo viable anual
   const minimoViableAnual = totalGastosFijosAnual + salarioAnualEmpleados + totalGastosVariables;
 
-  // Top 10 gastos fijos
-  const top10GastosFijos = gastosFijos
+  // Top 10 gastos fijos sin personal de gerencia
+  const top10GastosFijos = gastosFijosSinPersonalGerencia
     .map(gasto => ({
       descripcion: gasto.concepto,
       importe: gasto.frecuencia === 'mensual' 
