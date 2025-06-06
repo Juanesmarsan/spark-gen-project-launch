@@ -1,48 +1,7 @@
 
 import { useCallback } from 'react';
 import { Proyecto } from '@/types/proyecto';
-import { startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, format } from 'date-fns';
-
-// Lista de días festivos
-const diasFestivos = [
-  '2025-01-01', '2025-01-06', '2025-04-18', '2025-04-21', 
-  '2025-05-01', '2025-08-15', '2025-10-12', '2025-11-01', 
-  '2025-12-06', '2025-12-08', '2025-12-25'
-];
-
-const esFestivo = (fecha: Date): boolean => {
-  const fechaStr = format(fecha, 'yyyy-MM-dd');
-  return diasFestivos.includes(fechaStr);
-};
-
-const calcularHorasTrabajadorEnPeriodo = (inicioMes: Date, finMes: Date, fechaEntrada?: Date, fechaSalida?: Date): number => {
-  // Determinar fecha de inicio para el cálculo
-  let fechaInicio = inicioMes;
-  if (fechaEntrada && fechaEntrada > inicioMes) {
-    fechaInicio = fechaEntrada;
-  }
-  
-  // Determinar fecha de fin para el cálculo
-  let fechaFin = finMes;
-  if (fechaSalida && fechaSalida < finMes) {
-    fechaFin = fechaSalida;
-  }
-  
-  if (fechaInicio > fechaFin) {
-    return 0;
-  }
-  
-  const diasTrabajo = eachDayOfInterval({ start: fechaInicio, end: fechaFin });
-  
-  let horasTotales = 0;
-  diasTrabajo.forEach(dia => {
-    if (!isWeekend(dia) && !esFestivo(dia)) {
-      horasTotales += 8; // 8 horas por día laborable
-    }
-  });
-  
-  return horasTotales;
-};
+import { generarCalendarioMesPuro } from '@/utils/calendarioUtils';
 
 export const useCalculosBeneficios = () => {
   const calcularBeneficioBrutoAdministracion = useCallback((proyecto: Proyecto) => {
@@ -57,17 +16,16 @@ export const useCalculosBeneficios = () => {
     proyecto.trabajadoresAsignados.forEach(trabajador => {
       // Iterar sobre todos los meses del año
       for (let mes = 1; mes <= 12; mes++) {
-        const inicioMes = startOfMonth(new Date(añoActual, mes - 1, 1));
-        const finMes = endOfMonth(new Date(añoActual, mes - 1, 1));
+        const calendario = generarCalendarioMesPuro(trabajador.id, mes, añoActual);
         
-        const horasDelMes = calcularHorasTrabajadorEnPeriodo(
-          inicioMes,
-          finMes,
-          trabajador.fechaEntrada,
-          trabajador.fechaSalida
-        );
-        
-        totalHoras += horasDelMes;
+        calendario.dias.forEach(dia => {
+          // Solo contar días laborables y sábados sin ausencias que impidan trabajar
+          if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+            if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+              totalHoras += dia.horasReales || 0;
+            }
+          }
+        });
       }
     });
 
@@ -117,17 +75,17 @@ export const useCalculosBeneficios = () => {
     }
 
     let totalHoras = 0;
-    const inicioMes = startOfMonth(new Date(año, mes - 1, 1));
-    const finMes = endOfMonth(new Date(año, mes - 1, 1));
 
     proyecto.trabajadoresAsignados.forEach(trabajador => {
-      const horasDelMes = calcularHorasTrabajadorEnPeriodo(
-        inicioMes,
-        finMes,
-        trabajador.fechaEntrada,
-        trabajador.fechaSalida
-      );
-      totalHoras += horasDelMes;
+      const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
+      
+      calendario.dias.forEach(dia => {
+        if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+          if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+            totalHoras += dia.horasReales || 0;
+          }
+        }
+      });
     });
 
     return totalHoras * proyecto.precioHora;

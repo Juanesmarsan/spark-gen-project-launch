@@ -8,8 +8,9 @@ import { Users, Clock, CalendarDays, Edit, Trash2 } from "lucide-react";
 import { Proyecto, Trabajador } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
 import { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
+import { generarCalendarioMesPuro } from "@/utils/calendarioUtils";
 
 interface TrabajadoresTabProps {
   proyecto: Proyecto;
@@ -17,57 +18,20 @@ interface TrabajadoresTabProps {
   onUpdateProyecto: (proyecto: Proyecto) => void;
 }
 
-// Lista de días festivos (puedes expandir esta lista)
-const diasFestivos = [
-  '2025-01-01', // Año Nuevo
-  '2025-01-06', // Reyes
-  '2025-04-18', // Viernes Santo
-  '2025-04-21', // Lunes de Pascua
-  '2025-05-01', // Día del Trabajo
-  '2025-08-15', // Asunción
-  '2025-10-12', // Día de la Hispanidad
-  '2025-11-01', // Todos los Santos
-  '2025-12-06', // Día de la Constitución
-  '2025-12-08', // Inmaculada Concepción
-  '2025-12-25', // Navidad
-];
-
-const esFestivo = (fecha: Date): boolean => {
-  const fechaStr = format(fecha, 'yyyy-MM-dd');
-  return diasFestivos.includes(fechaStr);
-};
-
 const calcularHorasTrabajador = (trabajador: Trabajador, mesSeleccionado: Date): number => {
   console.log(`Calculando horas para ${trabajador.nombre} en ${format(mesSeleccionado, 'MMMM yyyy', { locale: es })}`);
   
-  const inicioMes = startOfMonth(mesSeleccionado);
-  const finMes = endOfMonth(mesSeleccionado);
+  const mes = mesSeleccionado.getMonth() + 1;
+  const año = mesSeleccionado.getFullYear();
   
-  // Determinar fecha de inicio para el cálculo
-  let fechaInicio = inicioMes;
-  if (trabajador.fechaEntrada && trabajador.fechaEntrada > inicioMes) {
-    fechaInicio = trabajador.fechaEntrada;
-  }
-  
-  // Determinar fecha de fin para el cálculo
-  let fechaFin = finMes;
-  if (trabajador.fechaSalida && trabajador.fechaSalida < finMes) {
-    fechaFin = trabajador.fechaSalida;
-  }
-  
-  console.log(`${trabajador.nombre}: Calculando desde ${format(fechaInicio, 'dd/MM/yyyy')} hasta ${format(fechaFin, 'dd/MM/yyyy')}`);
-  
-  if (fechaInicio > fechaFin) {
-    console.log(`${trabajador.nombre}: No trabajó en este mes`);
-    return 0;
-  }
-  
-  const diasTrabajo = eachDayOfInterval({ start: fechaInicio, end: fechaFin });
+  const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
   
   let horasTotales = 0;
-  diasTrabajo.forEach(dia => {
-    if (!isWeekend(dia) && !esFestivo(dia)) {
-      horasTotales += 8; // 8 horas por día laborable
+  calendario.dias.forEach(dia => {
+    if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+      if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+        horasTotales += dia.horasReales || 0;
+      }
     }
   });
   
