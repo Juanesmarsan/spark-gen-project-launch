@@ -61,7 +61,7 @@ export const EmpleadoDetails = ({
           </TabsContent>
 
           <TabsContent value="calendario">
-            <CalendarioMensual empleadoId={empleado.id} />
+            <CalendarioMensual empleado={empleado} />
           </TabsContent>
 
           <TabsContent value="epis">

@@ -13,6 +13,10 @@ export interface Empleado {
   seguridadSocialEmpresa: number;
   retenciones: number;
   embargo: number;
+  departamento: 'operario' | 'tecnico' | 'administracion' | 'gerencia';
+  categoria: 'peon' | 'oficial_3' | 'oficial_2' | 'oficial_1' | 'encargado' | 'tecnico' | 'gerencia';
+  precioHoraExtra: number;
+  precioHoraFestiva: number;
   adelantos: Adelanto[];
   epis: EpiAsignado[];
   herramientas: HerramientaAsignada[];

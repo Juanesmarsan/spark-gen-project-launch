@@ -14,7 +14,12 @@ export const useEmpleados = () => {
       console.log("Empleados cargados:", empleadosParseados);
       setEmpleados(empleadosParseados.map((emp: any) => ({
         ...emp,
-        fechaIngreso: new Date(emp.fechaIngreso)
+        fechaIngreso: new Date(emp.fechaIngreso),
+        // Valores por defecto para nuevos campos
+        departamento: emp.departamento || 'operario',
+        categoria: emp.categoria || 'peon',
+        precioHoraExtra: emp.precioHoraExtra || 20,
+        precioHoraFestiva: emp.precioHoraFestiva || 25,
       })));
     } else {
       // Datos de ejemplo si no hay empleados
@@ -32,6 +37,10 @@ export const useEmpleados = () => {
         seguridadSocialEmpresa: 750,
         retenciones: 375,
         embargo: 0,
+        departamento: 'operario',
+        categoria: 'oficial_2',
+        precioHoraExtra: 20,
+        precioHoraFestiva: 25,
         adelantos: [],
         epis: [],
         herramientas: [],
@@ -56,6 +65,10 @@ export const useEmpleados = () => {
     const nuevoEmpleado: Empleado = {
       ...nuevoEmpleadoData,
       id: Date.now(),
+      departamento: nuevoEmpleadoData.departamento || 'operario',
+      categoria: nuevoEmpleadoData.categoria || 'peon',
+      precioHoraExtra: nuevoEmpleadoData.precioHoraExtra || 20,
+      precioHoraFestiva: nuevoEmpleadoData.precioHoraFestiva || 25,
       adelantos: [],
       epis: [],
       herramientas: [],

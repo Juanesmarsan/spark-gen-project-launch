@@ -22,3 +22,10 @@ export interface FestivoEspañol {
   nombre: string;
   ambito: 'nacional' | 'valencia';
 }
+
+export interface ResumenHoras {
+  horasLaborales: number;
+  horasRealesLaborales: number;
+  horasRealesFestivas: number;
+  horasExtras: number;
+}

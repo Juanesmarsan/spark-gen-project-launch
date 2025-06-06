@@ -1,6 +1,5 @@
-
 import { useState, useMemo } from 'react';
-import { DiaCalendario, CalendarioMensual, FestivoEspañol } from '@/types/calendario';
+import { DiaCalendario, CalendarioMensual, FestivoEspañol, ResumenHoras } from '@/types/calendario';
 
 // Festivos nacionales fijos de España 2024-2025
 const festivosNacionalesFijos: FestivoEspañol[] = [
@@ -66,6 +65,30 @@ export const useCalendario = (empleadoId: number) => {
 
   const getHorasDefecto = (tipo: string): number => {
     return tipo === 'laborable' ? 8 : 0;
+  };
+
+  const calcularResumenHoras = (calendario: CalendarioMensual): ResumenHoras => {
+    let horasLaborales = 0;
+    let horasRealesLaborales = 0;
+    let horasRealesFestivas = 0;
+
+    calendario.dias.forEach(dia => {
+      if (dia.tipo === 'laborable') {
+        horasLaborales += dia.horasDefecto;
+        horasRealesLaborales += dia.horasReales;
+      } else if (dia.tipo === 'festivo' || dia.tipo === 'sabado' || dia.tipo === 'domingo') {
+        horasRealesFestivas += dia.horasReales;
+      }
+    });
+
+    const horasExtras = Math.max(0, horasRealesLaborales - horasLaborales);
+
+    return {
+      horasLaborales,
+      horasRealesLaborales,
+      horasRealesFestivas,
+      horasExtras
+    };
   };
 
   const generarCalendarioMes = (mes: number, año: number): CalendarioMensual => {
@@ -136,5 +159,6 @@ export const useCalendario = (empleadoId: number) => {
     actualizarDia,
     esFestivo,
     todosLosFestivos,
+    calcularResumenHoras,
   };
 };
