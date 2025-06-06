@@ -18,30 +18,22 @@ interface EmpleadosListProps {
 export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado, onDeshabilitarEmpleado, onHabilitarEmpleado }: EmpleadosListProps) => {
   console.log('EmpleadosList: Renderizando lista con', empleados.length, 'empleados');
 
-  const handleEditarEmpleado = (empleado: Empleado, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleEditarEmpleado = (empleado: Empleado) => {
     console.log('EmpleadosList: Editando empleado', empleado.id);
     onSelectEmpleado(empleado);
   };
 
-  const handleEliminarEmpleado = (empleadoId: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleEliminarEmpleado = (empleadoId: number) => {
     console.log('EmpleadosList: Eliminando empleado', empleadoId);
     onEliminarEmpleado(empleadoId);
   };
 
-  const handleDeshabilitarEmpleado = (empleadoId: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDeshabilitarEmpleado = (empleadoId: number) => {
     console.log('EmpleadosList: Deshabilitando empleado', empleadoId);
     onDeshabilitarEmpleado(empleadoId);
   };
 
-  const handleHabilitarEmpleado = (empleadoId: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleHabilitarEmpleado = (empleadoId: number) => {
     console.log('EmpleadosList: Habilitando empleado', empleadoId);
     onHabilitarEmpleado(empleadoId);
   };
@@ -86,7 +78,7 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado,
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={(e) => handleEditarEmpleado(empleado, e)}
+                      onClick={() => handleEditarEmpleado(empleado)}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -108,7 +100,7 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado,
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={(e) => handleDeshabilitarEmpleado(empleado.id, e)}>
+                            <AlertDialogAction onClick={() => handleDeshabilitarEmpleado(empleado.id)}>
                               Deshabilitar
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -131,7 +123,7 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado,
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={(e) => handleHabilitarEmpleado(empleado.id, e)}>
+                            <AlertDialogAction onClick={() => handleHabilitarEmpleado(empleado.id)}>
                               Habilitar
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -155,7 +147,7 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado,
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={(e) => handleEliminarEmpleado(empleado.id, e)}>
+                          <AlertDialogAction onClick={() => handleEliminarEmpleado(empleado.id)}>
                             Eliminar
                           </AlertDialogAction>
                         </AlertDialogFooter>
