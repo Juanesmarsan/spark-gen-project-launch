@@ -94,6 +94,11 @@ const Empleados = () => {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [nuevoAdelanto, setNuevoAdelanto] = useState({ concepto: "", cantidad: 0 });
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>();
+  const [dialogoAdelantoAbierto, setDialogoAdelantoAbierto] = useState(false);
+  const [dialogoEpiAbierto, setDialogoEpiAbierto] = useState(false);
+  const [dialogoHerramientaAbierto, setDialogoHerramientaAbierto] = useState(false);
+  const [epiSeleccionado, setEpiSeleccionado] = useState("");
+  const [herramientaSeleccionada, setHerramientaSeleccionada] = useState("");
 
   const epis = [
     { id: 1, nombre: "Casco de seguridad", precio: 25 },
@@ -142,6 +147,22 @@ const Empleados = () => {
           : emp
       ));
       setNuevoAdelanto({ concepto: "", cantidad: 0 });
+      setDialogoAdelantoAbierto(false);
+      // Actualizar el empleado seleccionado
+      if (empleadoSeleccionado && empleadoSeleccionado.id === empleadoId) {
+        const empleadoActualizado = empleados.find(emp => emp.id === empleadoId);
+        if (empleadoActualizado) {
+          setEmpleadoSeleccionado({
+            ...empleadoActualizado,
+            adelantos: [...empleadoActualizado.adelantos, {
+              id: Date.now(),
+              concepto: nuevoAdelanto.concepto,
+              cantidad: nuevoAdelanto.cantidad,
+              fecha: new Date()
+            }]
+          });
+        }
+      }
     }
   };
 
@@ -161,6 +182,9 @@ const Empleados = () => {
             }
           : emp
       ));
+      setEpiSeleccionado("");
+      setFechaSeleccionada(undefined);
+      setDialogoEpiAbierto(false);
     }
   };
 
@@ -180,6 +204,9 @@ const Empleados = () => {
             }
           : emp
       ));
+      setHerramientaSeleccionada("");
+      setFechaSeleccionada(undefined);
+      setDialogoHerramientaAbierto(false);
     }
   };
 
@@ -357,7 +384,7 @@ const Empleados = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-semibold">Adelantos</h3>
-                      <Dialog>
+                      <Dialog open={dialogoAdelantoAbierto} onOpenChange={setDialogoAdelantoAbierto}>
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm">
                             <Plus className="w-4 h-4 mr-2" />
@@ -382,13 +409,18 @@ const Empleados = () => {
                               <Input 
                                 type="number"
                                 value={nuevoAdelanto.cantidad}
-                                onChange={(e) => setNuevoAdelanto(prev => ({ ...prev, cantidad: parseFloat(e.target.value) }))}
+                                onChange={(e) => setNuevoAdelanto(prev => ({ ...prev, cantidad: parseFloat(e.target.value) || 0 }))}
                                 placeholder="0.00"
                               />
                             </div>
-                            <Button onClick={() => agregarAdelanto(empleadoSeleccionado.id)}>
-                              Añadir Adelanto
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button variant="outline" onClick={() => setDialogoAdelantoAbierto(false)}>
+                                Cancelar
+                              </Button>
+                              <Button onClick={() => agregarAdelanto(empleadoSeleccionado.id)}>
+                                Añadir Adelanto
+                              </Button>
+                            </div>
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -426,7 +458,7 @@ const Empleados = () => {
                 <TabsContent value="epis" className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold">EPIs Asignados</h3>
-                    <Dialog>
+                    <Dialog open={dialogoEpiAbierto} onOpenChange={setDialogoEpiAbierto}>
                       <DialogTrigger asChild>
                         <Button variant="outline" size="sm">
                           <Plus className="w-4 h-4 mr-2" />
@@ -440,7 +472,7 @@ const Empleados = () => {
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label>EPI</Label>
-                            <Select>
+                            <Select value={epiSeleccionado} onValueChange={setEpiSeleccionado}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar EPI" />
                               </SelectTrigger>
@@ -472,13 +504,21 @@ const Empleados = () => {
                               </PopoverContent>
                             </Popover>
                           </div>
-                          <Button onClick={() => {
-                            if (fechaSeleccionada) {
-                              asignarEpi(empleadoSeleccionado.id, 1, fechaSeleccionada);
-                            }
-                          }}>
-                            Asignar EPI
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setDialogoEpiAbierto(false)}>
+                              Cancelar
+                            </Button>
+                            <Button 
+                              onClick={() => {
+                                if (epiSeleccionado && fechaSeleccionada) {
+                                  asignarEpi(empleadoSeleccionado.id, parseInt(epiSeleccionado), fechaSeleccionada);
+                                }
+                              }}
+                              disabled={!epiSeleccionado || !fechaSeleccionada}
+                            >
+                              Asignar EPI
+                            </Button>
+                          </div>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -515,7 +555,7 @@ const Empleados = () => {
                 <TabsContent value="herramientas" className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold">Herramientas Asignadas</h3>
-                    <Dialog>
+                    <Dialog open={dialogoHerramientaAbierto} onOpenChange={setDialogoHerramientaAbierto}>
                       <DialogTrigger asChild>
                         <Button variant="outline" size="sm">
                           <Plus className="w-4 h-4 mr-2" />
@@ -529,7 +569,7 @@ const Empleados = () => {
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label>Herramienta</Label>
-                            <Select>
+                            <Select value={herramientaSeleccionada} onValueChange={setHerramientaSeleccionada}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar herramienta" />
                               </SelectTrigger>
@@ -561,13 +601,21 @@ const Empleados = () => {
                               </PopoverContent>
                             </Popover>
                           </div>
-                          <Button onClick={() => {
-                            if (fechaSeleccionada) {
-                              asignarHerramienta(empleadoSeleccionado.id, 1, fechaSeleccionada);
-                            }
-                          }}>
-                            Asignar Herramienta
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setDialogoHerramientaAbierto(false)}>
+                              Cancelar
+                            </Button>
+                            <Button 
+                              onClick={() => {
+                                if (herramientaSeleccionada && fechaSeleccionada) {
+                                  asignarHerramienta(empleadoSeleccionado.id, parseInt(herramientaSeleccionada), fechaSeleccionada);
+                                }
+                              }}
+                              disabled={!herramientaSeleccionada || !fechaSeleccionada}
+                            >
+                              Asignar Herramienta
+                            </Button>
+                          </div>
                         </div>
                       </DialogContent>
                     </Dialog>
