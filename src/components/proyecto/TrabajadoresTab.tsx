@@ -1,11 +1,11 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Edit, UserMinus, UserPlus } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CalendarIcon, Edit, UserMinus, UserPlus, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Proyecto, Trabajador } from "@/types/proyecto";
 import { useEmpleados } from "@/hooks/useEmpleados";
+import { generarCalendarioMesPuro } from "@/utils/calendarioUtils";
 
 interface TrabajadoresTabProps {
   proyecto: Proyecto;
@@ -27,6 +28,7 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedEmpleados, setSelectedEmpleados] = useState<number[]>([]);
   const [fechaEntradaNuevos, setFechaEntradaNuevos] = useState<Date | undefined>(new Date());
+  const [mostrarHoras, setMostrarHoras] = useState(false);
 
   const { empleados } = useEmpleados();
 
@@ -34,6 +36,61 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
   const empleadosDisponibles = empleados.filter(emp => 
     emp.activo && !proyecto.trabajadoresAsignados.some(t => t.id === emp.id)
   );
+
+  // Calcular horas trabajadas para un trabajador específico
+  const calcularHorasTrabajador = (trabajador: Trabajador) => {
+    if (!trabajador.fechaEntrada) return { horasLaborales: 0, horasExtras: 0, horasFestivas: 0 };
+
+    const añoActual = new Date().getFullYear();
+    const mesActual = new Date().getMonth() + 1;
+    let horasLaborales = 0;
+    let horasExtras = 0;
+    let horasFestivas = 0;
+
+    // Calcular desde el mes de entrada hasta el mes actual o hasta la fecha de salida
+    const fechaFin = trabajador.fechaSalida || new Date();
+    const mesInicio = trabajador.fechaEntrada.getMonth() + 1;
+    const añoInicio = trabajador.fechaEntrada.getFullYear();
+    const mesFin = fechaFin.getMonth() + 1;
+    const añoFin = fechaFin.getFullYear();
+
+    for (let año = añoInicio; año <= añoFin; año++) {
+      const mesStart = año === añoInicio ? mesInicio : 1;
+      const mesEnd = año === añoFin ? mesFin : 12;
+
+      for (let mes = mesStart; mes <= mesEnd; mes++) {
+        const calendario = generarCalendarioMesPuro(trabajador.id, mes, año);
+        
+        calendario.dias.forEach(dia => {
+          // Solo contar días dentro del rango de trabajo del empleado
+          const fechaDia = dia.fecha;
+          const dentroDelRango = fechaDia >= trabajador.fechaEntrada! && 
+                               (!trabajador.fechaSalida || fechaDia <= trabajador.fechaSalida);
+
+          if (dentroDelRango) {
+            if (dia.tipo === 'laborable') {
+              // Verificar que no hay ausencias que excluyan las horas
+              if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+                horasLaborales += dia.horasReales || 0;
+                // Si trabaja más de 8 horas en día laborable, son horas extras
+                if ((dia.horasReales || 0) > 8) {
+                  horasExtras += (dia.horasReales || 0) - 8;
+                }
+              }
+            } else if (dia.tipo === 'sabado') {
+              // Los sábados se consideran horas extras si se trabajan
+              horasExtras += dia.horasReales || 0;
+            } else if ((dia.tipo === 'festivo' || dia.tipo === 'domingo') && dia.horasReales) {
+              // Trabajo en festivos y domingos
+              horasFestivas += dia.horasReales || 0;
+            }
+          }
+        });
+      }
+    }
+
+    return { horasLaborales, horasExtras, horasFestivas };
+  };
 
   const handleEditTrabajador = (trabajador: Trabajador) => {
     setEditingTrabajador(trabajador);
@@ -132,6 +189,14 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Trabajadores del Proyecto</h3>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMostrarHoras(!mostrarHoras)}
+          >
+            <Clock className="w-4 h-4 mr-1" />
+            {mostrarHoras ? 'Ocultar Horas' : 'Ver Horas'}
+          </Button>
           <span className="text-sm text-gray-500">
             {proyecto.trabajadoresAsignados.length} trabajadores asignados
           </span>
@@ -219,6 +284,59 @@ export const TrabajadoresTab = ({ proyecto, onUpdateProyecto }: TrabajadoresTabP
           )}
         </div>
       </div>
+
+      {mostrarHoras && proyecto.trabajadoresAsignados.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Resumen de Horas por Trabajador</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Trabajador</TableHead>
+                  <TableHead>Fecha Entrada</TableHead>
+                  <TableHead>Fecha Salida</TableHead>
+                  <TableHead className="text-right">Horas Laborales</TableHead>
+                  <TableHead className="text-right">Horas Extras</TableHead>
+                  <TableHead className="text-right">Horas Festivas</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {proyecto.trabajadoresAsignados.map((trabajador) => {
+                  const horas = calcularHorasTrabajador(trabajador);
+                  const totalHoras = horas.horasLaborales + horas.horasExtras + horas.horasFestivas;
+                  
+                  return (
+                    <TableRow key={trabajador.id}>
+                      <TableCell className="font-medium">
+                        {trabajador.nombre} {trabajador.apellidos}
+                      </TableCell>
+                      <TableCell>
+                        {trabajador.fechaEntrada ? 
+                          format(trabajador.fechaEntrada, "dd/MM/yyyy") : 
+                          <span className="text-red-500">No definida</span>
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {trabajador.fechaSalida ? 
+                          format(trabajador.fechaSalida, "dd/MM/yyyy") : 
+                          <span className="text-green-600">Activo</span>
+                        }
+                      </TableCell>
+                      <TableCell className="text-right">{horas.horasLaborales}h</TableCell>
+                      <TableCell className="text-right">{horas.horasExtras}h</TableCell>
+                      <TableCell className="text-right">{horas.horasFestivas}h</TableCell>
+                      <TableCell className="text-right font-semibold">{totalHoras}h</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4">
         {proyecto.trabajadoresAsignados.map((trabajador) => {
