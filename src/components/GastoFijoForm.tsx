@@ -5,6 +5,7 @@ import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/compon
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GastoFijo } from "@/types/gastosFijos";
 
 interface GastoFijoFormProps {
@@ -18,6 +19,7 @@ export const GastoFijoForm = ({ gasto, onSubmit, onCancel }: GastoFijoFormProps)
   const [totalBruto, setTotalBruto] = useState(gasto?.totalBruto?.toString() || "");
   const [tieneIva, setTieneIva] = useState(gasto?.tieneIva || false);
   const [iva, setIva] = useState(gasto?.iva?.toString() || "");
+  const [frecuencia, setFrecuencia] = useState<'mensual' | 'trimestral' | 'semestral' | 'anual'>(gasto?.frecuencia || 'mensual');
 
   const calcularBaseImponible = () => {
     const bruto = parseFloat(totalBruto) || 0;
@@ -46,13 +48,16 @@ export const GastoFijoForm = ({ gasto, onSubmit, onCancel }: GastoFijoFormProps)
     e.preventDefault();
     
     const baseImponible = calcularBaseImponible();
+    const importe = baseImponible; // El importe es igual a la base imponible
     
     onSubmit({
       concepto,
       totalBruto: parseFloat(totalBruto) || 0,
       baseImponible,
       tieneIva,
-      iva: tieneIva ? parseFloat(iva) || 0 : undefined
+      iva: tieneIva ? parseFloat(iva) || 0 : undefined,
+      importe,
+      frecuencia
     });
   };
 
@@ -87,6 +92,21 @@ export const GastoFijoForm = ({ gasto, onSubmit, onCancel }: GastoFijoFormProps)
             placeholder="0.00"
             required
           />
+        </div>
+
+        <div>
+          <Label htmlFor="frecuencia">Frecuencia</Label>
+          <Select value={frecuencia} onValueChange={(value: any) => setFrecuencia(value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar frecuencia" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mensual">Mensual</SelectItem>
+              <SelectItem value="trimestral">Trimestral</SelectItem>
+              <SelectItem value="semestral">Semestral</SelectItem>
+              <SelectItem value="anual">Anual</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center space-x-2">

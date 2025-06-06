@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { GastoFijo, ResumenGastosFijos } from '@/types/gastosFijos';
 import { useEmpleados } from './useEmpleados';
@@ -17,28 +18,28 @@ export const useGastosFijos = () => {
     } else {
       // Datos de ejemplo basados en la imagen
       const gastosEjemplo: GastoFijo[] = [
-        { id: 1, concepto: "Salario y SS Jorge", totalBruto: 2200.00, baseImponible: 2200.00, tieneIva: false },
-        { id: 2, concepto: "Dietas Gerencia", totalBruto: 800.00, baseImponible: 800.00, tieneIva: false },
-        { id: 3, concepto: "Salarios Gerencia", totalBruto: 4600.00, baseImponible: 4600.00, tieneIva: false },
-        { id: 4, concepto: "CoWorking", totalBruto: 30.00, baseImponible: 30.00, tieneIva: false },
-        { id: 5, concepto: "Peugeot Rifter", totalBruto: 269.00, baseImponible: 212.51, tieneIva: true, iva: 56.49 },
-        { id: 6, concepto: "retencion Esteban", totalBruto: 658.56, baseImponible: 658.56, tieneIva: false },
-        { id: 7, concepto: "retencion Nuria", totalBruto: 448.76, baseImponible: 448.76, tieneIva: false },
-        { id: 8, concepto: "SS Nuria", totalBruto: 973.42, baseImponible: 973.42, tieneIva: false },
-        { id: 9, concepto: "Hilti", totalBruto: 250.00, baseImponible: 197.50, tieneIva: true, iva: 52.50 },
-        { id: 10, concepto: "Autónomo", totalBruto: 387.00, baseImponible: 387.00, tieneIva: false },
-        { id: 11, concepto: "Seguros privados", totalBruto: 200.00, baseImponible: 200.00, tieneIva: false },
-        { id: 12, concepto: "Tarjetas Crédito", totalBruto: 6000.00, baseImponible: 4740.00, tieneIva: true, iva: 1260.00 },
-        { id: 13, concepto: "Nalanda", totalBruto: 210.00, baseImponible: 210.00, tieneIva: true },
-        { id: 14, concepto: "Telefono/Internet", totalBruto: 350.00, baseImponible: 289.25, tieneIva: true, iva: 60.75 },
-        { id: 15, concepto: "Asesoria Laboral", totalBruto: 400.00, baseImponible: 377.60, tieneIva: true, iva: 22.40 },
-        { id: 16, concepto: "Seguros Vida", totalBruto: 164.00, baseImponible: 164.00, tieneIva: false },
-        { id: 17, concepto: "Hipoteca de locales", totalBruto: 497.00, baseImponible: 497.00, tieneIva: false },
-        { id: 18, concepto: "Alquiler Puzol", totalBruto: 700.00, baseImponible: 700.00, tieneIva: false },
-        { id: 19, concepto: "Asesoria financiera", totalBruto: 605.00, baseImponible: 500.00, tieneIva: true, iva: 105.00 },
-        { id: 20, concepto: "Seguro Autónmo", totalBruto: 62.50, baseImponible: 62.50, tieneIva: false },
-        { id: 21, concepto: "alquiler coche", totalBruto: 657.00, baseImponible: 542.90, tieneIva: true, iva: 114.10 },
-        { id: 22, concepto: "seguro cajamar vida", totalBruto: 29.00, baseImponible: 29.00, tieneIva: false }
+        { id: 1, concepto: "Salario y SS Jorge", totalBruto: 2200.00, baseImponible: 2200.00, tieneIva: false, importe: 2200.00, frecuencia: 'mensual' },
+        { id: 2, concepto: "Dietas Gerencia", totalBruto: 800.00, baseImponible: 800.00, tieneIva: false, importe: 800.00, frecuencia: 'mensual' },
+        { id: 3, concepto: "Salarios Gerencia", totalBruto: 4600.00, baseImponible: 4600.00, tieneIva: false, importe: 4600.00, frecuencia: 'mensual' },
+        { id: 4, concepto: "CoWorking", totalBruto: 30.00, baseImponible: 30.00, tieneIva: false, importe: 30.00, frecuencia: 'mensual' },
+        { id: 5, concepto: "Peugeot Rifter", totalBruto: 269.00, baseImponible: 212.51, tieneIva: true, iva: 56.49, importe: 212.51, frecuencia: 'mensual' },
+        { id: 6, concepto: "retencion Esteban", totalBruto: 658.56, baseImponible: 658.56, tieneIva: false, importe: 658.56, frecuencia: 'mensual' },
+        { id: 7, concepto: "retencion Nuria", totalBruto: 448.76, baseImponible: 448.76, tieneIva: false, importe: 448.76, frecuencia: 'mensual' },
+        { id: 8, concepto: "SS Nuria", totalBruto: 973.42, baseImponible: 973.42, tieneIva: false, importe: 973.42, frecuencia: 'mensual' },
+        { id: 9, concepto: "Hilti", totalBruto: 250.00, baseImponible: 197.50, tieneIva: true, iva: 52.50, importe: 197.50, frecuencia: 'mensual' },
+        { id: 10, concepto: "Autónomo", totalBruto: 387.00, baseImponible: 387.00, tieneIva: false, importe: 387.00, frecuencia: 'mensual' },
+        { id: 11, concepto: "Seguros privados", totalBruto: 200.00, baseImponible: 200.00, tieneIva: false, importe: 200.00, frecuencia: 'mensual' },
+        { id: 12, concepto: "Tarjetas Crédito", totalBruto: 6000.00, baseImponible: 4740.00, tieneIva: true, iva: 1260.00, importe: 4740.00, frecuencia: 'mensual' },
+        { id: 13, concepto: "Nalanda", totalBruto: 210.00, baseImponible: 210.00, tieneIva: true, importe: 210.00, frecuencia: 'mensual' },
+        { id: 14, concepto: "Telefono/Internet", totalBruto: 350.00, baseImponible: 289.25, tieneIva: true, iva: 60.75, importe: 289.25, frecuencia: 'mensual' },
+        { id: 15, concepto: "Asesoria Laboral", totalBruto: 400.00, baseImponible: 377.60, tieneIva: true, iva: 22.40, importe: 377.60, frecuencia: 'mensual' },
+        { id: 16, concepto: "Seguros Vida", totalBruto: 164.00, baseImponible: 164.00, tieneIva: false, importe: 164.00, frecuencia: 'mensual' },
+        { id: 17, concepto: "Hipoteca de locales", totalBruto: 497.00, baseImponible: 497.00, tieneIva: false, importe: 497.00, frecuencia: 'mensual' },
+        { id: 18, concepto: "Alquiler Puzol", totalBruto: 700.00, baseImponible: 700.00, tieneIva: false, importe: 700.00, frecuencia: 'mensual' },
+        { id: 19, concepto: "Asesoria financiera", totalBruto: 605.00, baseImponible: 500.00, tieneIva: true, iva: 105.00, importe: 500.00, frecuencia: 'mensual' },
+        { id: 20, concepto: "Seguro Autónmo", totalBruto: 62.50, baseImponible: 62.50, tieneIva: false, importe: 62.50, frecuencia: 'mensual' },
+        { id: 21, concepto: "alquiler coche", totalBruto: 657.00, baseImponible: 542.90, tieneIva: true, iva: 114.10, importe: 542.90, frecuencia: 'mensual' },
+        { id: 22, concepto: "seguro cajamar vida", totalBruto: 29.00, baseImponible: 29.00, tieneIva: false, importe: 29.00, frecuencia: 'mensual' }
       ];
       setGastosFijos(gastosEjemplo);
     }
