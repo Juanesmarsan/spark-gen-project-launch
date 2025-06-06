@@ -16,12 +16,32 @@ export const useEmpleados = () => {
     
     const empleadosGuardados = cargarEmpleadosDesdeStorage();
     
-    if (empleadosGuardados) {
+    if (empleadosGuardados && empleadosGuardados.length > 0) {
       console.log('useEmpleados: Empleados cargados:', empleadosGuardados.length);
-      setEmpleados(empleadosGuardados);
+      // Verificar si Mohammed ya está en la lista
+      const mohammedExists = empleadosGuardados.some(emp => 
+        emp.nombre === 'Mohammed' && emp.apellidos === 'Soumat Mehrroun'
+      );
+      
+      if (!mohammedExists) {
+        // Agregar Mohammed a los empleados existentes
+        const mohammed = empleadosEjemplo.find(emp => 
+          emp.nombre === 'Mohammed' && emp.apellidos === 'Soumat Mehrroun'
+        );
+        if (mohammed) {
+          const empleadosActualizados = [...empleadosGuardados, mohammed];
+          setEmpleados(empleadosActualizados);
+          guardarEmpleadosEnStorage(empleadosActualizados);
+        } else {
+          setEmpleados(empleadosGuardados);
+        }
+      } else {
+        setEmpleados(empleadosGuardados);
+      }
     } else {
       console.log('useEmpleados: Creando empleados de ejemplo');
       setEmpleados(empleadosEjemplo);
+      guardarEmpleadosEnStorage(empleadosEjemplo);
     }
     
     setIsLoaded(true);
