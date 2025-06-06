@@ -1,16 +1,23 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useGastosVariables } from '@/hooks/useGastosVariables';
 import { useProyectos } from '@/hooks/useProyectos';
 import { useEmpleados } from '@/hooks/useEmpleados';
-import { Badge } from "@/components/ui/badge"
-import { CircleDollarSign, PieChart as PieChartIcon, FileText, Users, Coins, Landmark, BarChart3, TrendingUp, Wallet, PiggyBank, ClipboardList, Shield } from "lucide-react";
+import { useCalculosBeneficios } from '@/hooks/useCalculosBeneficios';
+import { useGastosFijos } from '@/hooks/useGastosFijos';
+import { CircleDollarSign, Users, BarChart3, TrendingUp, PieChart as PieChartIcon, Calculator } from "lucide-react";
 
 const AnalisisFinanciero = () => {
   const { gastosVariables } = useGastosVariables();
   const { proyectos } = useProyectos();
   const { empleados } = useEmpleados();
+  const { gastosFijos } = useGastosFijos();
+  const {
+    calcularBeneficioBrutoAdministracion,
+    calcularBeneficioBrutoPresupuesto
+  } = useCalculosBeneficios();
 
   // Datos para gráfico de gastos variables por categoría
   const gastosVariablesPorCategoria = gastosVariables.reduce((acc, gasto) => {
@@ -30,23 +37,57 @@ const AnalisisFinanciero = () => {
   // Calcular el total de gastos variables
   const totalGastosVariables = gastosVariables.reduce((acc, gasto) => acc + gasto.importe, 0);
 
+  // Calcular gastos fijos totales anuales
+  const totalGastosFijosAnual = gastosFijos.reduce((total, gasto) => {
+    const importeAnual = gasto.frecuencia === 'mensual' 
+      ? gasto.importe * 12 
+      : gasto.frecuencia === 'trimestral' 
+        ? gasto.importe * 4 
+        : gasto.frecuencia === 'semestral' 
+          ? gasto.importe * 2 
+          : gasto.importe;
+    return total + importeAnual;
+  }, 0);
+
   // Calcular el total de ingresos por proyecto
-  const ingresosPorProyecto = proyectos.reduce((acc, proyecto) => acc + proyecto.precio, 0);
+  const ingresosPorProyecto = proyectos.reduce((acc, proyecto) => {
+    const ingresoBruto = proyecto.tipo === 'administracion' 
+      ? calcularBeneficioBrutoAdministracion(proyecto)
+      : calcularBeneficioBrutoPresupuesto(proyecto);
+    return acc + ingresoBruto;
+  }, 0);
 
   // Calcular el salario total de los empleados
-  const salarioTotalEmpleados = empleados.reduce((acc, empleado) => acc + empleado.salario, 0);
+  const salarioTotalEmpleados = empleados.reduce((acc, empleado) => acc + (empleado.salarioActual || 0), 0);
 
-  // Calcular el número total de proyectos
-  const totalProyectos = proyectos.length;
+  // Calcular salarios anuales
+  const salarioAnualEmpleados = salarioTotalEmpleados * 12;
 
-  // Calcular el número total de empleados
-  const totalEmpleados = empleados.length;
+  // Calcular el mínimo viable anual
+  const minimoViableAnual = totalGastosFijosAnual + salarioAnualEmpleados + totalGastosVariables;
+
+  // Top 10 gastos fijos
+  const top10GastosFijos = gastosFijos
+    .map(gasto => ({
+      descripcion: gasto.descripcion,
+      importe: gasto.frecuencia === 'mensual' 
+        ? gasto.importe * 12 
+        : gasto.frecuencia === 'trimestral' 
+          ? gasto.importe * 4 
+          : gasto.frecuencia === 'semestral' 
+            ? gasto.importe * 2 
+            : gasto.importe,
+      fill: `hsl(${Math.random() * 360}, 70%, 50%)`
+    }))
+    .sort((a, b) => b.importe - a.importe)
+    .slice(0, 10);
 
   // Datos para el gráfico de ingresos vs gastos
   const dataIngresosGastos = [
     { name: 'Ingresos', value: ingresosPorProyecto },
     { name: 'Gastos Variables', value: totalGastosVariables },
-    { name: 'Salarios', value: salarioTotalEmpleados },
+    { name: 'Gastos Fijos', value: totalGastosFijosAnual },
+    { name: 'Salarios', value: salarioAnualEmpleados },
   ];
 
   return (
@@ -56,7 +97,7 @@ const AnalisisFinanciero = () => {
         Visualización de datos financieros clave para la toma de decisiones
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -76,7 +117,7 @@ const AnalisisFinanciero = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
-              Gastos Variables Totales
+              Gastos Variables
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -91,76 +132,180 @@ const AnalisisFinanciero = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Salario Total Empleados
+              Salarios Anuales
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">€{salarioTotalEmpleados.toFixed(2)}</div>
+            <div className="text-2xl font-bold">€{salarioAnualEmpleados.toFixed(2)}</div>
             <p className="text-sm text-muted-foreground">
-              Salario total pagado a los empleados
+              Salario anual total de empleados
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <Calculator className="w-5 h-5" />
+              Mínimo Viable Anual
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-700">€{minimoViableAnual.toFixed(2)}</div>
+            <p className="text-sm text-red-600">
+              Facturación mínima necesaria para cubrir gastos
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              Ingresos vs Gastos
+              Ingresos vs Gastos (Anual)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dataIngresosGastos}>
+                <BarChart data={dataIngresosGastos} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `€${value.toFixed(2)}`} />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 12 }}
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value: number) => [`€${value.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`, 'Importe']}
+                    labelStyle={{ color: '#000' }}
+                    contentStyle={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}
+                  />
                   <Legend />
-                  <Bar dataKey="value" fill="#82ca9d" />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#82ca9d"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChart className="w-5 h-5" />
-                    Gastos Variables por Categoría
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={dataGastosVariablesPorCategoria}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="total"
-                          label={({ categoria, total }) => `${categoria}: €${total.toFixed(0)}`}
-                        >
-                          {dataGastosVariablesPorCategoria.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value: number) => [`€${value.toFixed(2)}`, 'Total']}
-                          labelFormatter={(label) => `Categoría: ${label}`}
-                        />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChartIcon className="w-5 h-5" />
+              Top 10 Gastos Fijos (Anual)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={top10GastosFijos}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="importe"
+                    label={({ descripcion, importe }) => 
+                      `${descripcion.substring(0, 15)}${descripcion.length > 15 ? '...' : ''}: €${importe.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`
+                    }
+                    labelLine={false}
+                  >
+                    {top10GastosFijos.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [`€${value.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`, 'Importe Anual']}
+                    labelFormatter={(label) => `Gasto: ${label}`}
+                    contentStyle={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChartIcon className="w-5 h-5" />
+              Gastos Variables por Categoría
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={dataGastosVariablesPorCategoria}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="total"
+                    label={({ categoria, total }) => 
+                      `${categoria.substring(0, 15)}${categoria.length > 15 ? '...' : ''}: €${total.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`
+                    }
+                    labelLine={false}
+                  >
+                    {dataGastosVariablesPorCategoria.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [`€${value.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`, 'Total']}
+                    labelFormatter={(label) => `Categoría: ${label}`}
+                    contentStyle={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Desglose del Mínimo Viable</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                <span className="font-medium">Gastos Fijos Anuales:</span>
+                <span className="font-bold text-blue-700">€{totalGastosFijosAnual.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                <span className="font-medium">Salarios Anuales:</span>
+                <span className="font-bold text-green-700">€{salarioAnualEmpleados.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                <span className="font-medium">Gastos Variables:</span>
+                <span className="font-bold text-yellow-700">€{totalGastosVariables.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</span>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center p-3 bg-red-100 rounded-lg">
+                  <span className="font-bold text-lg">TOTAL MÍNIMO:</span>
+                  <span className="font-bold text-xl text-red-700">€{minimoViableAnual.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                Este es el mínimo que la empresa debe facturar anualmente para cubrir todos los gastos fijos, salarios y gastos variables actuales.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
