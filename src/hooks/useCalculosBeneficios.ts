@@ -73,11 +73,83 @@ export const useCalculosBeneficios = () => {
     return (beneficioNeto / beneficioBruto) * 100;
   }, [calcularBeneficioBrutoAdministracion, calcularBeneficioBrutoPresupuesto, calcularBeneficioNeto]);
 
+  // Nuevas funciones para análisis mensual
+  const calcularBeneficioMensualAdministracion = useCallback((proyecto: Proyecto, mes: number, año: number) => {
+    if (proyecto.tipo !== 'administracion' || !proyecto.precioHora) {
+      return 0;
+    }
+
+    let totalHoras = 0;
+
+    proyecto.trabajadoresAsignados.forEach(trabajador => {
+      const { generarCalendarioMes } = useCalendario(trabajador.id);
+      const calendario = generarCalendarioMes(mes, año);
+      
+      calendario.dias.forEach(dia => {
+        if (dia.tipo === 'laborable' || dia.tipo === 'sabado') {
+          if (!dia.ausencia || !['vacaciones', 'baja_medica', 'baja_laboral', 'baja_personal'].includes(dia.ausencia.tipo)) {
+            totalHoras += dia.horasReales || 0;
+          }
+        }
+      });
+    });
+
+    return totalHoras * proyecto.precioHora;
+  }, []);
+
+  const calcularBeneficioMensualPresupuesto = useCallback((proyecto: Proyecto, mes: number, año: number) => {
+    if (proyecto.tipo !== 'presupuesto') {
+      return 0;
+    }
+
+    return proyecto.certificaciones?.find(cert => cert.mes === mes && cert.anio === año)?.importe || 0;
+  }, []);
+
+  const calcularGastosMensuales = useCallback((proyecto: Proyecto, mes: number, año: number) => {
+    return proyecto.gastosVariables?.filter(gasto => {
+      const fechaGasto = new Date(gasto.fecha);
+      return fechaGasto.getMonth() + 1 === mes && fechaGasto.getFullYear() === año;
+    }).reduce((total, gasto) => total + gasto.importe, 0) || 0;
+  }, []);
+
+  const calcularAnalisisMensual = useCallback((proyectos: Proyecto[], año: number) => {
+    const meses = Array.from({ length: 12 }, (_, i) => i + 1);
+    
+    return meses.map(mes => {
+      const beneficiosBrutos = proyectos.map(proyecto => 
+        proyecto.tipo === 'administracion' 
+          ? calcularBeneficioMensualAdministracion(proyecto, mes, año)
+          : calcularBeneficioMensualPresupuesto(proyecto, mes, año)
+      );
+      
+      const gastosMensuales = proyectos.map(proyecto => 
+        calcularGastosMensuales(proyecto, mes, año)
+      );
+
+      const beneficioBrutoTotal = beneficiosBrutos.reduce((sum, b) => sum + b, 0);
+      const gastosTotal = gastosMensuales.reduce((sum, g) => sum + g, 0);
+      const beneficioNeto = beneficioBrutoTotal - gastosTotal;
+
+      return {
+        mes,
+        nombreMes: new Date(año, mes - 1).toLocaleDateString('es-ES', { month: 'long' }),
+        beneficioBruto: beneficioBrutoTotal,
+        gastos: gastosTotal,
+        beneficioNeto,
+        margen: beneficioBrutoTotal > 0 ? (beneficioNeto / beneficioBrutoTotal) * 100 : 0
+      };
+    });
+  }, [calcularBeneficioMensualAdministracion, calcularBeneficioMensualPresupuesto, calcularGastosMensuales]);
+
   return {
     calcularBeneficioBrutoAdministracion,
     calcularBeneficioBrutoPresupuesto,
     calcularGastosTotales,
     calcularBeneficioNeto,
-    calcularMargenProyecto
+    calcularMargenProyecto,
+    calcularAnalisisMensual,
+    calcularBeneficioMensualAdministracion,
+    calcularBeneficioMensualPresupuesto,
+    calcularGastosMensuales
   };
 };
