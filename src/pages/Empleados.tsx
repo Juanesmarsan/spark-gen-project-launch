@@ -90,6 +90,35 @@ const Empleados = () => {
     }
   ]);
 
+  // Estados para inventarios - obtenemos los datos del localStorage o valores por defecto
+  const [inventarioEpis] = useState(() => {
+    const stored = localStorage.getItem('epis');
+    return stored ? JSON.parse(stored) : [
+      { id: 1, nombre: "Casco de seguridad", precio: 25, disponible: true },
+      { id: 2, nombre: "Chaleco reflectante", precio: 15, disponible: true },
+      { id: 3, nombre: "Botas de seguridad", precio: 85, disponible: true },
+      { id: 4, nombre: "Guantes de trabajo", precio: 12, disponible: true },
+    ];
+  });
+
+  const [inventarioHerramientas] = useState(() => {
+    const stored = localStorage.getItem('herramientas');
+    return stored ? JSON.parse(stored) : [
+      { id: 1, tipo: "Taladro", marca: "Bosch", coste: 120, disponible: true },
+      { id: 2, tipo: "Martillo", marca: "Stanley", coste: 35, disponible: true },
+      { id: 3, tipo: "Destornillador eléctrico", marca: "Makita", coste: 75, disponible: true },
+      { id: 4, tipo: "Sierra circular", marca: "DeWalt", coste: 250, disponible: true },
+    ];
+  });
+
+  const [inventarioVehiculos] = useState(() => {
+    const stored = localStorage.getItem('vehiculos');
+    return stored ? JSON.parse(stored) : [
+      { id: 1, matricula: "1234-ABC", tipo: "Furgoneta", marca: "Ford", modelo: "Transit", asignado: false },
+      { id: 2, matricula: "5678-DEF", tipo: "Camión", marca: "Mercedes", modelo: "Sprinter", asignado: false },
+    ];
+  });
+
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<Empleado | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [nuevoAdelanto, setNuevoAdelanto] = useState({ concepto: "", cantidad: 0 });
@@ -97,25 +126,12 @@ const Empleados = () => {
   const [dialogoAdelantoAbierto, setDialogoAdelantoAbierto] = useState(false);
   const [dialogoEpiAbierto, setDialogoEpiAbierto] = useState(false);
   const [dialogoHerramientaAbierto, setDialogoHerramientaAbierto] = useState(false);
+  const [dialogoVehiculoAbierto, setDialogoVehiculoAbierto] = useState(false);
   const [epiSeleccionado, setEpiSeleccionado] = useState("");
   const [herramientaSeleccionada, setHerramientaSeleccionada] = useState("");
-
-  const epis = [
-    { id: 1, nombre: "Casco de seguridad", precio: 25 },
-    { id: 2, nombre: "Chaleco reflectante", precio: 15 },
-    { id: 3, nombre: "Botas de seguridad", precio: 85 },
-    { id: 4, nombre: "Guantes de trabajo", precio: 12 },
-  ];
-
-  const herramientas = [
-    { id: 1, nombre: "Taladro", precio: 120 },
-    { id: 2, nombre: "Martillo", precio: 35 },
-    { id: 3, nombre: "Destornillador eléctrico", precio: 75 },
-    { id: 4, nombre: "Sierra circular", precio: 250 },
-  ];
+  const [vehiculoSeleccionado, setVehiculoSeleccionado] = useState("");
 
   const proyectos = ["Proyecto Alpha", "Proyecto Beta", "Proyecto Gamma"];
-  const vehiculos = ["Furgoneta 1234-ABC", "Camión 5678-DEF", "Coche 9012-GHI"];
 
   const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo'>) => {
     const nuevoEmpleado: Empleado = {
@@ -133,55 +149,56 @@ const Empleados = () => {
 
   const agregarAdelanto = (empleadoId: number) => {
     if (nuevoAdelanto.concepto && nuevoAdelanto.cantidad > 0) {
+      const nuevoAdelantoObj = {
+        id: Date.now(),
+        concepto: nuevoAdelanto.concepto,
+        cantidad: nuevoAdelanto.cantidad,
+        fecha: new Date()
+      };
+
       setEmpleados(prev => prev.map(emp => 
         emp.id === empleadoId 
-          ? {
-              ...emp,
-              adelantos: [...emp.adelantos, {
-                id: Date.now(),
-                concepto: nuevoAdelanto.concepto,
-                cantidad: nuevoAdelanto.cantidad,
-                fecha: new Date()
-              }]
-            }
+          ? { ...emp, adelantos: [...emp.adelantos, nuevoAdelantoObj] }
           : emp
       ));
+
+      // Actualizar empleado seleccionado
+      if (empleadoSeleccionado && empleadoSeleccionado.id === empleadoId) {
+        setEmpleadoSeleccionado(prev => prev ? {
+          ...prev,
+          adelantos: [...prev.adelantos, nuevoAdelantoObj]
+        } : null);
+      }
+
       setNuevoAdelanto({ concepto: "", cantidad: 0 });
       setDialogoAdelantoAbierto(false);
-      // Actualizar el empleado seleccionado
-      if (empleadoSeleccionado && empleadoSeleccionado.id === empleadoId) {
-        const empleadoActualizado = empleados.find(emp => emp.id === empleadoId);
-        if (empleadoActualizado) {
-          setEmpleadoSeleccionado({
-            ...empleadoActualizado,
-            adelantos: [...empleadoActualizado.adelantos, {
-              id: Date.now(),
-              concepto: nuevoAdelanto.concepto,
-              cantidad: nuevoAdelanto.cantidad,
-              fecha: new Date()
-            }]
-          });
-        }
-      }
     }
   };
 
   const asignarEpi = (empleadoId: number, epiId: number, fecha: Date) => {
-    const epi = epis.find(e => e.id === epiId);
-    if (epi) {
+    const epi = inventarioEpis.find(e => e.id === epiId);
+    if (epi && fecha) {
+      const nuevoEpiAsignado = {
+        id: Date.now(),
+        nombre: epi.nombre,
+        precio: epi.precio,
+        fechaEntrega: fecha
+      };
+
       setEmpleados(prev => prev.map(emp => 
         emp.id === empleadoId 
-          ? {
-              ...emp,
-              epis: [...emp.epis, {
-                id: Date.now(),
-                nombre: epi.nombre,
-                precio: epi.precio,
-                fechaEntrega: fecha
-              }]
-            }
+          ? { ...emp, epis: [...emp.epis, nuevoEpiAsignado] }
           : emp
       ));
+
+      // Actualizar empleado seleccionado
+      if (empleadoSeleccionado && empleadoSeleccionado.id === empleadoId) {
+        setEmpleadoSeleccionado(prev => prev ? {
+          ...prev,
+          epis: [...prev.epis, nuevoEpiAsignado]
+        } : null);
+      }
+
       setEpiSeleccionado("");
       setFechaSeleccionada(undefined);
       setDialogoEpiAbierto(false);
@@ -189,24 +206,54 @@ const Empleados = () => {
   };
 
   const asignarHerramienta = (empleadoId: number, herramientaId: number, fecha: Date) => {
-    const herramienta = herramientas.find(h => h.id === herramientaId);
-    if (herramienta) {
+    const herramienta = inventarioHerramientas.find(h => h.id === herramientaId);
+    if (herramienta && fecha) {
+      const nuevaHerramientaAsignada = {
+        id: Date.now(),
+        nombre: `${herramienta.tipo} ${herramienta.marca}`,
+        precio: herramienta.coste,
+        fechaEntrega: fecha
+      };
+
       setEmpleados(prev => prev.map(emp => 
         emp.id === empleadoId 
-          ? {
-              ...emp,
-              herramientas: [...emp.herramientas, {
-                id: Date.now(),
-                nombre: herramienta.nombre,
-                precio: herramienta.precio,
-                fechaEntrega: fecha
-              }]
-            }
+          ? { ...emp, herramientas: [...emp.herramientas, nuevaHerramientaAsignada] }
           : emp
       ));
+
+      // Actualizar empleado seleccionado
+      if (empleadoSeleccionado && empleadoSeleccionado.id === empleadoId) {
+        setEmpleadoSeleccionado(prev => prev ? {
+          ...prev,
+          herramientas: [...prev.herramientas, nuevaHerramientaAsignada]
+        } : null);
+      }
+
       setHerramientaSeleccionada("");
       setFechaSeleccionada(undefined);
       setDialogoHerramientaAbierto(false);
+    }
+  };
+
+  const asignarVehiculo = (empleadoId: number, vehiculoId: number) => {
+    const vehiculo = inventarioVehiculos.find(v => v.id === vehiculoId);
+    if (vehiculo) {
+      setEmpleados(prev => prev.map(emp => 
+        emp.id === empleadoId 
+          ? { ...emp, vehiculo: `${vehiculo.tipo} ${vehiculo.matricula}` }
+          : emp
+      ));
+
+      // Actualizar empleado seleccionado
+      if (empleadoSeleccionado && empleadoSeleccionado.id === empleadoId) {
+        setEmpleadoSeleccionado(prev => prev ? {
+          ...prev,
+          vehiculo: `${vehiculo.tipo} ${vehiculo.matricula}`
+        } : null);
+      }
+
+      setVehiculoSeleccionado("");
+      setDialogoVehiculoAbierto(false);
     }
   };
 
@@ -477,7 +524,7 @@ const Empleados = () => {
                                 <SelectValue placeholder="Seleccionar EPI" />
                               </SelectTrigger>
                               <SelectContent>
-                                {epis.map((epi) => (
+                                {inventarioEpis.filter(epi => epi.disponible).map((epi) => (
                                   <SelectItem key={epi.id} value={epi.id.toString()}>
                                     {epi.nombre} - €{epi.precio}
                                   </SelectItem>
@@ -574,9 +621,9 @@ const Empleados = () => {
                                 <SelectValue placeholder="Seleccionar herramienta" />
                               </SelectTrigger>
                               <SelectContent>
-                                {herramientas.map((herramienta) => (
+                                {inventarioHerramientas.filter(herramienta => herramienta.disponible).map((herramienta) => (
                                   <SelectItem key={herramienta.id} value={herramienta.id.toString()}>
-                                    {herramienta.nombre} - €{herramienta.precio}
+                                    {herramienta.tipo} {herramienta.marca} - €{herramienta.coste}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -686,22 +733,59 @@ const Empleados = () => {
                 <TabsContent value="vehiculo" className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-semibold">Vehículo Asignado</h3>
-                    <Select>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Asignar vehículo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehiculos.map((vehiculo) => (
-                          <SelectItem key={vehiculo} value={vehiculo}>
-                            {vehiculo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Dialog open={dialogoVehiculoAbierto} onOpenChange={setDialogoVehiculoAbierto}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Asignar Vehículo
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Asignar Vehículo</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Vehículo</Label>
+                            <Select value={vehiculoSeleccionado} onValueChange={setVehiculoSeleccionado}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar vehículo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {inventarioVehiculos.filter(vehiculo => !vehiculo.asignado).map((vehiculo) => (
+                                  <SelectItem key={vehiculo.id} value={vehiculo.id.toString()}>
+                                    {vehiculo.tipo} {vehiculo.matricula} - {vehiculo.marca} {vehiculo.modelo}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => setDialogoVehiculoAbierto(false)}>
+                              Cancelar
+                            </Button>
+                            <Button 
+                              onClick={() => {
+                                if (vehiculoSeleccionado) {
+                                  asignarVehiculo(empleadoSeleccionado.id, parseInt(vehiculoSeleccionado));
+                                }
+                              }}
+                              disabled={!vehiculoSeleccionado}
+                            >
+                              Asignar Vehículo
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
-                  <div className="text-center text-muted-foreground py-8">
-                    Gestión de vehículos - En desarrollo
-                  </div>
+                  
+                  {empleadoSeleccionado.vehiculo && (
+                    <div className="p-4 border rounded-lg">
+                      <p className="font-medium">Vehículo asignado:</p>
+                      <Badge variant="secondary" className="mt-2">{empleadoSeleccionado.vehiculo}</Badge>
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </CardContent>
