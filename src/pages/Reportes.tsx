@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { usePdfGenerator } from "@/hooks/usePdfGenerator";
-import { FileText, Users, TrendingUp, Download, Calendar } from "lucide-react";
+import { FileText, Users, TrendingUp, Download, Calendar, Plane } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 
@@ -11,7 +11,8 @@ const Reportes = () => {
     generarReporteMensualTrabajadores,
     generarReporteMensual, 
     generarReporteEmpleados, 
-    generarReporteFinanciero 
+    generarReporteFinanciero,
+    generarReporteVacaciones
   } = usePdfGenerator();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reporteSeleccionado, setReporteSeleccionado] = useState<string | null>(null);
@@ -29,6 +30,8 @@ const Reportes = () => {
       generarReporteEmpleados();
     } else if (reporteSeleccionado === 'financiero') {
       generarReporteFinanciero();
+    } else if (reporteSeleccionado === 'vacaciones') {
+      generarReporteVacaciones();
     }
     setDialogOpen(false);
   };
@@ -59,6 +62,14 @@ const Reportes = () => {
                 >
                   <Calendar className="w-4 h-4 mr-2" />
                   Reporte Mensual de Trabajadores
+                </Button>
+                <Button
+                  variant={reporteSeleccionado === 'vacaciones' ? 'default' : 'outline'}
+                  className="w-full justify-start"
+                  onClick={() => setReporteSeleccionado('vacaciones')}
+                >
+                  <Plane className="w-4 h-4 mr-2" />
+                  Reporte de Vacaciones
                 </Button>
                 <Button
                   variant={reporteSeleccionado === 'mensual' ? 'default' : 'outline'}
@@ -109,6 +120,24 @@ const Reportes = () => {
               Detalle completo de todos los trabajadores del mes: días trabajados, vacaciones, bajas, ausencias y proyectos asignados
             </p>
             <Button variant="outline" className="w-full" onClick={generarReporteMensualTrabajadores}>
+              <Download className="w-4 h-4 mr-2" />
+              Descargar PDF
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Plane className="w-5 h-5 mr-2" />
+              Reporte de Vacaciones
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Listado completo de vacaciones del personal por año: días tomados, fechas y períodos de cada empleado
+            </p>
+            <Button variant="outline" className="w-full" onClick={generarReporteVacaciones}>
               <Download className="w-4 h-4 mr-2" />
               Descargar PDF
             </Button>
