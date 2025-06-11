@@ -65,7 +65,7 @@ const Vehiculos = () => {
 
   // Calcular gastos del mes actual
   const fechaActual = new Date();
-  const gastosDelMes = getTotalGastosPorMes(fechaActual.getFullYear(), fechaActual.getMonth());
+  const gastosDelMes = getTotalGastosPorMes(fechaActual.getFullYear(), fechaActual.getMonth()) || 0;
 
   return (
     <div className="p-6 space-y-6">
@@ -125,7 +125,7 @@ const Vehiculos = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-blue-600">
-            €{gastosDelMes.toFixed(2)}
+            €{gastosDelMes.toLocaleString()}
           </div>
           <p className="text-sm text-muted-foreground">
             Total gastos de vehículos de {fechaActual.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}

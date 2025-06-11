@@ -167,9 +167,14 @@ export const useVehiculosGastos = () => {
     });
   };
 
-  const getTotalGastosPorMes = (año: number, mes: number) => {
-    const gastosDelMes = getGastosComputablesPorMes(año, mes);
-    return gastosDelMes.reduce((total, gasto) => total + gasto.importe, 0);
+  const getTotalGastosPorMes = (año: number, mes: number): number => {
+    try {
+      const gastosDelMes = getGastosComputablesPorMes(año, mes);
+      return gastosDelMes.reduce((total, gasto) => total + (gasto.importe || 0), 0);
+    } catch (error) {
+      console.error('Error calculating monthly vehicle expenses:', error);
+      return 0;
+    }
   };
 
   return {

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +64,7 @@ export const AnalisisFinancieroTab: React.FC<AnalisisFinancieroTabProps> = ({
     <div className="space-y-6">
       {/* Timeline específico para proyectos de presupuesto */}
       {proyecto.tipo === 'presupuesto' && (
-        <TimelinePresupuesto proyecto={proyecto} />
+        <TimelinePresupuesto proyecto={proyecto} onUpdateProyecto={onUpdateProyecto} />
       )}
 
       {/* Métricas principales */}
