@@ -27,19 +27,24 @@ export const EmpleadosBulkActions = ({
 }: EmpleadosBulkActionsProps) => {
   const allSelected = empleados.length > 0 && selectedEmpleados.length === empleados.length;
   const someSelected = selectedEmpleados.length > 0;
-  const selectedActiveEmpleados = empleados.filter(emp => 
-    selectedEmpleados.includes(emp.id) && emp.activo
-  );
+  
+  // Filtrar solo los empleados activos entre los seleccionados
+  const selectedActiveEmpleadoIds = selectedEmpleados.filter(selectedId => {
+    const empleado = empleados.find(emp => emp.id === selectedId);
+    return empleado && empleado.activo;
+  });
 
   const handleSelectAll = (checked: boolean) => {
     onSelectAll(checked);
   };
 
   const handleBulkDisable = () => {
-    onBulkDisable(selectedActiveEmpleados.map(emp => emp.id));
+    console.log('EmpleadosBulkActions: Deshabilitando empleados:', selectedActiveEmpleadoIds);
+    onBulkDisable(selectedActiveEmpleadoIds);
   };
 
   const handleBulkDelete = () => {
+    console.log('EmpleadosBulkActions: Eliminando empleados:', selectedEmpleados);
     onBulkDelete(selectedEmpleados);
   };
 
@@ -62,19 +67,19 @@ export const EmpleadosBulkActions = ({
             {selectedEmpleados.length} empleado{selectedEmpleados.length !== 1 ? 's' : ''} seleccionado{selectedEmpleados.length !== 1 ? 's' : ''}
           </span>
 
-          {selectedActiveEmpleados.length > 0 && (
+          {selectedActiveEmpleadoIds.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   <UserX className="w-4 h-4 mr-2" />
-                  Inhabilitar ({selectedActiveEmpleados.length})
+                  Inhabilitar ({selectedActiveEmpleadoIds.length})
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Inhabilitar Empleados</AlertDialogTitle>
                   <AlertDialogDescription>
-                    ¿Estás seguro de que quieres inhabilitar {selectedActiveEmpleados.length} empleado{selectedActiveEmpleados.length !== 1 ? 's' : ''}? 
+                    ¿Estás seguro de que quieres inhabilitar {selectedActiveEmpleadoIds.length} empleado{selectedActiveEmpleadoIds.length !== 1 ? 's' : ''}? 
                     Los empleados serán marcados como inactivos pero se mantendrán todos sus datos.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
