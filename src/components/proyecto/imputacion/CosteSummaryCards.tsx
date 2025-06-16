@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Euro, Calculator, Calendar } from "lucide-react";
+import { Users, Euro, Calculator, Calendar, Building, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -11,6 +11,8 @@ interface CosteSummaryCardsProps {
   mes: number;
   anio: number;
   cantidadRegistros: number;
+  gastosVariablesProyecto?: number;
+  gastosVariablesEmpleados?: number;
 }
 
 export const CosteSummaryCards = ({
@@ -19,14 +21,16 @@ export const CosteSummaryCards = ({
   totalGeneral,
   mes,
   anio,
-  cantidadRegistros
+  cantidadRegistros,
+  gastosVariablesProyecto = 0,
+  gastosVariablesEmpleados = 0
 }: CosteSummaryCardsProps) => {
   const safeToFixed = (value: number | null | undefined, decimals: number = 2): string => {
     return (value ?? 0).toFixed(decimals);
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -35,7 +39,7 @@ export const CosteSummaryCards = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-xl font-bold text-blue-600">
             €{safeToFixed(totalCostesSalariales)}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -47,16 +51,50 @@ export const CosteSummaryCards = ({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Euro className="w-4 h-4" />
-            Gastos Variables
+            <UserCheck className="w-4 h-4" />
+            Gastos Empleados
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-purple-600">
+          <div className="text-xl font-bold text-green-600">
+            €{safeToFixed(gastosVariablesEmpleados)}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Gastos individuales
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Building className="w-4 h-4" />
+            Gastos Proyecto
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xl font-bold text-purple-600">
+            €{safeToFixed(gastosVariablesProyecto)}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Gastos del proyecto
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Euro className="w-4 h-4" />
+            Total Gastos Variables
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xl font-bold text-orange-600">
             €{safeToFixed(totalGastosVariables)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Dietas, transporte, etc.
+            Empleados + Proyecto
           </p>
         </CardContent>
       </Card>
@@ -69,7 +107,7 @@ export const CosteSummaryCards = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-xl font-bold text-red-600">
             €{safeToFixed(totalGeneral)}
           </div>
           <p className="text-xs text-muted-foreground">

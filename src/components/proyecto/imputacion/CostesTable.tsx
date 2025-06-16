@@ -52,7 +52,7 @@ export const CostesTable = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead width="30"></TableHead>
+              <TableHead className="w-8"></TableHead>
               <TableHead>Empleado</TableHead>
               <TableHead>Días Trabajados</TableHead>
               <TableHead>Salario Prorrateo</TableHead>

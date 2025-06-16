@@ -30,16 +30,23 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
   // Obtener gastos ya imputados para el mes seleccionado
   const gastosImputados = obtenerGastosPorProyectoMes(proyecto.id, mes, anio);
 
+  // Calcular gastos variables del proyecto para el mes seleccionado
+  const gastosVariablesProyecto = proyecto.gastosVariables?.filter(gasto => {
+    const fechaGasto = new Date(gasto.fecha);
+    return fechaGasto.getMonth() + 1 === mes && fechaGasto.getFullYear() === anio;
+  }).reduce((total, gasto) => total + gasto.importe, 0) || 0;
+
   // Calcular totales
   const totalCostesSalariales = gastosImputados.reduce((total, gasto) => 
     total + (gasto.salarioBrutoProrrateo || 0) + (gasto.seguridadSocialEmpresaProrrateo || 0) + 
     (gasto.importeHorasExtras || 0) + (gasto.importeHorasFestivas || 0), 0
   );
 
-  const totalGastosVariables = gastosImputados.reduce((total, gasto) => 
+  const totalGastosVariablesEmpleados = gastosImputados.reduce((total, gasto) => 
     total + (gasto.gastos?.reduce((subTotal, gastoVar) => subTotal + (gastoVar.importe || 0), 0) || 0), 0
   );
 
+  const totalGastosVariables = totalGastosVariablesEmpleados + gastosVariablesProyecto;
   const totalGeneral = totalCostesSalariales + totalGastosVariables;
 
   const handleImputarCostes = async () => {
@@ -111,6 +118,8 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
         mes={mes}
         anio={anio}
         cantidadRegistros={gastosImputados.length}
+        gastosVariablesProyecto={gastosVariablesProyecto}
+        gastosVariablesEmpleados={totalGastosVariablesEmpleados}
       />
 
       <TrabajadoresAusenciasSection
