@@ -1,11 +1,14 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Edit, Trash2, UserX, UserCheck } from "lucide-react";
 import { Empleado } from "@/types/empleado";
+import { EmpleadosBulkActions } from "./EmpleadosBulkActions";
 
 interface EmpleadosListProps {
   empleados: Empleado[];
@@ -26,6 +29,8 @@ export const EmpleadosList = ({
 }: EmpleadosListProps) => {
   console.log('EmpleadosList: Renderizando lista con', empleados.length, 'empleados');
 
+  const [selectedEmpleados, setSelectedEmpleados] = useState<number[]>([]);
+
   const handleEditarEmpleado = (empleado: Empleado) => {
     console.log('EmpleadosList: Editando empleado', empleado.id);
     onSelectEmpleado(empleado);
@@ -34,11 +39,13 @@ export const EmpleadosList = ({
   const handleEliminarEmpleado = (empleadoId: number) => {
     console.log('EmpleadosList: Eliminando empleado', empleadoId);
     onEliminarEmpleado(empleadoId);
+    setSelectedEmpleados(prev => prev.filter(id => id !== empleadoId));
   };
 
   const handleDeshabilitarEmpleado = (empleadoId: number) => {
     console.log('EmpleadosList: Deshabilitando empleado', empleadoId);
     onDeshabilitarEmpleado(empleadoId);
+    setSelectedEmpleados(prev => prev.filter(id => id !== empleadoId));
   };
 
   const handleHabilitarEmpleado = (empleadoId: number) => {
@@ -46,15 +53,50 @@ export const EmpleadosList = ({
     onHabilitarEmpleado(empleadoId);
   };
 
+  const handleSelectEmpleado = (empleadoId: number, selected: boolean) => {
+    setSelectedEmpleados(prev => 
+      selected 
+        ? [...prev, empleadoId]
+        : prev.filter(id => id !== empleadoId)
+    );
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    setSelectedEmpleados(selected ? empleados.map(emp => emp.id) : []);
+  };
+
+  const handleBulkDisable = (empleadoIds: number[]) => {
+    empleadoIds.forEach(id => onDeshabilitarEmpleado(id));
+    setSelectedEmpleados([]);
+  };
+
+  const handleBulkDelete = (empleadoIds: number[]) => {
+    empleadoIds.forEach(id => onEliminarEmpleado(id));
+    setSelectedEmpleados([]);
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Lista de Empleados</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <EmpleadosBulkActions
+          empleados={empleados}
+          selectedEmpleados={selectedEmpleados}
+          onSelectEmpleado={handleSelectEmpleado}
+          onSelectAll={handleSelectAll}
+          onBulkDisable={handleBulkDisable}
+          onBulkDelete={handleBulkDelete}
+          allowPermanentDelete={allowPermanentDelete}
+        />
+
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <span className="sr-only">Seleccionar</span>
+              </TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Teléfono</TableHead>
               <TableHead>Salario Bruto</TableHead>
@@ -66,6 +108,14 @@ export const EmpleadosList = ({
           <TableBody>
             {empleados.map((empleado) => (
               <TableRow key={empleado.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedEmpleados.includes(empleado.id)}
+                    onCheckedChange={(checked) => 
+                      handleSelectEmpleado(empleado.id, checked as boolean)
+                    }
+                  />
+                </TableCell>
                 <TableCell>{empleado.nombre} {empleado.apellidos}</TableCell>
                 <TableCell>{empleado.telefono}</TableCell>
                 <TableCell>€{empleado.salarioBruto}</TableCell>

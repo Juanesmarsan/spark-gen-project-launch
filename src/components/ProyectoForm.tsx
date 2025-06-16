@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -42,6 +41,9 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
   });
 
   const [trabajadoresConFechas, setTrabajadoresConFechas] = useState<TrabajadorConFechas[]>([]);
+
+  // Filtrar solo empleados activos
+  const empleadosActivos = empleados.filter(empleado => empleado.activo);
 
   // Cargar datos del proyecto cuando se está editando
   useEffect(() => {
@@ -240,8 +242,8 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
         <div>
           <Label>Trabajadores Asignados</Label>
           <div className="border rounded-md p-4 max-h-96 overflow-y-auto space-y-4">
-            {empleados.length > 0 ? (
-              empleados.map((empleado) => {
+            {empleadosActivos.length > 0 ? (
+              empleadosActivos.map((empleado) => {
                 const isSelected = formData.trabajadoresAsignados.includes(empleado.id);
                 const trabajadorFechas = trabajadoresConFechas.find(t => t.id === empleado.id);
                 
@@ -346,7 +348,7 @@ export const ProyectoForm = ({ onSubmit, onCancel, empleados, proyecto, isEditin
               })
             ) : (
               <div className="text-sm text-gray-500">
-                No hay empleados disponibles. Crea empleados primero en la sección de Empleados.
+                No hay empleados activos disponibles. Verifica que haya empleados activos en la sección de Empleados.
               </div>
             )}
           </div>

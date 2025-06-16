@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,10 +38,11 @@ export const ProyectosTab = ({ empleado, onUpdateEmpleado }: ProyectosTabProps) 
     proyecto.trabajadoresAsignados.some(trabajador => trabajador.id === empleado.id)
   );
 
-  // Obtener proyectos disponibles para asignar (activos y que no tenga ya asignado)
+  // Filtrar proyectos disponibles solo para empleados activos
   const proyectosDisponibles = proyectos.filter(proyecto => 
     proyecto.estado === 'activo' && 
-    !proyecto.trabajadoresAsignados.some(trabajador => trabajador.id === empleado.id)
+    !proyecto.trabajadoresAsignados.some(trabajador => trabajador.id === empleado.id) &&
+    empleado.activo // Solo mostrar proyectos si el empleado está activo
   );
 
   const handleAsignarProyecto = () => {
@@ -109,127 +109,139 @@ export const ProyectosTab = ({ empleado, onUpdateEmpleado }: ProyectosTabProps) 
               <Users className="w-5 h-5" />
               Proyectos Asignados
             </CardTitle>
-            <Dialog open={showAsignarDialog} onOpenChange={setShowAsignarDialog}>
-              <DialogTrigger asChild>
-                <Button className="bg-omenar-green hover:bg-omenar-dark-green">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Asignar a Proyecto
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Asignar a Proyecto</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Proyecto</Label>
-                    <Select value={proyectoSeleccionado} onValueChange={setProyectoSeleccionado}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar proyecto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {proyectosDisponibles.map((proyecto) => (
-                          <SelectItem key={proyecto.id} value={proyecto.id.toString()}>
-                            <div className="flex items-center gap-2">
-                              <span>{proyecto.nombre}</span>
-                              <Badge variant="outline">{proyecto.ciudad}</Badge>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Fecha de Entrada</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !fechaEntrada && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {fechaEntrada ? format(fechaEntrada, "dd/MM/yyyy") : "Seleccionar fecha"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={fechaEntrada}
-                          onSelect={setFechaEntrada}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div>
-                    <Label>Fecha de Salida (opcional)</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !fechaSalida && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {fechaSalida ? format(fechaSalida, "dd/MM/yyyy") : "Sin fecha de salida"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={fechaSalida}
-                          onSelect={setFechaSalida}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    {fechaSalida && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setFechaSalida(undefined)}
-                        className="mt-2 text-red-600 hover:text-red-700"
-                      >
-                        Quitar fecha de salida
-                      </Button>
-                    )}
-                  </div>
-
-                  {proyectoSeleccionadoObj?.tipo === 'administracion' && (
+            {empleado.activo && (
+              <Dialog open={showAsignarDialog} onOpenChange={setShowAsignarDialog}>
+                <DialogTrigger asChild>
+                  <Button className="bg-omenar-green hover:bg-omenar-dark-green">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Asignar a Proyecto
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Asignar a Proyecto</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
                     <div>
-                      <Label>Precio por Hora (€)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={precioHora || ''}
-                        onChange={(e) => setPrecioHora(e.target.value ? parseFloat(e.target.value) : undefined)}
-                        placeholder="Precio por hora"
-                      />
+                      <Label>Proyecto</Label>
+                      <Select value={proyectoSeleccionado} onValueChange={setProyectoSeleccionado}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar proyecto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {proyectosDisponibles.map((proyecto) => (
+                            <SelectItem key={proyecto.id} value={proyecto.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <span>{proyecto.nombre}</span>
+                                <Badge variant="outline">{proyecto.ciudad}</Badge>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
 
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setShowAsignarDialog(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleAsignarProyecto} disabled={!proyectoSeleccionado}>
-                      Asignar
-                    </Button>
+                    <div>
+                      <Label>Fecha de Entrada</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !fechaEntrada && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {fechaEntrada ? format(fechaEntrada, "dd/MM/yyyy") : "Seleccionar fecha"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={fechaEntrada}
+                            onSelect={setFechaEntrada}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div>
+                      <Label>Fecha de Salida (opcional)</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !fechaSalida && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {fechaSalida ? format(fechaSalida, "dd/MM/yyyy") : "Sin fecha de salida"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={fechaSalida}
+                            onSelect={setFechaSalida}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {fechaSalida && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setFechaSalida(undefined)}
+                          className="mt-2 text-red-600 hover:text-red-700"
+                        >
+                          Quitar fecha de salida
+                        </Button>
+                      )}
+                    </div>
+
+                    {proyectoSeleccionadoObj?.tipo === 'administracion' && (
+                      <div>
+                        <Label>Precio por Hora (€)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={precioHora || ''}
+                          onChange={(e) => setPrecioHora(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          placeholder="Precio por hora"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowAsignarDialog(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleAsignarProyecto} disabled={!proyectoSeleccionado}>
+                        Asignar
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent>
+          {!empleado.activo && (
+            <div className="text-center py-4 mb-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                <p className="text-yellow-800 text-sm">
+                  Este empleado está inactivo y no puede ser asignado a nuevos proyectos.
+                </p>
+              </div>
+            </div>
+          )}
+          
           {proyectosAsignados.length === 0 ? (
             <div className="text-center py-8">
               <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
