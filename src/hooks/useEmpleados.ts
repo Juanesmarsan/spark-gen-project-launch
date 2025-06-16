@@ -29,9 +29,21 @@ export const useEmpleados = () => {
   }, [isLoaded]);
 
   const eliminarTodosEmpleados = () => {
-    console.log('useEmpleados: Eliminando todos los empleados...');
+    console.log('useEmpleados: Eliminando todos los empleados permanentemente...');
     setEmpleados([]);
     guardarEmpleadosEnStorage([]);
+    // Forzar que no se recarguen los datos de ejemplo
+    localStorage.setItem('empleados-reset', 'true');
+  };
+
+  const resetearTodosEmpleados = () => {
+    console.log('useEmpleados: Reseteando completamente todos los empleados...');
+    setEmpleados([]);
+    localStorage.removeItem('empleados');
+    localStorage.setItem('empleados-reset', 'true');
+    // Forzar actualización del estado
+    setIsLoaded(false);
+    setTimeout(() => setIsLoaded(true), 100);
   };
 
   const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables' | 'historialSalarios' | 'activo'>) => {
@@ -166,6 +178,7 @@ export const useEmpleados = () => {
     deshabilitarEmpleado,
     habilitarEmpleado,
     agregarCambioSalario,
-    agregarGastoVariable
+    agregarGastoVariable,
+    resetearTodosEmpleados
   };
 };

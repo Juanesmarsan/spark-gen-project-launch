@@ -3,6 +3,13 @@ import { Empleado } from '@/types/empleado';
 
 export const cargarEmpleadosDesdeStorage = (): Empleado[] | null => {
   try {
+    // Verificar si se hizo un reset completo
+    const wasReset = localStorage.getItem('empleados-reset');
+    if (wasReset === 'true') {
+      console.log('Empleados fueron reseteados, devolviendo array vacío');
+      return [];
+    }
+
     const empleadosGuardados = localStorage.getItem('empleados');
     
     if (empleadosGuardados) {
@@ -35,6 +42,17 @@ export const cargarEmpleadosDesdeStorage = (): Empleado[] | null => {
 
 export const guardarEmpleadosEnStorage = (empleados: Empleado[]) => {
   try {
+    // Si el array está vacío, mantener la marca de reset
+    if (empleados.length === 0) {
+      localStorage.setItem('empleados', JSON.stringify([]));
+      localStorage.setItem('empleados-reset', 'true');
+      console.log('useEmpleados: Array vacío guardado con marca de reset');
+      return;
+    }
+
+    // Si hay empleados, quitar la marca de reset
+    localStorage.removeItem('empleados-reset');
+    
     // Procesar los empleados antes de guardar para evitar problemas con las fechas
     const empleadosParaGuardar = empleados.map(empleado => ({
       ...empleado,

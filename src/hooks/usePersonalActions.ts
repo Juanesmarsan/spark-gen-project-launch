@@ -9,7 +9,7 @@ export const usePersonalActions = () => {
   console.log('usePersonalActions: Inicializando hook');
   
   const { toast } = useToast();
-  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, eliminarTodosEmpleados, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
+  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, eliminarTodosEmpleados, resetearTodosEmpleados, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
   const { sincronizarGastoVariableConGastosFijos, sincronizarSalariosGerenciaConGastosFijos } = useGastosPersonalGerencia();
   
   // Filtrar solo el personal de gerencia
@@ -29,16 +29,16 @@ export const usePersonalActions = () => {
   const baseActions = useEmpleadoActionsBase(empleados);
 
   const handleEliminarTodosEmpleados = useCallback(() => {
-    console.log('usePersonalActions: Eliminando todos los empleados');
-    eliminarTodosEmpleados();
+    console.log('usePersonalActions: Reseteando todo el personal completamente');
+    resetearTodosEmpleados();
     baseActions.setEmpleadoSeleccionado(null);
     
     toast({
       title: "Todo el personal eliminado",
-      description: "Se ha eliminado todo el personal de la base de datos.",
+      description: "Se ha eliminado todo el personal permanentemente de la base de datos.",
       variant: "destructive"
     });
-  }, [eliminarTodosEmpleados, baseActions, toast]);
+  }, [resetearTodosEmpleados, baseActions, toast]);
 
   const handleAgregarEmpleado = useCallback((nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables' | 'historialSalarios' | 'activo'>) => {
     console.log('usePersonalActions: Agregando empleado');

@@ -8,7 +8,7 @@ export const useEmpleadosActions = () => {
   console.log('useEmpleadosActions: Inicializando hook');
   
   const { toast } = useToast();
-  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, eliminarTodosEmpleados, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
+  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, eliminarTodosEmpleados, resetearTodosEmpleados, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
   
   // Filtrar empleados excluyendo a Esteban Márquez y Nuria Playan (ahora están en Personal de Gerencia)
   const empleados = todosEmpleados.filter(emp => 
@@ -45,16 +45,16 @@ export const useEmpleadosActions = () => {
   }, [eliminarEmpleado, baseActions, toast]);
 
   const handleEliminarTodosEmpleados = useCallback(() => {
-    console.log('useEmpleadosActions: Eliminando todos los empleados');
-    eliminarTodosEmpleados();
+    console.log('useEmpleadosActions: Reseteando todos los empleados completamente');
+    resetearTodosEmpleados();
     baseActions.setEmpleadoSeleccionado(null);
     
     toast({
       title: "Todos los empleados eliminados",
-      description: "Se han eliminado todos los empleados de la base de datos.",
+      description: "Se han eliminado todos los empleados permanentemente de la base de datos.",
       variant: "destructive"
     });
-  }, [eliminarTodosEmpleados, baseActions, toast]);
+  }, [resetearTodosEmpleados, baseActions, toast]);
 
   const handleBulkEliminar = useCallback((empleadoIds: number[]) => {
     console.log('useEmpleadosActions: Eliminación masiva de empleados:', empleadoIds);
