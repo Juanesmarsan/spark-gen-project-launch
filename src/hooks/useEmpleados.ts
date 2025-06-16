@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Empleado, GastoVariableEmpleado, HistorialSalario } from '@/types/empleado';
 import { empleadosEjemplo } from '@/data/empleadosEjemplo';
@@ -117,6 +118,7 @@ export const useEmpleados = () => {
         
         return {
           ...emp,
+          // Actualizar los datos principales del empleado con los nuevos valores
           salarioBruto: nuevosSalarios.salarioBruto,
           seguridadSocialTrabajador: nuevosSalarios.seguridadSocialTrabajador,
           seguridadSocialEmpresa: nuevosSalarios.seguridadSocialEmpresa,

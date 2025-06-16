@@ -33,6 +33,16 @@ export const HistorialSalariosTab = ({ empleado, onAgregarCambioSalario }: Histo
     e.preventDefault();
     onAgregarCambioSalario(empleado.id, formData);
     setMostrarFormulario(false);
+    // Resetear el formulario con los datos actuales del empleado
+    setFormData({
+      mes: new Date().getMonth() + 1,
+      anio: new Date().getFullYear(),
+      salarioBruto: empleado.salarioBruto,
+      seguridadSocialTrabajador: empleado.seguridadSocialTrabajador,
+      seguridadSocialEmpresa: empleado.seguridadSocialEmpresa,
+      retenciones: empleado.retenciones,
+      embargo: empleado.embargo
+    });
   };
 
   const historialOrdenado = [...(empleado.historialSalarios || [])].sort((a, b) => {
@@ -159,39 +169,46 @@ export const HistorialSalariosTab = ({ empleado, onAgregarCambioSalario }: Histo
 
       <Card>
         <CardHeader>
-          <CardTitle>Historial de Cambios</CardTitle>
+          <CardTitle>Historial de Cambios ({historialOrdenado.length} registros)</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Período</TableHead>
-                <TableHead>Salario Bruto</TableHead>
-                <TableHead>SS Trabajador</TableHead>
-                <TableHead>SS Empresa</TableHead>
-                <TableHead>Retenciones</TableHead>
-                <TableHead>Embargo</TableHead>
-                <TableHead>Fecha Cambio</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {historialOrdenado.map((registro) => (
-                <TableRow key={registro.id}>
-                  <TableCell>
-                    {new Date(2024, registro.mes - 1).toLocaleDateString('es-ES', { month: 'long' })} {registro.anio}
-                  </TableCell>
-                  <TableCell>€{registro.salarioBruto.toFixed(2)}</TableCell>
-                  <TableCell>€{registro.seguridadSocialTrabajador.toFixed(2)}</TableCell>
-                  <TableCell>€{registro.seguridadSocialEmpresa.toFixed(2)}</TableCell>
-                  <TableCell>€{registro.retenciones.toFixed(2)}</TableCell>
-                  <TableCell>€{registro.embargo.toFixed(2)}</TableCell>
-                  <TableCell>
-                    {format(new Date(registro.fechaCambio), "dd/MM/yyyy", { locale: es })}
-                  </TableCell>
+          {historialOrdenado.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No hay cambios de salario registrados</p>
+              <p className="text-sm">Usa el botón "Registrar Cambio" para añadir el primer registro</p>
+            </div>
+          ) : (
+            <Table key={`historial-${empleado.id}-${historialOrdenado.length}`}>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Período</TableHead>
+                  <TableHead>Salario Bruto</TableHead>
+                  <TableHead>SS Trabajador</TableHead>
+                  <TableHead>SS Empresa</TableHead>
+                  <TableHead>Retenciones</TableHead>
+                  <TableHead>Embargo</TableHead>
+                  <TableHead>Fecha Cambio</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {historialOrdenado.map((registro) => (
+                  <TableRow key={`${registro.id}-${registro.mes}-${registro.anio}`}>
+                    <TableCell>
+                      {new Date(2024, registro.mes - 1).toLocaleDateString('es-ES', { month: 'long' })} {registro.anio}
+                    </TableCell>
+                    <TableCell>€{registro.salarioBruto.toFixed(2)}</TableCell>
+                    <TableCell>€{registro.seguridadSocialTrabajador.toFixed(2)}</TableCell>
+                    <TableCell>€{registro.seguridadSocialEmpresa.toFixed(2)}</TableCell>
+                    <TableCell>€{registro.retenciones.toFixed(2)}</TableCell>
+                    <TableCell>€{registro.embargo.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {format(new Date(registro.fechaCambio), "dd/MM/yyyy", { locale: es })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

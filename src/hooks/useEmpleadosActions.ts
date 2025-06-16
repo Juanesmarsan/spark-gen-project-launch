@@ -30,10 +30,25 @@ export const useEmpleadosActions = () => {
     });
   }, [agregarEmpleado, toast, baseActions]);
 
+  const handleAgregarCambioSalario = useCallback((empleadoId: number, nuevosSalarios: any) => {
+    console.log('useEmpleadosActions: Agregando cambio de salario');
+    agregarCambioSalario(empleadoId, nuevosSalarios);
+    
+    // Actualizar el empleado seleccionado con los nuevos datos
+    setTimeout(() => {
+      baseActions.actualizarEmpleadoSeleccionado(empleadoId);
+    }, 100);
+    
+    toast({
+      title: "Salario actualizado",
+      description: "El cambio de salario se ha registrado correctamente.",
+    });
+  }, [agregarCambioSalario, baseActions, toast]);
+
   return {
     empleados,
     ...baseActions,
     handleAgregarEmpleado,
-    agregarCambioSalario
+    agregarCambioSalario: handleAgregarCambioSalario
   };
 };

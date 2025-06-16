@@ -64,6 +64,16 @@ export const useEmpleadoActionsBase = (empleadosFiltrados: Empleado[]) => {
     setEmpleadoSeleccionado(empleadoActualizado);
   }, [updateEmpleado]);
 
+  // Función para actualizar el empleado seleccionado desde la lista
+  const actualizarEmpleadoSeleccionado = useCallback((empleadoId: number) => {
+    if (empleadoSeleccionado?.id === empleadoId) {
+      const empleadoActualizado = empleadosFiltrados.find(emp => emp.id === empleadoId);
+      if (empleadoActualizado) {
+        setEmpleadoSeleccionado(empleadoActualizado);
+      }
+    }
+  }, [empleadoSeleccionado, empleadosFiltrados]);
+
   const agregarAdelanto = useCallback((concepto: string, cantidad: number) => {
     if (!empleadoSeleccionado) return;
 
@@ -144,17 +154,14 @@ export const useEmpleadoActionsBase = (empleadosFiltrados: Empleado[]) => {
     agregarGastoVariable(empleadoSeleccionado.id, gasto);
     
     setTimeout(() => {
-      const empleadoActualizado = empleadosFiltrados.find(emp => emp.id === empleadoSeleccionado.id);
-      if (empleadoActualizado) {
-        setEmpleadoSeleccionado(empleadoActualizado);
-      }
+      actualizarEmpleadoSeleccionado(empleadoSeleccionado.id);
     }, 100);
 
     toast({
       title: "Gasto añadido",
       description: "El gasto variable se ha registrado correctamente.",
     });
-  }, [empleadoSeleccionado, agregarGastoVariable, empleadosFiltrados, toast]);
+  }, [empleadoSeleccionado, agregarGastoVariable, actualizarEmpleadoSeleccionado, toast]);
 
   return {
     empleadoSeleccionado,
@@ -172,6 +179,7 @@ export const useEmpleadoActionsBase = (empleadosFiltrados: Empleado[]) => {
     asignarEpi,
     asignarHerramienta,
     asignarVehiculo,
-    handleAgregarGastoVariable
+    handleAgregarGastoVariable,
+    actualizarEmpleadoSeleccionado
   };
 };
