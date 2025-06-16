@@ -47,14 +47,19 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
   // Obtener gastos ya imputados para el mes seleccionado
   const gastosImputados = obtenerGastosPorProyectoMes(proyecto.id, mes, anio);
 
+  // Helper function to safely format numbers
+  const safeToFixed = (value: number | null | undefined, decimals: number = 2): string => {
+    return (value ?? 0).toFixed(decimals);
+  };
+
   // Calcular totales
   const totalCostesSalariales = gastosImputados.reduce((total, gasto) => 
-    total + gasto.salarioBrutoProrrateo + gasto.seguridadSocialEmpresaProrrateo + 
-    gasto.importeHorasExtras + gasto.importeHorasFestivas, 0
+    total + (gasto.salarioBrutoProrrateo || 0) + (gasto.seguridadSocialEmpresaProrrateo || 0) + 
+    (gasto.importeHorasExtras || 0) + (gasto.importeHorasFestivas || 0), 0
   );
 
   const totalGastosVariables = gastosImputados.reduce((total, gasto) => 
-    total + gasto.gastos.reduce((subTotal, gastoVar) => subTotal + gastoVar.importe, 0), 0
+    total + (gasto.gastos?.reduce((subTotal, gastoVar) => subTotal + (gastoVar.importe || 0), 0) || 0), 0
   );
 
   const totalGeneral = totalCostesSalariales + totalGastosVariables;
@@ -144,7 +149,7 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              €{totalCostesSalariales.toFixed(2)}
+              €{safeToFixed(totalCostesSalariales)}
             </div>
             <p className="text-xs text-muted-foreground">
               Salarios + SS + Extras
@@ -161,7 +166,7 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              €{totalGastosVariables.toFixed(2)}
+              €{safeToFixed(totalGastosVariables)}
             </div>
             <p className="text-xs text-muted-foreground">
               Dietas, transporte, etc.
@@ -178,7 +183,7 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              €{totalGeneral.toFixed(2)}
+              €{safeToFixed(totalGeneral)}
             </div>
             <p className="text-xs text-muted-foreground">
               Total del mes
@@ -226,9 +231,9 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
               {gastosImputados.length > 0 ? (
                 gastosImputados.map((gasto) => {
                   const empleado = empleados.find(e => e.id === gasto.empleadoId);
-                  const totalGastosVar = gasto.gastos.reduce((sum, g) => sum + g.importe, 0);
-                  const totalEmpleado = gasto.salarioBrutoProrrateo + gasto.seguridadSocialEmpresaProrrateo + 
-                                     gasto.importeHorasExtras + gasto.importeHorasFestivas + totalGastosVar;
+                  const totalGastosVar = (gasto.gastos || []).reduce((sum, g) => sum + (g.importe || 0), 0);
+                  const totalEmpleado = (gasto.salarioBrutoProrrateo || 0) + (gasto.seguridadSocialEmpresaProrrateo || 0) + 
+                                     (gasto.importeHorasExtras || 0) + (gasto.importeHorasFestivas || 0) + totalGastosVar;
 
                   return (
                     <TableRow key={gasto.id}>
@@ -237,16 +242,16 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {gasto.diasTrabajados}/{gasto.diasLaboralesMes} días
+                          {gasto.diasTrabajados || 0}/{gasto.diasLaboralesMes || 0} días
                         </Badge>
                       </TableCell>
-                      <TableCell>€{gasto.salarioBrutoProrrateo.toFixed(2)}</TableCell>
-                      <TableCell>€{gasto.seguridadSocialEmpresaProrrateo.toFixed(2)}</TableCell>
+                      <TableCell>€{safeToFixed(gasto.salarioBrutoProrrateo)}</TableCell>
+                      <TableCell>€{safeToFixed(gasto.seguridadSocialEmpresaProrrateo)}</TableCell>
                       <TableCell>
-                        {gasto.horasExtras > 0 || gasto.horasFestivas > 0 ? (
+                        {(gasto.horasExtras || 0) > 0 || (gasto.horasFestivas || 0) > 0 ? (
                           <div className="text-sm">
-                            <div>Extras: {gasto.horasExtras}h (€{gasto.importeHorasExtras.toFixed(2)})</div>
-                            <div>Festivas: {gasto.horasFestivas}h (€{gasto.importeHorasFestivas.toFixed(2)})</div>
+                            <div>Extras: {gasto.horasExtras || 0}h (€{safeToFixed(gasto.importeHorasExtras)})</div>
+                            <div>Festivas: {gasto.horasFestivas || 0}h (€{safeToFixed(gasto.importeHorasFestivas)})</div>
                           </div>
                         ) : (
                           '-'
@@ -255,13 +260,13 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
                       <TableCell>
                         {totalGastosVar > 0 ? (
                           <div className="text-sm">
-                            €{totalGastosVar.toFixed(2)} ({gasto.gastos.length} gastos)
+                            €{safeToFixed(totalGastosVar)} ({(gasto.gastos || []).length} gastos)
                           </div>
                         ) : (
                           '-'
                         )}
                       </TableCell>
-                      <TableCell className="font-bold">€{totalEmpleado.toFixed(2)}</TableCell>
+                      <TableCell className="font-bold">€{safeToFixed(totalEmpleado)}</TableCell>
                     </TableRow>
                   );
                 })
