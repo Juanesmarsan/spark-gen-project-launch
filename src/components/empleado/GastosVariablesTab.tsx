@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
-import { useImputacionGastosProyectos } from "@/hooks/useImputacionGastosProyectos";
 import { useToast } from "@/hooks/use-toast";
+import { useProyectos } from "@/hooks/useProyectos";
+import { useGastosEmpleados } from "@/hooks/useGastosEmpleados";
 import { GastoVariableForm } from "./gastos/GastoVariableForm";
 import { ProyectoSelectionDialog } from "./gastos/ProyectoSelectionDialog";
 import { GastosVariablesSummary } from "./gastos/GastosVariablesSummary";
@@ -24,8 +25,30 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
   const [proyectosDisponibles, setProyectosDisponibles] = useState<Array<{id: number, nombre: string}>>([]);
   const [gastoParaImputar, setGastoParaImputar] = useState<Omit<GastoVariableEmpleado, 'id'> | null>(null);
 
-  const { imputarGastoAProyecto, imputarGastoManual } = useImputacionGastosProyectos();
+  const { proyectos, agregarGastoProyecto } = useProyectos();
+  const { agregarGastoVariable } = useGastosEmpleados();
   const { toast } = useToast();
+
+  const buscarProyectosActivos = (fechaGasto: Date) => {
+    console.log('GastosVariablesTab: Buscando proyectos activos para empleado:', empleado.id, 'en fecha:', fechaGasto);
+    
+    const proyectosDelEmpleado = proyectos.filter(proyecto => {
+      const empleadoAsignado = proyecto.trabajadoresAsignados.some(trabajador => trabajador.id === empleado.id);
+      if (!empleadoAsignado) return false;
+
+      const trabajadorAsignado = proyecto.trabajadoresAsignados.find(t => t.id === empleado.id);
+      if (!trabajadorAsignado) return false;
+
+      // Verificar fechas de trabajo en el proyecto
+      const despuesFechaEntrada = !trabajadorAsignado.fechaEntrada || fechaGasto >= trabajadorAsignado.fechaEntrada;
+      const antesFechaSalida = !trabajadorAsignado.fechaSalida || fechaGasto <= trabajadorAsignado.fechaSalida;
+      
+      return despuesFechaEntrada && antesFechaSalida && proyecto.estado === 'activo';
+    });
+
+    console.log('GastosVariablesTab: Proyectos encontrados:', proyectosDelEmpleado.length);
+    return proyectosDelEmpleado;
+  };
 
   const handleSubmit = (formData: {
     concepto: 'dieta' | 'alojamiento' | 'transporte' | 'otro';
@@ -43,37 +66,57 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
     } else {
       console.log('GastosVariablesTab: Agregando nuevo gasto');
       
-      // Crear el gasto temporal para la imputación
-      const gastoTemporal: GastoVariableEmpleado = {
-        id: Date.now(), // ID temporal para la imputación
-        ...formData
-      };
+      // Buscar proyectos activos para la fecha del gasto
+      const proyectosActivos = buscarProyectosActivos(formData.fecha);
       
-      // Intentar imputar automáticamente a un proyecto
-      const resultadoImputacion = imputarGastoAProyecto(empleado.id, gastoTemporal);
-      
-      if (resultadoImputacion.imputado) {
-        // Se imputó automáticamente
+      if (proyectosActivos.length === 1) {
+        // Imputar automáticamente al único proyecto
+        const proyecto = proyectosActivos[0];
+        
+        // Agregar como gasto de proyecto
+        const gastoProyecto = {
+          concepto: `${formData.concepto} - ${empleado.nombre}`,
+          categoria: 'otro' as const,
+          descripcion: formData.descripcion || `Gasto de ${formData.concepto}`,
+          importe: formData.importe,
+          fecha: formData.fecha,
+          factura: `EMP-${empleado.id}-${Date.now()}`
+        };
+        
+        agregarGastoProyecto(proyecto.id, gastoProyecto);
+        
+        // También agregar como gasto variable del empleado para el proyecto
+        const mes = formData.fecha.getMonth() + 1;
+        const anio = formData.fecha.getFullYear();
+        
+        agregarGastoVariable(Date.now(), {
+          tipo: formData.concepto,
+          concepto: formData.descripcion,
+          importe: formData.importe,
+          fecha: formData.fecha,
+          descripcion: formData.descripcion
+        });
+        
         toast({
           title: "Gasto imputado automáticamente",
-          description: `El gasto se ha imputado al proyecto: ${resultadoImputacion.proyecto}`,
+          description: `El gasto se ha imputado al proyecto: ${proyecto.nombre}`,
         });
-      } else if (resultadoImputacion.proyectosDisponibles && resultadoImputacion.proyectosDisponibles.length > 0) {
-        // Hay múltiples proyectos, mostrar dialog de selección
+      } else if (proyectosActivos.length > 1) {
+        // Mostrar dialog de selección
         setGastoParaImputar(formData);
-        setProyectosDisponibles(resultadoImputacion.proyectosDisponibles);
+        setProyectosDisponibles(proyectosActivos.map(p => ({ id: p.id, nombre: p.nombre })));
         setMostrarDialogProyectos(true);
         setMostrarDialog(false);
         return;
       } else {
-        // No hay proyectos, agregar como gasto general del empleado
+        // No hay proyectos activos
         toast({
           title: "Gasto agregado al empleado",
-          description: "No se encontraron proyectos activos. El gasto se ha registrado como gasto general del empleado.",
+          description: "No se encontraron proyectos activos para la fecha. El gasto se ha registrado como gasto general del empleado.",
         });
       }
       
-      // Agregar el gasto al empleado en cualquier caso
+      // Agregar el gasto al empleado en todos los casos
       onAgregarGasto(formData);
       setMostrarDialog(false);
     }
@@ -81,14 +124,26 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
 
   const handleImputarProyectoSeleccionado = (proyectoId: number) => {
     if (gastoParaImputar) {
-      // Crear el gasto temporal para la imputación manual
-      const gastoTemporal: GastoVariableEmpleado = {
-        id: Date.now(), // ID temporal para la imputación
-        ...gastoParaImputar
+      // Imputar al proyecto seleccionado
+      const gastoProyecto = {
+        concepto: `${gastoParaImputar.concepto} - ${empleado.nombre}`,
+        categoria: 'otro' as const,
+        descripcion: gastoParaImputar.descripcion || `Gasto de ${gastoParaImputar.concepto}`,
+        importe: gastoParaImputar.importe,
+        fecha: gastoParaImputar.fecha,
+        factura: `EMP-${empleado.id}-${Date.now()}`
       };
       
-      // Imputar manualmente al proyecto seleccionado
-      imputarGastoManual(proyectoId, empleado.id, gastoTemporal);
+      agregarGastoProyecto(proyectoId, gastoProyecto);
+      
+      // También agregar como gasto variable del empleado
+      agregarGastoVariable(Date.now(), {
+        tipo: gastoParaImputar.concepto,
+        concepto: gastoParaImputar.descripcion,
+        importe: gastoParaImputar.importe,
+        fecha: gastoParaImputar.fecha,
+        descripcion: gastoParaImputar.descripcion
+      });
       
       // Agregar también como gasto del empleado
       onAgregarGasto(gastoParaImputar);
