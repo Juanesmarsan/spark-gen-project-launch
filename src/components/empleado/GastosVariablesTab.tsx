@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calendar as CalendarIcon, Plus, Edit, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Edit, Trash2, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useImputacionGastosProyectos } from "@/hooks/useImputacionGastosProyectos";
+import { useToast } from "@/hooks/use-toast";
 
 interface GastosVariablesTabProps {
   empleado: Empleado;
@@ -25,6 +26,10 @@ interface GastosVariablesTabProps {
 export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, onEliminarGasto }: GastosVariablesTabProps) => {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [gastoEditando, setGastoEditando] = useState<GastoVariableEmpleado | null>(null);
+  const [mostrarDialogProyectos, setMostrarDialogProyectos] = useState(false);
+  const [proyectosDisponibles, setProyectosDisponibles] = useState<Array<{id: number, nombre: string}>>([]);
+  const [gastoParaImputar, setGastoParaImputar] = useState<Omit<GastoVariableEmpleado, 'id'> | null>(null);
+  
   const [formData, setFormData] = useState<{
     concepto: 'dieta' | 'alojamiento' | 'transporte' | 'otro';
     descripcion: string;
@@ -36,6 +41,9 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
     importe: 0,
     fecha: new Date()
   });
+
+  const { imputarGastoAProyecto, imputarGastoManual } = useImputacionGastosProyectos();
+  const { toast } = useToast();
 
   const resetForm = () => {
     setFormData({
@@ -66,13 +74,76 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
     if (gastoEditando && onEditarGasto) {
       console.log('GastosVariablesTab: Editando gasto existente');
       onEditarGasto(gastoEditando.id, formData);
+      setMostrarDialog(false);
+      resetForm();
     } else {
       console.log('GastosVariablesTab: Agregando nuevo gasto');
+      
+      // Intentar imputar automáticamente a un proyecto
+      const resultadoImputacion = imputarGastoAProyecto(empleado.id, formData);
+      
+      if (resultadoImputacion.imputado) {
+        // Se imputó automáticamente
+        toast({
+          title: "Gasto imputado automáticamente",
+          description: `El gasto se ha imputado al proyecto: ${resultadoImputacion.proyecto}`,
+        });
+      } else if (resultadoImputacion.proyectosDisponibles && resultadoImputacion.proyectosDisponibles.length > 0) {
+        // Hay múltiples proyectos, mostrar dialog de selección
+        setGastoParaImputar(formData);
+        setProyectosDisponibles(resultadoImputacion.proyectosDisponibles);
+        setMostrarDialogProyectos(true);
+        setMostrarDialog(false);
+        resetForm();
+        return;
+      } else {
+        // No hay proyectos, agregar como gasto general del empleado
+        toast({
+          title: "Gasto agregado al empleado",
+          description: "No se encontraron proyectos activos. El gasto se ha registrado como gasto general del empleado.",
+        });
+      }
+      
+      // Agregar el gasto al empleado en cualquier caso
       onAgregarGasto(formData);
+      setMostrarDialog(false);
+      resetForm();
+    }
+  };
+
+  const handleImputarProyectoSeleccionado = (proyectoId: number) => {
+    if (gastoParaImputar) {
+      // Imputar manualmente al proyecto seleccionado
+      imputarGastoManual(proyectoId, empleado.id, gastoParaImputar);
+      
+      // Agregar también como gasto del empleado
+      onAgregarGasto(gastoParaImputar);
+      
+      const proyectoSeleccionado = proyectosDisponibles.find(p => p.id === proyectoId);
+      toast({
+        title: "Gasto imputado",
+        description: `El gasto se ha imputado al proyecto: ${proyectoSeleccionado?.nombre}`,
+      });
     }
     
-    setMostrarDialog(false);
-    resetForm();
+    setMostrarDialogProyectos(false);
+    setGastoParaImputar(null);
+    setProyectosDisponibles([]);
+  };
+
+  const handleNoImputar = () => {
+    if (gastoParaImputar) {
+      // Solo agregar como gasto del empleado sin imputar a proyecto
+      onAgregarGasto(gastoParaImputar);
+      toast({
+        title: "Gasto agregado",
+        description: "El gasto se ha registrado como gasto general del empleado.",
+      });
+    }
+    
+    setMostrarDialogProyectos(false);
+    setGastoParaImputar(null);
+    setProyectosDisponibles([]);
   };
 
   const handleEditar = (gasto: GastoVariableEmpleado) => {
@@ -209,6 +280,41 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Dialog para selección de proyecto */}
+      <Dialog open={mostrarDialogProyectos} onOpenChange={setMostrarDialogProyectos}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              Seleccionar Proyecto
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              El empleado está asignado a múltiples proyectos activos. ¿A qué proyecto deseas imputar este gasto?
+            </p>
+            <div className="space-y-2">
+              {proyectosDisponibles.map((proyecto) => (
+                <Button
+                  key={proyecto.id}
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleImputarProyectoSeleccionado(proyecto.id)}
+                >
+                  <Building2 className="w-4 h-4 mr-2" />
+                  {proyecto.nombre}
+                </Button>
+              ))}
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={handleNoImputar}>
+                No imputar a proyecto
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Resumen */}
       <Card>
