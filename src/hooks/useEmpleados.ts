@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Empleado, GastoVariableEmpleado, HistorialSalario } from '@/types/empleado';
 import { empleadosEjemplo } from '@/data/empleadosEjemplo';
@@ -28,6 +27,12 @@ export const useEmpleados = () => {
     
     setIsLoaded(true);
   }, [isLoaded]);
+
+  const eliminarTodosEmpleados = () => {
+    console.log('useEmpleados: Eliminando todos los empleados...');
+    setEmpleados([]);
+    guardarEmpleadosEnStorage([]);
+  };
 
   const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables' | 'historialSalarios' | 'activo'>) => {
     console.log('useEmpleados: Agregando empleado...');
@@ -157,6 +162,7 @@ export const useEmpleados = () => {
     agregarEmpleado,
     updateEmpleado,
     eliminarEmpleado,
+    eliminarTodosEmpleados,
     deshabilitarEmpleado,
     habilitarEmpleado,
     agregarCambioSalario,

@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { Empleado } from "@/types/empleado";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +9,7 @@ export const usePersonalActions = () => {
   console.log('usePersonalActions: Inicializando hook');
   
   const { toast } = useToast();
-  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
+  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, eliminarTodosEmpleados, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
   const { sincronizarGastoVariableConGastosFijos, sincronizarSalariosGerenciaConGastosFijos } = useGastosPersonalGerencia();
   
   // Filtrar solo el personal de gerencia
@@ -28,6 +27,18 @@ export const usePersonalActions = () => {
   console.log('usePersonalActions: Personal de gerencia encontrado:', empleados.length);
 
   const baseActions = useEmpleadoActionsBase(empleados);
+
+  const handleEliminarTodosEmpleados = useCallback(() => {
+    console.log('usePersonalActions: Eliminando todos los empleados');
+    eliminarTodosEmpleados();
+    baseActions.setEmpleadoSeleccionado(null);
+    
+    toast({
+      title: "Todo el personal eliminado",
+      description: "Se ha eliminado todo el personal de la base de datos.",
+      variant: "destructive"
+    });
+  }, [eliminarTodosEmpleados, baseActions, toast]);
 
   const handleAgregarEmpleado = useCallback((nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables' | 'historialSalarios' | 'activo'>) => {
     console.log('usePersonalActions: Agregando empleado');
@@ -133,6 +144,7 @@ export const usePersonalActions = () => {
     ...baseActions,
     handleAgregarEmpleado,
     handleEliminarEmpleado,
+    handleEliminarTodosEmpleados,
     handleBulkEliminar,
     handleBulkDeshabilitar,
     handleUpdateEmpleado: handleUpdateEmpleado,

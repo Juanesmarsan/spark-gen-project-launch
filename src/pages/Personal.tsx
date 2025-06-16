@@ -18,6 +18,7 @@ const Personal = () => {
     inventarioVehiculos,
     handleAgregarEmpleado,
     handleEliminarEmpleado,
+    handleEliminarTodosEmpleados,
     handleBulkEliminar,
     handleBulkDeshabilitar,
     handleDeshabilitarEmpleado,
@@ -42,6 +43,7 @@ const Personal = () => {
         mostrarFormulario={mostrarFormulario}
         setMostrarFormulario={setMostrarFormulario}
         onAgregarEmpleado={handleAgregarEmpleado}
+        onEliminarTodos={handleEliminarTodosEmpleados}
       />
 
       <div className="grid gap-6">
