@@ -1,9 +1,12 @@
 
 import { useCallback } from 'react';
 import { Proyecto } from '@/types/proyecto';
+import { useGastosEmpleados } from '../useGastosEmpleados';
 import { generarCalendarioMesPuro } from '@/utils/calendarioUtils';
 
 export const useBeneficiosMensuales = () => {
+  const { obtenerGastosPorProyectoMes } = useGastosEmpleados();
+
   const calcularBeneficioMensualAdministracion = useCallback((proyecto: Proyecto, mes: number, año: number) => {
     if (proyecto.tipo !== 'administracion' || !proyecto.precioHora) {
       return 0;
@@ -60,11 +63,25 @@ export const useBeneficiosMensuales = () => {
   }, []);
 
   const calcularGastosMensuales = useCallback((proyecto: Proyecto, mes: number, año: number) => {
-    return proyecto.gastosVariables?.filter(gasto => {
+    // Gastos variables del proyecto
+    const gastosVariables = proyecto.gastosVariables?.filter(gasto => {
       const fechaGasto = new Date(gasto.fecha);
       return fechaGasto.getMonth() + 1 === mes && fechaGasto.getFullYear() === año;
     }).reduce((total, gasto) => total + gasto.importe, 0) || 0;
-  }, []);
+
+    // Gastos salariales proporcionales de empleados asignados
+    const gastosEmpleados = obtenerGastosPorProyectoMes(proyecto.id, mes, año);
+    const gastosSalariales = gastosEmpleados.reduce((total, gastoEmpleado) => {
+      return total + 
+        gastoEmpleado.salarioBrutoProrrateo + 
+        gastoEmpleado.seguridadSocialEmpresaProrrateo + 
+        gastoEmpleado.importeHorasExtras + 
+        gastoEmpleado.importeHorasFestivas +
+        gastoEmpleado.gastos.reduce((subTotal, gasto) => subTotal + gasto.importe, 0);
+    }, 0);
+
+    return gastosVariables + gastosSalariales;
+  }, [obtenerGastosPorProyectoMes]);
 
   return {
     calcularBeneficioMensualAdministracion,

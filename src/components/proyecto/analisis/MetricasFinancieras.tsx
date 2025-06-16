@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { DollarSign, Calculator, TrendingUp, TrendingDown, Percent } from "lucide-react";
+import { DollarSign, Calculator, TrendingUp, TrendingDown, Percent, Users } from "lucide-react";
 
 interface MetricasFinancierasProps {
   beneficioBruto: number;
@@ -23,7 +23,7 @@ export const MetricasFinancieras: React.FC<MetricasFinancierasProps> = ({
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-green-600" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Beneficio Bruto</p>
+              <p className="text-sm font-medium text-muted-foreground">Ingresos Brutos</p>
               <p className="text-lg font-bold text-green-600">
                 €{beneficioBruto.toLocaleString()}
               </p>
@@ -40,6 +40,9 @@ export const MetricasFinancieras: React.FC<MetricasFinancierasProps> = ({
               <p className="text-sm font-medium text-muted-foreground">Gastos Totales</p>
               <p className="text-lg font-bold text-blue-600">
                 €{gastosTotales.toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Incluye salarios proporcionales
               </p>
             </div>
           </div>
