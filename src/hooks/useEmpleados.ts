@@ -16,7 +16,8 @@ export const useEmpleados = () => {
         const empleadosParseados = JSON.parse(empleadosGuardados);
         const empleadosProcesados = empleadosParseados.map((empleado: any) => ({
           ...empleado,
-          fechaAlta: new Date(empleado.fechaAlta),
+          fechaIngreso: new Date(empleado.fechaIngreso),
+          fechaAlta: empleado.fechaAlta ? new Date(empleado.fechaAlta) : new Date(empleado.fechaIngreso || Date.now()),
           fechaBaja: empleado.fechaBaja ? new Date(empleado.fechaBaja) : undefined,
           adelantos: empleado.adelantos?.map((adelanto: any) => ({
             ...adelanto,
@@ -32,7 +33,12 @@ export const useEmpleados = () => {
           })) || [],
           episAsignados: empleado.episAsignados || [],
           herramientasAsignadas: empleado.herramientasAsignadas || [],
-          vehiculosAsignados: empleado.vehiculosAsignados || []
+          vehiculosAsignados: empleado.vehiculosAsignados || [],
+          epis: empleado.epis || empleado.episAsignados || [],
+          herramientas: empleado.herramientas || empleado.herramientasAsignadas || [],
+          documentos: empleado.documentos || [],
+          proyectos: empleado.proyectos || [],
+          historialSalarios: empleado.historialSalarios || []
         }));
         
         console.log('useEmpleados: Empleados cargados desde storage:', empleadosProcesados.length);
@@ -52,6 +58,7 @@ export const useEmpleados = () => {
     try {
       const empleadosParaGuardar = newEmpleados.map(empleado => ({
         ...empleado,
+        fechaIngreso: empleado.fechaIngreso.toISOString(),
         fechaAlta: empleado.fechaAlta.toISOString(),
         fechaBaja: empleado.fechaBaja ? empleado.fechaBaja.toISOString() : undefined,
         adelantos: empleado.adelantos?.map(adelanto => ({
@@ -87,7 +94,12 @@ export const useEmpleados = () => {
       cambiosSalario: [],
       episAsignados: [],
       herramientasAsignadas: [],
-      vehiculosAsignados: []
+      vehiculosAsignados: [],
+      epis: [],
+      herramientas: [],
+      documentos: [],
+      proyectos: [],
+      historialSalarios: []
     };
 
     const nuevosEmpleados = [...empleados, nuevoEmpleado];
@@ -112,6 +124,18 @@ export const useEmpleados = () => {
     setEmpleados(nuevosEmpleados);
     saveToLocalStorage(nuevosEmpleados);
   }, [empleados, saveToLocalStorage]);
+
+  const eliminarTodosEmpleados = useCallback(() => {
+    console.log('useEmpleados: Eliminando todos los empleados...');
+    setEmpleados([]);
+    saveToLocalStorage([]);
+  }, [saveToLocalStorage]);
+
+  const resetearTodosEmpleados = useCallback(() => {
+    console.log('useEmpleados: Reseteando todos los empleados...');
+    setEmpleados([]);
+    saveToLocalStorage([]);
+  }, [saveToLocalStorage]);
 
   const agregarAdelanto = useCallback((empleadoId: number, concepto: string, cantidad: number) => {
     console.log('useEmpleados: Agregando adelanto...');
@@ -188,12 +212,6 @@ export const useEmpleados = () => {
     saveToLocalStorage(nuevosEmpleados);
   }, [empleados, saveToLocalStorage]);
 
-  const eliminarTodosEmpleados = useCallback(() => {
-    console.log('useEmpleados: Eliminando todos los empleados...');
-    setEmpleados([]);
-    saveToLocalStorage([]);
-  }, [saveToLocalStorage]);
-
   const deshabilitarEmpleado = useCallback((id: number) => {
     console.log('useEmpleados: Deshabilitando empleado...');
     const nuevosEmpleados = empleados.map(empleado =>
@@ -221,6 +239,7 @@ export const useEmpleados = () => {
     agregarGastoVariable,
     agregarCambioSalario,
     eliminarTodosEmpleados,
+    resetearTodosEmpleados,
     deshabilitarEmpleado,
     habilitarEmpleado
   };
