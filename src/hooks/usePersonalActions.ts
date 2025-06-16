@@ -9,7 +9,17 @@ export const usePersonalActions = () => {
   console.log('usePersonalActions: Inicializando hook');
   
   const { toast } = useToast();
-  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, eliminarTodosEmpleados, resetearTodosEmpleados, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
+  const { 
+    empleados: todosEmpleados, 
+    agregarEmpleado, 
+    eliminarEmpleado, 
+    eliminarTodosEmpleados, 
+    resetearTodosEmpleados, 
+    deshabilitarEmpleado, 
+    agregarCambioSalario,
+    editarGastoVariable,
+    eliminarGastoVariable 
+  } = useEmpleados();
   const { sincronizarGastoVariableConGastosFijos, sincronizarSalariosGerenciaConGastosFijos } = useGastosPersonalGerencia();
   
   // Filtrar solo el personal de gerencia
@@ -124,6 +134,41 @@ export const usePersonalActions = () => {
     sincronizarGastoVariableConGastosFijos(baseActions.empleadoSeleccionado.id, gastoConId);
   }, [baseActions, sincronizarGastoVariableConGastosFijos]);
 
+  const handleEditarGastoVariable = useCallback((gastoId: number, gastoActualizado: any) => {
+    if (!baseActions.empleadoSeleccionado) return;
+
+    console.log('usePersonalActions: Editando gasto variable');
+    editarGastoVariable(baseActions.empleadoSeleccionado.id, gastoId, gastoActualizado);
+    
+    // Actualizar el empleado seleccionado
+    setTimeout(() => {
+      baseActions.actualizarEmpleadoSeleccionado(baseActions.empleadoSeleccionado!.id);
+    }, 100);
+
+    toast({
+      title: "Gasto actualizado",
+      description: "El gasto variable se ha actualizado correctamente.",
+    });
+  }, [editarGastoVariable, baseActions, toast]);
+
+  const handleEliminarGastoVariable = useCallback((gastoId: number) => {
+    if (!baseActions.empleadoSeleccionado) return;
+
+    console.log('usePersonalActions: Eliminando gasto variable');
+    eliminarGastoVariable(baseActions.empleadoSeleccionado.id, gastoId);
+    
+    // Actualizar el empleado seleccionado
+    setTimeout(() => {
+      baseActions.actualizarEmpleadoSeleccionado(baseActions.empleadoSeleccionado!.id);
+    }, 100);
+
+    toast({
+      title: "Gasto eliminado",
+      description: "El gasto variable se ha eliminado correctamente.",
+      variant: "destructive"
+    });
+  }, [eliminarGastoVariable, baseActions, toast]);
+
   const handleAgregarCambioSalario = useCallback((empleadoId: number, nuevosSalarios: any) => {
     console.log('usePersonalActions: Agregando cambio de salario');
     agregarCambioSalario(empleadoId, nuevosSalarios);
@@ -149,6 +194,8 @@ export const usePersonalActions = () => {
     handleBulkDeshabilitar,
     handleUpdateEmpleado: handleUpdateEmpleado,
     handleAgregarGastoVariable,
+    handleEditarGastoVariable,
+    handleEliminarGastoVariable,
     agregarCambioSalario: handleAgregarCambioSalario
   };
 };

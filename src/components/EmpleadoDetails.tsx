@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Empleado, Epi, Herramienta, Vehiculo, GastoVariableEmpleado, HistorialSalario } from "@/types/empleado";
@@ -23,6 +22,8 @@ interface EmpleadoDetailsProps {
   onAsignarHerramienta: (herramientaId: number, fecha: Date) => void;
   onAsignarVehiculo: (vehiculoId: number) => void;
   onAgregarGastoVariable: (gasto: Omit<GastoVariableEmpleado, 'id'>) => void;
+  onEditarGastoVariable?: (gastoId: number, gastoActualizado: Omit<GastoVariableEmpleado, 'id'>) => void;
+  onEliminarGastoVariable?: (gastoId: number) => void;
   onAgregarCambioSalario: (empleadoId: number, nuevosSalarios: Omit<HistorialSalario, 'id' | 'fechaCambio'>) => void;
 }
 
@@ -37,6 +38,8 @@ export const EmpleadoDetails = ({
   onAsignarHerramienta,
   onAsignarVehiculo,
   onAgregarGastoVariable,
+  onEditarGastoVariable,
+  onEliminarGastoVariable,
   onAgregarCambioSalario
 }: EmpleadoDetailsProps) => {
   return (
@@ -119,6 +122,8 @@ export const EmpleadoDetails = ({
             <GastosVariablesTab
               empleado={empleado}
               onAgregarGasto={onAgregarGastoVariable}
+              onEditarGasto={onEditarGastoVariable}
+              onEliminarGasto={onEliminarGastoVariable}
             />
           </TabsContent>
         </Tabs>

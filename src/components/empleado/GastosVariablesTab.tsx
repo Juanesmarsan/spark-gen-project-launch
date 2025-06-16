@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Calendar as CalendarIcon, Plus, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
@@ -17,10 +18,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface GastosVariablesTabProps {
   empleado: Empleado;
   onAgregarGasto: (gasto: Omit<GastoVariableEmpleado, 'id'>) => void;
+  onEditarGasto?: (gastoId: number, gastoActualizado: Omit<GastoVariableEmpleado, 'id'>) => void;
+  onEliminarGasto?: (gastoId: number) => void;
 }
 
-export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariablesTabProps) => {
+export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, onEliminarGasto }: GastosVariablesTabProps) => {
   const [mostrarDialog, setMostrarDialog] = useState(false);
+  const [gastoEditando, setGastoEditando] = useState<GastoVariableEmpleado | null>(null);
   const [formData, setFormData] = useState({
     concepto: 'dieta' as const,
     descripcion: '',
@@ -28,9 +32,19 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
     fecha: new Date()
   });
 
+  const resetForm = () => {
+    setFormData({
+      concepto: 'dieta' as const,
+      descripcion: '',
+      importe: 0,
+      fecha: new Date()
+    });
+    setGastoEditando(null);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('GastosVariablesTab: Agregando gasto variable:', formData);
+    console.log('GastosVariablesTab: Procesando gasto:', formData);
     
     // Validar que el importe sea mayor que 0
     if (formData.importe <= 0) {
@@ -44,14 +58,35 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
       return;
     }
 
-    onAgregarGasto(formData);
+    if (gastoEditando && onEditarGasto) {
+      console.log('GastosVariablesTab: Editando gasto existente');
+      onEditarGasto(gastoEditando.id, formData);
+    } else {
+      console.log('GastosVariablesTab: Agregando nuevo gasto');
+      onAgregarGasto(formData);
+    }
+    
     setMostrarDialog(false);
+    resetForm();
+  };
+
+  const handleEditar = (gasto: GastoVariableEmpleado) => {
+    console.log('GastosVariablesTab: Preparando edición de gasto:', gasto);
+    setGastoEditando(gasto);
     setFormData({
-      concepto: 'dieta' as const,
-      descripcion: '',
-      importe: 0,
-      fecha: new Date()
+      concepto: gasto.concepto,
+      descripcion: gasto.descripcion || '',
+      importe: gasto.importe,
+      fecha: gasto.fecha
     });
+    setMostrarDialog(true);
+  };
+
+  const handleEliminar = (gastoId: number) => {
+    console.log('GastosVariablesTab: Eliminando gasto:', gastoId);
+    if (onEliminarGasto) {
+      onEliminarGasto(gastoId);
+    }
   };
 
   const getConceptoLabel = (concepto: string) => {
@@ -76,7 +111,10 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
           </p>
         </div>
         
-        <Dialog open={mostrarDialog} onOpenChange={setMostrarDialog}>
+        <Dialog open={mostrarDialog} onOpenChange={(open) => {
+          setMostrarDialog(open);
+          if (!open) resetForm();
+        }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
@@ -85,7 +123,9 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nuevo Gasto Variable</DialogTitle>
+              <DialogTitle>
+                {gastoEditando ? 'Editar Gasto Variable' : 'Nuevo Gasto Variable'}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -154,7 +194,7 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
                   Cancelar
                 </Button>
                 <Button type="submit">
-                  Guardar Gasto
+                  {gastoEditando ? 'Actualizar Gasto' : 'Guardar Gasto'}
                 </Button>
               </div>
             </form>
@@ -184,6 +224,7 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
               <TableHead>Descripción</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead className="text-right">Importe</TableHead>
+              <TableHead className="text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -196,11 +237,55 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
                   <TableCell>{gasto.descripcion || '-'}</TableCell>
                   <TableCell>{format(gasto.fecha, "dd/MM/yyyy", { locale: es })}</TableCell>
                   <TableCell className="text-right">€{gasto.importe.toFixed(2)}</TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      {onEditarGasto && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditar(gasto)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {onEliminarGasto && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar gasto?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción no se puede deshacer. Se eliminará permanentemente el gasto de {getConceptoLabel(gasto.concepto)} por €{gasto.importe.toFixed(2)}.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleEliminar(gasto.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   No hay gastos variables registrados
                 </TableCell>
               </TableRow>

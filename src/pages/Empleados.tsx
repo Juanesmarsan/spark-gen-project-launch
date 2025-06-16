@@ -29,6 +29,8 @@ const Empleados = () => {
     asignarHerramienta,
     asignarVehiculo,
     handleAgregarGastoVariable,
+    handleEditarGastoVariable,
+    handleEliminarGastoVariable,
     agregarCambioSalario
   } = useEmpleadosActions();
 
@@ -65,6 +67,8 @@ const Empleados = () => {
             onAsignarHerramienta={asignarHerramienta}
             onAsignarVehiculo={asignarVehiculo}
             onAgregarGastoVariable={handleAgregarGastoVariable}
+            onEditarGastoVariable={handleEditarGastoVariable}
+            onEliminarGastoVariable={handleEliminarGastoVariable}
             onAgregarCambioSalario={agregarCambioSalario}
           />
         )}

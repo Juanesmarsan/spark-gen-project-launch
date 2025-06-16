@@ -1,22 +1,22 @@
-
 import { Empleado } from '@/types/empleado';
 
 export const empleadosEjemplo: Empleado[] = [
   {
     id: 1,
-    nombre: "Jorge",
-    apellidos: "",
-    telefono: "",
+    nombre: "Juan",
+    apellidos: "Pérez García",
+    telefono: "666123456",
     fechaIngreso: new Date("2023-01-15"),
-    salarioBruto: 0,
-    seguridadSocialTrabajador: 0,
-    seguridadSocialEmpresa: 0,
-    retenciones: 0,
+    fechaAlta: new Date("2023-01-15"),
+    salarioBruto: 1800,
+    seguridadSocialTrabajador: 117,
+    seguridadSocialEmpresa: 540,
+    retenciones: 270,
     embargo: 0,
-    departamento: 'operario',
-    categoria: 'oficial_2',
-    precioHoraExtra: 20,
-    precioHoraFestiva: 25,
+    departamento: "operario",
+    categoria: "oficial_2",
+    precioHoraExtra: 15,
+    precioHoraFestiva: 18,
     adelantos: [],
     epis: [],
     herramientas: [],
@@ -24,7 +24,11 @@ export const empleadosEjemplo: Empleado[] = [
     proyectos: [],
     gastosVariables: [],
     historialSalarios: [],
-    activo: true,
+    cambiosSalario: [],
+    episAsignados: [],
+    herramientasAsignadas: [],
+    vehiculosAsignados: [],
+    activo: true
   },
   {
     id: 2,

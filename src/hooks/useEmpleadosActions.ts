@@ -8,7 +8,17 @@ export const useEmpleadosActions = () => {
   console.log('useEmpleadosActions: Inicializando hook');
   
   const { toast } = useToast();
-  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, eliminarTodosEmpleados, resetearTodosEmpleados, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
+  const { 
+    empleados: todosEmpleados, 
+    agregarEmpleado, 
+    eliminarEmpleado, 
+    eliminarTodosEmpleados, 
+    resetearTodosEmpleados, 
+    deshabilitarEmpleado, 
+    agregarCambioSalario,
+    editarGastoVariable,
+    eliminarGastoVariable 
+  } = useEmpleados();
   
   // Filtrar empleados excluyendo a Esteban Márquez y Nuria Playan (ahora están en Personal de Gerencia)
   const empleados = todosEmpleados.filter(emp => 
@@ -103,6 +113,41 @@ export const useEmpleadosActions = () => {
     });
   }, [agregarCambioSalario, baseActions, toast]);
 
+  const handleEditarGastoVariable = useCallback((gastoId: number, gastoActualizado: any) => {
+    if (!baseActions.empleadoSeleccionado) return;
+
+    console.log('useEmpleadosActions: Editando gasto variable');
+    editarGastoVariable(baseActions.empleadoSeleccionado.id, gastoId, gastoActualizado);
+    
+    // Actualizar el empleado seleccionado
+    setTimeout(() => {
+      baseActions.actualizarEmpleadoSeleccionado(baseActions.empleadoSeleccionado!.id);
+    }, 100);
+
+    toast({
+      title: "Gasto actualizado",
+      description: "El gasto variable se ha actualizado correctamente.",
+    });
+  }, [editarGastoVariable, baseActions, toast]);
+
+  const handleEliminarGastoVariable = useCallback((gastoId: number) => {
+    if (!baseActions.empleadoSeleccionado) return;
+
+    console.log('useEmpleadosActions: Eliminando gasto variable');
+    eliminarGastoVariable(baseActions.empleadoSeleccionado.id, gastoId);
+    
+    // Actualizar el empleado seleccionado
+    setTimeout(() => {
+      baseActions.actualizarEmpleadoSeleccionado(baseActions.empleadoSeleccionado!.id);
+    }, 100);
+
+    toast({
+      title: "Gasto eliminado",
+      description: "El gasto variable se ha eliminado correctamente.",
+      variant: "destructive"
+    });
+  }, [eliminarGastoVariable, baseActions, toast]);
+
   return {
     empleados,
     ...baseActions,
@@ -111,6 +156,8 @@ export const useEmpleadosActions = () => {
     handleEliminarTodosEmpleados,
     handleBulkEliminar,
     handleBulkDeshabilitar,
-    agregarCambioSalario: handleAgregarCambioSalario
+    agregarCambioSalario: handleAgregarCambioSalario,
+    handleEditarGastoVariable,
+    handleEliminarGastoVariable
   };
 };

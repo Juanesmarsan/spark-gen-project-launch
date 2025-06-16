@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Empleado, EmpleadoFormData, GastoVariableEmpleado, CambioSalario } from '@/types/empleado';
 
@@ -183,6 +182,54 @@ export const useEmpleados = () => {
     console.log('useEmpleados: Gasto variable agregado correctamente');
   }, [empleados, saveToLocalStorage]);
 
+  const editarGastoVariable = useCallback((empleadoId: number, gastoId: number, gastoActualizado: Omit<GastoVariableEmpleado, 'id'>) => {
+    console.log('useEmpleados: Editando gasto variable...', { empleadoId, gastoId, gastoActualizado });
+    
+    const nuevosEmpleados = empleados.map(empleado => {
+      if (empleado.id === empleadoId) {
+        const gastosActualizados = empleado.gastosVariables.map(gasto => 
+          gasto.id === gastoId 
+            ? { ...gastoActualizado, id: gastoId }
+            : gasto
+        );
+        
+        console.log('useEmpleados: Gastos actualizados después de edición:', gastosActualizados);
+        
+        return {
+          ...empleado,
+          gastosVariables: gastosActualizados
+        };
+      }
+      return empleado;
+    });
+    
+    setEmpleados(nuevosEmpleados);
+    saveToLocalStorage(nuevosEmpleados);
+    console.log('useEmpleados: Gasto variable editado correctamente');
+  }, [empleados, saveToLocalStorage]);
+
+  const eliminarGastoVariable = useCallback((empleadoId: number, gastoId: number) => {
+    console.log('useEmpleados: Eliminando gasto variable...', { empleadoId, gastoId });
+    
+    const nuevosEmpleados = empleados.map(empleado => {
+      if (empleado.id === empleadoId) {
+        const gastosActualizados = empleado.gastosVariables.filter(gasto => gasto.id !== gastoId);
+        
+        console.log('useEmpleados: Gastos después de eliminación:', gastosActualizados);
+        
+        return {
+          ...empleado,
+          gastosVariables: gastosActualizados
+        };
+      }
+      return empleado;
+    });
+    
+    setEmpleados(nuevosEmpleados);
+    saveToLocalStorage(nuevosEmpleados);
+    console.log('useEmpleados: Gasto variable eliminado correctamente');
+  }, [empleados, saveToLocalStorage]);
+
   const agregarCambioSalario = useCallback((empleadoId: number, cambio: Omit<CambioSalario, 'id'>) => {
     console.log('useEmpleados: Agregando cambio de salario...');
     const nuevosEmpleados = empleados.map(empleado => {
@@ -237,6 +284,8 @@ export const useEmpleados = () => {
     eliminarEmpleado,
     agregarAdelanto,
     agregarGastoVariable,
+    editarGastoVariable,
+    eliminarGastoVariable,
     agregarCambioSalario,
     eliminarTodosEmpleados,
     resetearTodosEmpleados,

@@ -29,6 +29,8 @@ const Personal = () => {
     asignarHerramienta,
     asignarVehiculo,
     handleAgregarGastoVariable,
+    handleEditarGastoVariable,
+    handleEliminarGastoVariable,
     agregarCambioSalario
   } = usePersonalActions();
 
@@ -70,6 +72,8 @@ const Personal = () => {
             onAsignarHerramienta={asignarHerramienta}
             onAsignarVehiculo={asignarVehiculo}
             onAgregarGastoVariable={handleAgregarGastoVariable}
+            onEditarGastoVariable={handleEditarGastoVariable}
+            onEliminarGastoVariable={handleEliminarGastoVariable}
             onAgregarCambioSalario={agregarCambioSalario}
           />
         )}
