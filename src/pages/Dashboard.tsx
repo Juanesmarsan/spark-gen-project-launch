@@ -67,7 +67,7 @@ const Dashboard = () => {
               </div>
               <div className="flex justify-between">
                 <span>Gastos Proyectos:</span>
-                <span className="text-red-600">€{gastosTotales - gastosFijosMes.toFixed(2)}</span>
+                <span className="text-red-600">€{(gastosTotales - gastosFijosMes).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Gastos Personal:</span>

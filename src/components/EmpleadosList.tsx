@@ -13,9 +13,17 @@ interface EmpleadosListProps {
   onEliminarEmpleado: (empleadoId: number) => void;
   onDeshabilitarEmpleado: (empleadoId: number) => void;
   onHabilitarEmpleado: (empleadoId: number) => void;
+  allowPermanentDelete?: boolean;
 }
 
-export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado, onDeshabilitarEmpleado, onHabilitarEmpleado }: EmpleadosListProps) => {
+export const EmpleadosList = ({ 
+  empleados, 
+  onSelectEmpleado, 
+  onEliminarEmpleado, 
+  onDeshabilitarEmpleado, 
+  onHabilitarEmpleado,
+  allowPermanentDelete = false 
+}: EmpleadosListProps) => {
   console.log('EmpleadosList: Renderizando lista con', empleados.length, 'empleados');
 
   const handleEditarEmpleado = (empleado: Empleado) => {
@@ -131,28 +139,30 @@ export const EmpleadosList = ({ empleados, onSelectEmpleado, onEliminarEmpleado,
                       </AlertDialog>
                     )}
                     
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Eliminar Empleado</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            ¿Estás seguro de que quieres eliminar permanentemente a {empleado.nombre} {empleado.apellidos}? 
-                            Esta acción no se puede deshacer y se perderán todos los datos del empleado.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleEliminarEmpleado(empleado.id)}>
-                            Eliminar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    {allowPermanentDelete && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Eliminar Empleado Permanentemente</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              ¿Estás seguro de que quieres eliminar permanentemente a {empleado.nombre} {empleado.apellidos}? 
+                              Esta acción no se puede deshacer y se perderán todos los datos del empleado.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleEliminarEmpleado(empleado.id)}>
+                              Eliminar Permanentemente
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

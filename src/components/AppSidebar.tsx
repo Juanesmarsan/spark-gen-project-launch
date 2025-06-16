@@ -27,7 +27,8 @@ import {
   FileText,
   Shield,
   ChevronRight,
-  UserCog
+  UserCog,
+  FolderText
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -84,6 +85,11 @@ const gerenciaItems = [
     title: "Personal",
     url: "/gerencia/personal",
     icon: UserCog,
+  },
+  {
+    title: "Documentación",
+    url: "/gerencia/documentacion",
+    icon: FolderText,
   },
   {
     title: "Reportes",
