@@ -9,7 +9,7 @@ export const useEmpleadosActions = () => {
   console.log('useEmpleadosActions: Inicializando hook');
   
   const { toast } = useToast();
-  const { empleados: todosEmpleados, agregarEmpleado, agregarCambioSalario } = useEmpleados();
+  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, agregarCambioSalario } = useEmpleados();
   
   // Filtrar empleados excluyendo a Esteban Márquez y Nuria Playan (ahora están en Personal de Gerencia)
   const empleados = todosEmpleados.filter(emp => 
@@ -30,6 +30,21 @@ export const useEmpleadosActions = () => {
     });
   }, [agregarEmpleado, toast, baseActions]);
 
+  const handleEliminarEmpleado = useCallback((empleadoId: number) => {
+    console.log('useEmpleadosActions: Eliminando empleado con ID:', empleadoId);
+    eliminarEmpleado(empleadoId);
+    
+    if (baseActions.empleadoSeleccionado?.id === empleadoId) {
+      baseActions.setEmpleadoSeleccionado(null);
+    }
+    
+    toast({
+      title: "Empleado eliminado",
+      description: "El empleado ha sido eliminado permanentemente.",
+      variant: "destructive"
+    });
+  }, [eliminarEmpleado, baseActions, toast]);
+
   const handleAgregarCambioSalario = useCallback((empleadoId: number, nuevosSalarios: any) => {
     console.log('useEmpleadosActions: Agregando cambio de salario');
     agregarCambioSalario(empleadoId, nuevosSalarios);
@@ -49,6 +64,7 @@ export const useEmpleadosActions = () => {
     empleados,
     ...baseActions,
     handleAgregarEmpleado,
+    handleEliminarEmpleado,
     agregarCambioSalario: handleAgregarCambioSalario
   };
 };
