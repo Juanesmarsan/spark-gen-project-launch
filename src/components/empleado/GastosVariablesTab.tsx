@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
 import { useImputacionGastosProyectos } from "@/hooks/useImputacionGastosProyectos";
@@ -44,8 +43,14 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
     } else {
       console.log('GastosVariablesTab: Agregando nuevo gasto');
       
+      // Crear el gasto temporal para la imputación
+      const gastoTemporal: GastoVariableEmpleado = {
+        id: Date.now(), // ID temporal para la imputación
+        ...formData
+      };
+      
       // Intentar imputar automáticamente a un proyecto
-      const resultadoImputacion = imputarGastoAProyecto(empleado.id, formData);
+      const resultadoImputacion = imputarGastoAProyecto(empleado.id, gastoTemporal);
       
       if (resultadoImputacion.imputado) {
         // Se imputó automáticamente
@@ -76,8 +81,14 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
 
   const handleImputarProyectoSeleccionado = (proyectoId: number) => {
     if (gastoParaImputar) {
+      // Crear el gasto temporal para la imputación manual
+      const gastoTemporal: GastoVariableEmpleado = {
+        id: Date.now(), // ID temporal para la imputación
+        ...gastoParaImputar
+      };
+      
       // Imputar manualmente al proyecto seleccionado
-      imputarGastoManual(proyectoId, empleado.id, gastoParaImputar);
+      imputarGastoManual(proyectoId, empleado.id, gastoTemporal);
       
       // Agregar también como gasto del empleado
       onAgregarGasto(gastoParaImputar);

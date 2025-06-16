@@ -1,17 +1,19 @@
-import { useState } from "react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Trash2, MapPin, Users, Euro, Clock, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash2, MapPin, Users, Calendar, Euro } from "lucide-react";
 import { Proyecto } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
-import { ProyectoForm } from "./ProyectoForm";
+import { ProyectoBasicInfo } from "./proyecto/ProyectoBasicInfo";
+import { ProyectoFinancialInfo } from "./proyecto/ProyectoFinancialInfo";
+import { TrabajadoresTab } from "./proyecto/TrabajadoresTab";
 import { GastosVariablesProyectoTab } from "./proyecto/GastosVariablesProyectoTab";
 import { CertificacionesTab } from "./proyecto/CertificacionesTab";
 import { AnalisisFinancieroTab } from "./proyecto/AnalisisFinancieroTab";
-import { TrabajadoresTab } from "./proyecto/TrabajadoresTab";
+import { ImputacionCostesTab } from "./proyecto/ImputacionCostesTab";
 
 interface ProyectoDetailsProps {
   proyecto: Proyecto;
@@ -22,205 +24,154 @@ interface ProyectoDetailsProps {
   onAgregarCertificacion: (proyectoId: number, certificacion: any) => void;
 }
 
-export const ProyectoDetails = ({ 
-  proyecto, 
-  empleados, 
-  onUpdateProyecto, 
+export const ProyectoDetails = ({
+  proyecto,
+  empleados,
+  onUpdateProyecto,
   onEliminarProyecto,
   onAgregarGasto,
   onAgregarCertificacion
 }: ProyectoDetailsProps) => {
-  const [showEditForm, setShowEditForm] = useState(false);
-
-  const getEstadoBadgeColor = (estado: string) => {
+  const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case 'activo':
-        return 'bg-green-100 text-green-800';
-      case 'completado':
-        return 'bg-blue-100 text-blue-800';
-      case 'pausado':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'activo': return 'bg-green-100 text-green-800';
+      case 'completado': return 'bg-blue-100 text-blue-800';
+      case 'pausado': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getTipoBadgeColor = (tipo: string) => {
-    return tipo === 'presupuesto' 
-      ? 'bg-purple-100 text-purple-800'
-      : 'bg-orange-100 text-orange-800';
+  const getTipoLabel = (tipo: string) => {
+    return tipo === 'presupuesto' ? 'Por Presupuesto' : 'Por Administración';
+  };
+
+  const getTipoColor = (tipo: string) => {
+    return tipo === 'presupuesto' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800';
   };
 
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-2xl">{proyecto.nombre}</CardTitle>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge className={getEstadoBadgeColor(proyecto.estado)}>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <CardTitle className="text-xl">{proyecto.nombre}</CardTitle>
+              <Badge className={getEstadoColor(proyecto.estado)}>
                 {proyecto.estado.charAt(0).toUpperCase() + proyecto.estado.slice(1)}
               </Badge>
-              <Badge className={getTipoBadgeColor(proyecto.tipo)}>
-                {proyecto.tipo === 'presupuesto' ? 'Por Presupuesto' : 'Por Administración'}
+              <Badge className={getTipoColor(proyecto.tipo)}>
+                {getTipoLabel(proyecto.tipo)}
               </Badge>
             </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                {proyecto.ciudad}
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                {proyecto.trabajadoresAsignados.length} trabajadores
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                {proyecto.fechaCreacion.toLocaleDateString()}
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Edit className="w-4 h-4 mr-1" />
-                  Editar
-                </Button>
-              </DialogTrigger>
-              <ProyectoForm
-                onSubmit={(data) => {
-                  const updatedProyecto: Proyecto = {
-                    ...proyecto,
-                    ...data,
-                    trabajadoresAsignados: data.trabajadoresAsignados.map(id => {
-                      const empleado = empleados.find(e => e.id === id);
-                      const fechasTrabajador = data.trabajadoresConFechas?.find(t => t.id === id);
-                      
-                      return empleado ? {
-                        id: empleado.id,
-                        nombre: empleado.nombre,
-                        apellidos: empleado.apellidos,
-                        precioHora: data.tipo === 'administracion' ? data.precioHora : undefined,
-                        fechaEntrada: fechasTrabajador?.fechaEntrada,
-                        fechaSalida: fechasTrabajador?.fechaSalida
-                      } : { 
-                        id, 
-                        nombre: '', 
-                        apellidos: '',
-                        fechaEntrada: fechasTrabajador?.fechaEntrada,
-                        fechaSalida: fechasTrabajador?.fechaSalida
-                      };
-                    })
-                  };
-                  onUpdateProyecto(updatedProyecto);
-                  setShowEditForm(false);
-                }}
-                onCancel={() => setShowEditForm(false)}
-                empleados={empleados}
-                proyecto={proyecto}
-                isEditing={true}
-              />
-            </Dialog>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => onEliminarProyecto(proyecto.id)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              Eliminar
-            </Button>
-          </div>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Eliminar
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar proyecto?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto
+                  "{proyecto.nombre}" y todos sus datos asociados.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onEliminarProyecto(proyecto.id)}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Eliminar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="detalles" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="detalles">Detalles</TabsTrigger>
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="trabajadores">Trabajadores</TabsTrigger>
-            <TabsTrigger value="gastos">Gastos</TabsTrigger>
-            <TabsTrigger value="certificaciones">
-              {proyecto.tipo === 'presupuesto' ? 'Certificaciones' : 'Facturación'}
-            </TabsTrigger>
-            <TabsTrigger value="financiero">Análisis</TabsTrigger>
+            <TabsTrigger value="gastos">Gastos Variables</TabsTrigger>
+            <TabsTrigger value="costes">Imputación Costes</TabsTrigger>
+            <TabsTrigger value="certificaciones">Certificaciones</TabsTrigger>
+            <TabsTrigger value="analisis">Análisis</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="detalles" className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-gray-500" />
-                <span><strong>Ciudad:</strong> {proyecto.ciudad}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-gray-500" />
-                <span><strong>Creado:</strong> {proyecto.fechaCreacion.toLocaleDateString()}</span>
-              </div>
-              
-              {proyecto.tipo === 'presupuesto' ? (
-                <div className="flex items-center gap-2">
-                  <Euro className="w-5 h-5 text-gray-500" />
-                  <span><strong>Presupuesto:</strong> {proyecto.presupuestoTotal?.toLocaleString()}€</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-gray-500" />
-                  <span><strong>Precio/hora:</strong> {proyecto.precioHora}€</span>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-gray-500" />
-                <span><strong>Trabajadores:</strong> {proyecto.trabajadoresAsignados.length}</span>
-              </div>
+          <TabsContent value="general" className="space-y-6 mt-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <ProyectoBasicInfo 
+                proyecto={proyecto} 
+                onUpdateProyecto={onUpdateProyecto}
+                empleados={empleados}
+              />
+              <ProyectoFinancialInfo proyecto={proyecto} />
             </div>
-
+            
             {proyecto.descripcion && (
-              <div>
-                <h4 className="font-semibold mb-2">Descripción</h4>
-                <p className="text-gray-600">{proyecto.descripcion}</p>
-              </div>
-            )}
-
-            {proyecto.trabajadoresAsignados.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2">Trabajadores Asignados</h4>
-                <div className="grid gap-2">
-                  {proyecto.trabajadoresAsignados.map((trabajador) => (
-                    <div key={trabajador.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <span>{trabajador.nombre} {trabajador.apellidos}</span>
-                      {trabajador.precioHora && (
-                        <Badge variant="outline">{trabajador.precioHora}€/hora</Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Descripción</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{proyecto.descripcion}</p>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
-          <TabsContent value="trabajadores">
-            <TrabajadoresTab
-              proyecto={proyecto}
+          <TabsContent value="trabajadores" className="mt-6">
+            <TrabajadoresTab 
+              proyecto={proyecto} 
               empleados={empleados}
               onUpdateProyecto={onUpdateProyecto}
             />
           </TabsContent>
 
-          <TabsContent value="gastos">
-            <GastosVariablesProyectoTab
+          <TabsContent value="gastos" className="mt-6">
+            <GastosVariablesProyectoTab 
               proyecto={proyecto}
               onAgregarGasto={(gasto) => onAgregarGasto(proyecto.id, gasto)}
             />
           </TabsContent>
 
-          <TabsContent value="certificaciones">
-            {proyecto.tipo === 'presupuesto' ? (
-              <CertificacionesTab
-                proyecto={proyecto}
-                onAgregarCertificacion={(certificacion) => onAgregarCertificacion(proyecto.id, certificacion)}
-              />
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Funcionalidad de facturación por administración próximamente...</p>
-              </div>
-            )}
+          <TabsContent value="costes" className="mt-6">
+            <ImputacionCostesTab 
+              proyecto={proyecto}
+              empleados={empleados}
+            />
           </TabsContent>
 
-          <TabsContent value="financiero">
-            <AnalisisFinancieroTab 
-              proyecto={proyecto} 
-              onUpdateProyecto={onUpdateProyecto}
+          <TabsContent value="certificaciones" className="mt-6">
+            <CertificacionesTab 
+              proyecto={proyecto}
+              onAgregarCertificacion={(certificacion) => onAgregarCertificacion(proyecto.id, certificacion)}
             />
+          </TabsContent>
+
+          <TabsContent value="analisis" className="mt-6">
+            <AnalisisFinancieroTab proyecto={proyecto} />
           </TabsContent>
         </Tabs>
       </CardContent>
