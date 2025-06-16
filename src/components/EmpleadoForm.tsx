@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +22,10 @@ interface Empleado {
   seguridadSocialEmpresa: number;
   retenciones: number;
   embargo: number;
+  departamento: 'operario' | 'tecnico' | 'administracion' | 'gerencia';
+  categoria: 'peon' | 'oficial_3' | 'oficial_2' | 'oficial_1' | 'encargado' | 'tecnico' | 'gerencia';
+  precioHoraExtra: number;
+  precioHoraFestiva: number;
   adelantos: any[];
   epis: any[];
   herramientas: any[];
@@ -47,7 +52,11 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
     seguridadSocialTrabajador: 0,
     seguridadSocialEmpresa: 0,
     retenciones: 0,
-    embargo: 0
+    embargo: 0,
+    departamento: 'operario' as const,
+    categoria: 'peon' as const,
+    precioHoraExtra: 20,
+    precioHoraFestiva: 25
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,11 +71,11 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
   };
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Añadir Nuevo Empleado</DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="nombre">Nombre</Label>
@@ -118,10 +127,51 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
+            <Label htmlFor="departamento">Departamento</Label>
+            <Select 
+              value={formData.departamento} 
+              onValueChange={(value: any) => setFormData(prev => ({ ...prev, departamento: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="operario">Operario</SelectItem>
+                <SelectItem value="tecnico">Técnico</SelectItem>
+                <SelectItem value="administracion">Administración</SelectItem>
+                <SelectItem value="gerencia">Gerencia</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="categoria">Categoría</Label>
+            <Select 
+              value={formData.categoria} 
+              onValueChange={(value: any) => setFormData(prev => ({ ...prev, categoria: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="peon">Peón</SelectItem>
+                <SelectItem value="oficial_3">Oficial 3ª</SelectItem>
+                <SelectItem value="oficial_2">Oficial 2ª</SelectItem>
+                <SelectItem value="oficial_1">Oficial 1ª</SelectItem>
+                <SelectItem value="encargado">Encargado</SelectItem>
+                <SelectItem value="tecnico">Técnico</SelectItem>
+                <SelectItem value="gerencia">Gerencia</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
             <Label htmlFor="salarioBruto">Salario Bruto</Label>
             <Input
               id="salarioBruto"
               type="number"
+              step="0.01"
               value={formData.salarioBruto}
               onChange={(e) => setFormData(prev => ({ ...prev, salarioBruto: parseFloat(e.target.value) || 0 }))}
               required
@@ -132,6 +182,7 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
             <Input
               id="seguridadSocialTrabajador"
               type="number"
+              step="0.01"
               value={formData.seguridadSocialTrabajador}
               onChange={(e) => setFormData(prev => ({ ...prev, seguridadSocialTrabajador: parseFloat(e.target.value) || 0 }))}
             />
@@ -141,6 +192,7 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
             <Input
               id="seguridadSocialEmpresa"
               type="number"
+              step="0.01"
               value={formData.seguridadSocialEmpresa}
               onChange={(e) => setFormData(prev => ({ ...prev, seguridadSocialEmpresa: parseFloat(e.target.value) || 0 }))}
             />
@@ -150,6 +202,7 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
             <Input
               id="retenciones"
               type="number"
+              step="0.01"
               value={formData.retenciones}
               onChange={(e) => setFormData(prev => ({ ...prev, retenciones: parseFloat(e.target.value) || 0 }))}
             />
@@ -159,8 +212,34 @@ export const EmpleadoForm = ({ onSubmit, onCancel }: EmpleadoFormProps) => {
             <Input
               id="embargo"
               type="number"
+              step="0.01"
               value={formData.embargo}
               onChange={(e) => setFormData(prev => ({ ...prev, embargo: parseFloat(e.target.value) || 0 }))}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="precioHoraExtra">Precio Hora Extra (€)</Label>
+            <Input
+              id="precioHoraExtra"
+              type="number"
+              step="0.01"
+              value={formData.precioHoraExtra}
+              onChange={(e) => setFormData(prev => ({ ...prev, precioHoraExtra: parseFloat(e.target.value) || 0 }))}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="precioHoraFestiva">Precio Hora Festiva (€)</Label>
+            <Input
+              id="precioHoraFestiva"
+              type="number"
+              step="0.01"
+              value={formData.precioHoraFestiva}
+              onChange={(e) => setFormData(prev => ({ ...prev, precioHoraFestiva: parseFloat(e.target.value) || 0 }))}
+              required
             />
           </div>
         </div>
