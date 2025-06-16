@@ -4,11 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, MapPin, Users, Calendar, Euro } from "lucide-react";
+import { Trash2, MapPin, Users, Calendar } from "lucide-react";
 import { Proyecto } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
-import { ProyectoBasicInfo } from "./proyecto/ProyectoBasicInfo";
-import { ProyectoFinancialInfo } from "./proyecto/ProyectoFinancialInfo";
+import { ProyectoBasicInfoDisplay } from "./proyecto/ProyectoBasicInfoDisplay";
+import { ProyectoFinancialInfoDisplay } from "./proyecto/ProyectoFinancialInfoDisplay";
 import { TrabajadoresTab } from "./proyecto/TrabajadoresTab";
 import { GastosVariablesProyectoTab } from "./proyecto/GastosVariablesProyectoTab";
 import { CertificacionesTab } from "./proyecto/CertificacionesTab";
@@ -110,7 +110,7 @@ export const ProyectoDetails = ({
       
       <CardContent>
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="trabajadores">Trabajadores</TabsTrigger>
             <TabsTrigger value="gastos">Gastos Variables</TabsTrigger>
@@ -121,12 +121,11 @@ export const ProyectoDetails = ({
 
           <TabsContent value="general" className="space-y-6 mt-6">
             <div className="grid gap-6 md:grid-cols-2">
-              <ProyectoBasicInfo 
+              <ProyectoBasicInfoDisplay 
                 proyecto={proyecto} 
-                onUpdateProyecto={onUpdateProyecto}
                 empleados={empleados}
               />
-              <ProyectoFinancialInfo proyecto={proyecto} />
+              <ProyectoFinancialInfoDisplay proyecto={proyecto} />
             </div>
             
             {proyecto.descripcion && (
@@ -171,7 +170,10 @@ export const ProyectoDetails = ({
           </TabsContent>
 
           <TabsContent value="analisis" className="mt-6">
-            <AnalisisFinancieroTab proyecto={proyecto} />
+            <AnalisisFinancieroTab 
+              proyecto={proyecto}
+              onUpdateProyecto={onUpdateProyecto}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
