@@ -24,7 +24,11 @@ interface RentabilidadTrabajadoresProps {
 }
 
 export const RentabilidadTrabajadores: React.FC<RentabilidadTrabajadoresProps> = ({ trabajadores }) => {
-  const trabajadoresOrdenados = [...trabajadores].sort((a, b) => b.rentabilidad - a.rentabilidad);
+  const trabajadoresOrdenados = [...trabajadores].sort((a, b) => (b.rentabilidad || 0) - (a.rentabilidad || 0));
+
+  const safeToFixed = (value: number | undefined | null, decimals: number = 2): string => {
+    return (value ?? 0).toFixed(decimals);
+  };
 
   return (
     <Card>
@@ -38,10 +42,10 @@ export const RentabilidadTrabajadores: React.FC<RentabilidadTrabajadoresProps> =
               <div className="flex justify-between items-center">
                 <h4 className="font-semibold text-lg">{trabajador.nombre}</h4>
                 <Badge 
-                  variant={trabajador.rentabilidad >= 0 ? "default" : "destructive"}
+                  variant={(trabajador.rentabilidad || 0) >= 0 ? "default" : "destructive"}
                   className="text-sm"
                 >
-                  {trabajador.porcentajeRentabilidad.toFixed(1)}% rentabilidad
+                  {safeToFixed(trabajador.porcentajeRentabilidad, 1)}% rentabilidad
                 </Badge>
               </div>
               
@@ -51,37 +55,37 @@ export const RentabilidadTrabajadores: React.FC<RentabilidadTrabajadoresProps> =
                   <div className="pl-2 space-y-1">
                     <div className="flex justify-between">
                       <span>Salario Bruto Base:</span>
-                      <span>€{trabajador.salarioBruto.toFixed(2)}</span>
+                      <span>€{safeToFixed(trabajador.salarioBruto)}</span>
                     </div>
-                    {trabajador.importeHorasExtras > 0 && (
+                    {(trabajador.importeHorasExtras || 0) > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>+ Horas Extras:</span>
-                        <span>€{trabajador.importeHorasExtras.toFixed(2)}</span>
+                        <span>€{safeToFixed(trabajador.importeHorasExtras)}</span>
                       </div>
                     )}
-                    {trabajador.importeHorasFestivas > 0 && (
+                    {(trabajador.importeHorasFestivas || 0) > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>+ Horas Festivas:</span>
-                        <span>€{trabajador.importeHorasFestivas.toFixed(2)}</span>
+                        <span>€{safeToFixed(trabajador.importeHorasFestivas)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-medium border-t pt-1">
                       <span>Salario Bruto Total:</span>
-                      <span>€{trabajador.salarioBrutoConExtras.toFixed(2)}</span>
+                      <span>€{safeToFixed(trabajador.salarioBrutoConExtras)}</span>
                     </div>
                     <div className="flex justify-between font-medium">
                       <span>Salario Neto:</span>
-                      <span>€{trabajador.salarioNeto.toFixed(2)}</span>
+                      <span>€{safeToFixed(trabajador.salarioNeto)}</span>
                     </div>
-                    {trabajador.adelantosDelMes > 0 && (
+                    {(trabajador.adelantosDelMes || 0) > 0 && (
                       <div className="flex justify-between text-red-600">
                         <span>- Adelantos Mes:</span>
-                        <span>€{trabajador.adelantosDelMes.toFixed(2)}</span>
+                        <span>€{safeToFixed(trabajador.adelantosDelMes)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold border-t pt-1">
                       <span>A Pagar:</span>
-                      <span className="text-green-700">€{trabajador.salarioAPagar.toFixed(2)}</span>
+                      <span className="text-green-700">€{safeToFixed(trabajador.salarioAPagar)}</span>
                     </div>
                   </div>
                 </div>
@@ -91,16 +95,16 @@ export const RentabilidadTrabajadores: React.FC<RentabilidadTrabajadoresProps> =
                   <div className="pl-2 space-y-1">
                     <div className="flex justify-between">
                       <span>Ingresos Generados:</span>
-                      <span className="text-green-600">€{trabajador.ingresosGenerados.toFixed(2)}</span>
+                      <span className="text-green-600">€{safeToFixed(trabajador.ingresosGenerados)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Costo Total:</span>
-                      <span className="text-red-600">€{trabajador.costoTotalEmpleado.toFixed(2)}</span>
+                      <span className="text-red-600">€{safeToFixed(trabajador.costoTotalEmpleado)}</span>
                     </div>
                     <div className="flex justify-between font-bold border-t pt-1">
                       <span>Rentabilidad:</span>
-                      <span className={trabajador.rentabilidad >= 0 ? "text-green-700" : "text-red-700"}>
-                        €{trabajador.rentabilidad.toFixed(2)}
+                      <span className={(trabajador.rentabilidad || 0) >= 0 ? "text-green-700" : "text-red-700"}>
+                        €{safeToFixed(trabajador.rentabilidad)}
                       </span>
                     </div>
                   </div>
@@ -110,9 +114,9 @@ export const RentabilidadTrabajadores: React.FC<RentabilidadTrabajadoresProps> =
               <div className="bg-gray-50 rounded p-2">
                 <div className="flex justify-between text-sm">
                   <span>Eficiencia:</span>
-                  <span className={trabajador.porcentajeRentabilidad >= 20 ? "text-green-600 font-semibold" : 
-                                  trabajador.porcentajeRentabilidad >= 0 ? "text-yellow-600" : "text-red-600 font-semibold"}>
-                    {trabajador.porcentajeRentabilidad > 0 ? "+" : ""}{trabajador.porcentajeRentabilidad.toFixed(1)}%
+                  <span className={(trabajador.porcentajeRentabilidad || 0) >= 20 ? "text-green-600 font-semibold" : 
+                                  (trabajador.porcentajeRentabilidad || 0) >= 0 ? "text-yellow-600" : "text-red-600 font-semibold"}>
+                    {(trabajador.porcentajeRentabilidad || 0) > 0 ? "+" : ""}{safeToFixed(trabajador.porcentajeRentabilidad, 1)}%
                   </span>
                 </div>
               </div>
