@@ -1,11 +1,5 @@
+
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Calculator, Users, Euro, Calendar, Trash2 } from "lucide-react";
 import { Proyecto } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
 import { useImputacionCostesSalariales } from "@/hooks/useImputacionCostesSalariales";
@@ -13,6 +7,9 @@ import { useGastosEmpleados } from "@/hooks/useGastosEmpleados";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { ImputacionHeader } from "./imputacion/ImputacionHeader";
+import { CosteSummaryCards } from "./imputacion/CosteSummaryCards";
+import { CostesTable } from "./imputacion/CostesTable";
 
 interface ImputacionCostesTabProps {
   proyecto: Proyecto;
@@ -27,30 +24,10 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
   const { obtenerGastosPorProyectoMes, eliminarGastoEmpleadoProyecto } = useGastosEmpleados();
   const { toast } = useToast();
 
-  const mesesDisponibles = [
-    { value: '2025-01', label: 'Enero 2025' },
-    { value: '2025-02', label: 'Febrero 2025' },
-    { value: '2025-03', label: 'Marzo 2025' },
-    { value: '2025-04', label: 'Abril 2025' },
-    { value: '2025-05', label: 'Mayo 2025' },
-    { value: '2025-06', label: 'Junio 2025' },
-    { value: '2025-07', label: 'Julio 2025' },
-    { value: '2025-08', label: 'Agosto 2025' },
-    { value: '2025-09', label: 'Septiembre 2025' },
-    { value: '2025-10', label: 'Octubre 2025' },
-    { value: '2025-11', label: 'Noviembre 2025' },
-    { value: '2025-12', label: 'Diciembre 2025' },
-  ];
-
   const [anio, mes] = mesSeleccionado.split('-').map(Number);
 
   // Obtener gastos ya imputados para el mes seleccionado
   const gastosImputados = obtenerGastosPorProyectoMes(proyecto.id, mes, anio);
-
-  // Helper function to safely format numbers
-  const safeToFixed = (value: number | null | undefined, decimals: number = 2): string => {
-    return (value ?? 0).toFixed(decimals);
-  };
 
   // Calcular totales
   const totalCostesSalariales = gastosImputados.reduce((total, gasto) => 
@@ -119,212 +96,29 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Calculator className="w-5 h-5" />
-            Imputación de Costes
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Gestiona la imputación automática de costes salariales y gastos variables al proyecto
-          </p>
-        </div>
+      <ImputacionHeader
+        mesSeleccionado={mesSeleccionado}
+        onMesChange={setMesSeleccionado}
+        onImputarCostes={handleImputarCostes}
+        procesando={procesando}
+      />
 
-        <div className="flex items-center gap-4">
-          <Select value={mesSeleccionado} onValueChange={setMesSeleccionado}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Seleccionar mes" />
-            </SelectTrigger>
-            <SelectContent>
-              {mesesDisponibles.map((mes) => (
-                <SelectItem key={mes.value} value={mes.value}>
-                  {mes.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <CosteSummaryCards
+        totalCostesSalariales={totalCostesSalariales}
+        totalGastosVariables={totalGastosVariables}
+        totalGeneral={totalGeneral}
+        mes={mes}
+        anio={anio}
+        cantidadRegistros={gastosImputados.length}
+      />
 
-          <Button 
-            onClick={handleImputarCostes}
-            disabled={procesando}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Calculator className="w-4 h-4 mr-2" />
-            {procesando ? 'Procesando...' : 'Imputar Costes'}
-          </Button>
-        </div>
-      </div>
-
-      {/* Resumen de costes */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Costes Salariales
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              €{safeToFixed(totalCostesSalariales)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Salarios + SS + Extras
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Euro className="w-4 h-4" />
-              Gastos Variables
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              €{safeToFixed(totalGastosVariables)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Dietas, transporte, etc.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calculator className="w-4 h-4" />
-              Coste Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              €{safeToFixed(totalGeneral)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total del mes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Período
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-medium">
-              {format(new Date(anio, mes - 1), 'MMMM yyyy', { locale: es })}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {gastosImputados.length} registros
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabla de costes imputados */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Detalle de Costes Imputados - {format(new Date(anio, mes - 1), 'MMMM yyyy', { locale: es })}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Empleado</TableHead>
-                <TableHead>Días Trabajados</TableHead>
-                <TableHead>Salario Prorrateo</TableHead>
-                <TableHead>SS Empresa</TableHead>
-                <TableHead>Horas Extras</TableHead>
-                <TableHead>Gastos Variables</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {gastosImputados.length > 0 ? (
-                gastosImputados.map((gasto) => {
-                  const empleado = empleados.find(e => e.id === gasto.empleadoId);
-                  const totalGastosVar = (gasto.gastos || []).reduce((sum, g) => sum + (g.importe || 0), 0);
-                  const totalEmpleado = (gasto.salarioBrutoProrrateo || 0) + (gasto.seguridadSocialEmpresaProrrateo || 0) + 
-                                     (gasto.importeHorasExtras || 0) + (gasto.importeHorasFestivas || 0) + totalGastosVar;
-
-                  return (
-                    <TableRow key={gasto.id}>
-                      <TableCell className="font-medium">
-                        {empleado ? `${empleado.nombre} ${empleado.apellidos}` : 'Empleado no encontrado'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {gasto.diasTrabajados || 0}/{gasto.diasLaboralesMes || 0} días
-                        </Badge>
-                      </TableCell>
-                      <TableCell>€{safeToFixed(gasto.salarioBrutoProrrateo)}</TableCell>
-                      <TableCell>€{safeToFixed(gasto.seguridadSocialEmpresaProrrateo)}</TableCell>
-                      <TableCell>
-                        {(gasto.horasExtras || 0) > 0 || (gasto.horasFestivas || 0) > 0 ? (
-                          <div className="text-sm">
-                            <div>Extras: {gasto.horasExtras || 0}h (€{safeToFixed(gasto.importeHorasExtras)})</div>
-                            <div>Festivas: {gasto.horasFestivas || 0}h (€{safeToFixed(gasto.importeHorasFestivas)})</div>
-                          </div>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {totalGastosVar > 0 ? (
-                          <div className="text-sm">
-                            €{safeToFixed(totalGastosVar)} ({(gasto.gastos || []).length} gastos)
-                          </div>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                      <TableCell className="font-bold">€{safeToFixed(totalEmpleado)}</TableCell>
-                      <TableCell>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Eliminar coste imputado?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta acción eliminará los costes imputados de {empleado?.nombre} {empleado?.apellidos} para {format(new Date(anio, mes - 1), 'MMMM yyyy', { locale: es })}. Esta acción no se puede deshacer.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleEliminarCoste(gasto.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Eliminar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    No hay costes imputados para el mes seleccionado
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <CostesTable
+        gastosImputados={gastosImputados}
+        empleados={empleados}
+        mes={mes}
+        anio={anio}
+        onEliminarCoste={handleEliminarCoste}
+      />
     </div>
   );
 };
