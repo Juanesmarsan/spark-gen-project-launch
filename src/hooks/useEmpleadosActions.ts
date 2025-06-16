@@ -9,7 +9,7 @@ export const useEmpleadosActions = () => {
   console.log('useEmpleadosActions: Inicializando hook');
   
   const { toast } = useToast();
-  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, agregarCambioSalario } = useEmpleados();
+  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
   
   // Filtrar empleados excluyendo a Esteban Márquez y Nuria Playan (ahora están en Personal de Gerencia)
   const empleados = todosEmpleados.filter(emp => 
@@ -45,6 +45,38 @@ export const useEmpleadosActions = () => {
     });
   }, [eliminarEmpleado, baseActions, toast]);
 
+  const handleBulkEliminar = useCallback((empleadoIds: number[]) => {
+    console.log('useEmpleadosActions: Eliminación masiva de empleados:', empleadoIds);
+    empleadoIds.forEach(id => eliminarEmpleado(id));
+    
+    if (baseActions.empleadoSeleccionado && empleadoIds.includes(baseActions.empleadoSeleccionado.id)) {
+      baseActions.setEmpleadoSeleccionado(null);
+    }
+    
+    toast({
+      title: "Empleados eliminados",
+      description: `Se han eliminado ${empleadoIds.length} empleado${empleadoIds.length !== 1 ? 's' : ''} permanentemente.`,
+      variant: "destructive"
+    });
+  }, [eliminarEmpleado, baseActions, toast]);
+
+  const handleBulkDeshabilitar = useCallback((empleadoIds: number[]) => {
+    console.log('useEmpleadosActions: Inhabilitación masiva de empleados:', empleadoIds);
+    empleadoIds.forEach(id => deshabilitarEmpleado(id));
+    
+    if (baseActions.empleadoSeleccionado && empleadoIds.includes(baseActions.empleadoSeleccionado.id)) {
+      const empleadoActualizado = empleados.find(emp => emp.id === baseActions.empleadoSeleccionado.id);
+      if (empleadoActualizado) {
+        baseActions.setEmpleadoSeleccionado({ ...empleadoActualizado, activo: false });
+      }
+    }
+    
+    toast({
+      title: "Empleados inhabilitados",
+      description: `Se han inhabilitado ${empleadoIds.length} empleado${empleadoIds.length !== 1 ? 's' : ''}.`,
+    });
+  }, [deshabilitarEmpleado, baseActions, empleados, toast]);
+
   const handleAgregarCambioSalario = useCallback((empleadoId: number, nuevosSalarios: any) => {
     console.log('useEmpleadosActions: Agregando cambio de salario');
     agregarCambioSalario(empleadoId, nuevosSalarios);
@@ -65,6 +97,8 @@ export const useEmpleadosActions = () => {
     ...baseActions,
     handleAgregarEmpleado,
     handleEliminarEmpleado,
+    handleBulkEliminar,
+    handleBulkDeshabilitar,
     agregarCambioSalario: handleAgregarCambioSalario
   };
 };

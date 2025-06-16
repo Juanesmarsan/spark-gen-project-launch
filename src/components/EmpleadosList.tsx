@@ -14,6 +14,8 @@ interface EmpleadosListProps {
   empleados: Empleado[];
   onSelectEmpleado: (empleado: Empleado) => void;
   onEliminarEmpleado: (empleadoId: number) => void;
+  onBulkEliminar: (empleadoIds: number[]) => void;
+  onBulkDeshabilitar: (empleadoIds: number[]) => void;
   onDeshabilitarEmpleado: (empleadoId: number) => void;
   onHabilitarEmpleado: (empleadoId: number) => void;
   allowPermanentDelete?: boolean;
@@ -22,7 +24,9 @@ interface EmpleadosListProps {
 export const EmpleadosList = ({ 
   empleados, 
   onSelectEmpleado, 
-  onEliminarEmpleado, 
+  onEliminarEmpleado,
+  onBulkEliminar,
+  onBulkDeshabilitar,
   onDeshabilitarEmpleado, 
   onHabilitarEmpleado,
   allowPermanentDelete = false 
@@ -66,12 +70,12 @@ export const EmpleadosList = ({
   };
 
   const handleBulkDisable = (empleadoIds: number[]) => {
-    empleadoIds.forEach(id => onDeshabilitarEmpleado(id));
+    onBulkDeshabilitar(empleadoIds);
     setSelectedEmpleados([]);
   };
 
   const handleBulkDelete = (empleadoIds: number[]) => {
-    empleadoIds.forEach(id => onEliminarEmpleado(id));
+    onBulkEliminar(empleadoIds);
     setSelectedEmpleados([]);
   };
 

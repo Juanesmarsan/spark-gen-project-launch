@@ -18,6 +18,8 @@ const Empleados = () => {
     inventarioVehiculos,
     handleAgregarEmpleado,
     handleEliminarEmpleado,
+    handleBulkEliminar,
+    handleBulkDeshabilitar,
     handleDeshabilitarEmpleado,
     handleHabilitarEmpleado,
     handleUpdateEmpleado,
@@ -42,6 +44,8 @@ const Empleados = () => {
           empleados={empleados}
           onSelectEmpleado={setEmpleadoSeleccionado}
           onEliminarEmpleado={handleEliminarEmpleado}
+          onBulkEliminar={handleBulkEliminar}
+          onBulkDeshabilitar={handleBulkDeshabilitar}
           onDeshabilitarEmpleado={handleDeshabilitarEmpleado}
           onHabilitarEmpleado={handleHabilitarEmpleado}
           allowPermanentDelete={true}
