@@ -15,14 +15,19 @@ export const useEmpleados = () => {
     
     const empleadosGuardados = cargarEmpleadosDesdeStorage();
     
-    // Si hay menos empleados guardados que en los ejemplos, cargar los ejemplos completos
-    if (!empleadosGuardados || empleadosGuardados.length < empleadosEjemplo.length) {
-      console.log('useEmpleados: Cargando empleados de ejemplo completos');
+    // Solo cargar empleados de ejemplo si no hay datos guardados Y no se ha hecho reset
+    const wasReset = localStorage.getItem('empleados-reset');
+    
+    if (empleadosGuardados === null && wasReset !== 'true') {
+      console.log('useEmpleados: Primera carga, cargando empleados de ejemplo');
       setEmpleados(empleadosEjemplo);
       guardarEmpleadosEnStorage(empleadosEjemplo);
-    } else {
+    } else if (empleadosGuardados !== null) {
       console.log('useEmpleados: Empleados cargados desde storage:', empleadosGuardados.length);
       setEmpleados(empleadosGuardados);
+    } else {
+      console.log('useEmpleados: Sistema reseteado, array vacío');
+      setEmpleados([]);
     }
     
     setIsLoaded(true);
@@ -32,8 +37,6 @@ export const useEmpleados = () => {
     console.log('useEmpleados: Eliminando todos los empleados permanentemente...');
     setEmpleados([]);
     guardarEmpleadosEnStorage([]);
-    // Forzar que no se recarguen los datos de ejemplo
-    localStorage.setItem('empleados-reset', 'true');
   };
 
   const resetearTodosEmpleados = () => {
@@ -41,9 +44,6 @@ export const useEmpleados = () => {
     setEmpleados([]);
     localStorage.removeItem('empleados');
     localStorage.setItem('empleados-reset', 'true');
-    // Forzar actualización del estado
-    setIsLoaded(false);
-    setTimeout(() => setIsLoaded(true), 100);
   };
 
   const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables' | 'historialSalarios' | 'activo'>) => {
@@ -81,6 +81,9 @@ export const useEmpleados = () => {
       historialSalarios: [historialInicial],
       activo: true,
     };
+    
+    // Al agregar un empleado, quitar la marca de reset
+    localStorage.removeItem('empleados-reset');
     
     const nuevosEmpleados = [...empleados, nuevoEmpleado];
     setEmpleados(nuevosEmpleados);
