@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Euro, Calculator, Calendar, Building, UserCheck } from "lucide-react";
+import { Users, Euro, Calculator, Calendar, Building } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -22,15 +22,14 @@ export const CosteSummaryCards = ({
   mes,
   anio,
   cantidadRegistros,
-  gastosVariablesProyecto = 0,
-  gastosVariablesEmpleados = 0
+  gastosVariablesProyecto = 0
 }: CosteSummaryCardsProps) => {
   const safeToFixed = (value: number | null | undefined, decimals: number = 2): string => {
     return (value ?? 0).toFixed(decimals);
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -51,23 +50,6 @@ export const CosteSummaryCards = ({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <UserCheck className="w-4 h-4" />
-            Gastos Empleados
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-xl font-bold text-green-600">
-            €{safeToFixed(gastosVariablesEmpleados)}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Gastos individuales
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Building className="w-4 h-4" />
             Gastos Proyecto
           </CardTitle>
@@ -77,7 +59,7 @@ export const CosteSummaryCards = ({
             €{safeToFixed(gastosVariablesProyecto)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Gastos del proyecto
+            Materiales, transporte, etc.
           </p>
         </CardContent>
       </Card>
@@ -94,7 +76,7 @@ export const CosteSummaryCards = ({
             €{safeToFixed(totalGastosVariables)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Empleados + Proyecto
+            Proyecto + Empleados
           </p>
         </CardContent>
       </Card>

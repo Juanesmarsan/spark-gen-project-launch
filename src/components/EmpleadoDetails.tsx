@@ -104,10 +104,7 @@ export const EmpleadoDetails = ({
           </TabsContent>
 
           <TabsContent value="proyectos">
-            <ProyectosTab
-              empleado={empleado}
-              onUpdateEmpleado={onUpdateEmpleado}
-            />
+            <ProyectosTab empleado={empleado} />
           </TabsContent>
 
           <TabsContent value="vehiculo">
