@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Calendar as CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Proyecto, GastoVariableProyecto } from "@/types/proyecto";
@@ -17,9 +17,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface GastosVariablesProyectoTabProps {
   proyecto: Proyecto;
   onAgregarGasto: (gasto: Omit<GastoVariableProyecto, 'id'>) => void;
+  onEliminarGasto: (gastoId: number) => void;
 }
 
-export const GastosVariablesProyectoTab = ({ proyecto, onAgregarGasto }: GastosVariablesProyectoTabProps) => {
+export const GastosVariablesProyectoTab = ({ proyecto, onAgregarGasto, onEliminarGasto }: GastosVariablesProyectoTabProps) => {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [formData, setFormData] = useState({
     concepto: '',
@@ -193,6 +194,7 @@ export const GastosVariablesProyectoTab = ({ proyecto, onAgregarGasto }: GastosV
               <TableHead>Fecha</TableHead>
               <TableHead>Factura</TableHead>
               <TableHead className="text-right">Importe</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -209,11 +211,37 @@ export const GastosVariablesProyectoTab = ({ proyecto, onAgregarGasto }: GastosV
                   <TableCell>{format(gasto.fecha, "dd/MM/yyyy", { locale: es })}</TableCell>
                   <TableCell>{gasto.factura || '-'}</TableCell>
                   <TableCell className="text-right">€{gasto.importe.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Eliminar gasto?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Se eliminará permanentemente el gasto "{gasto.concepto}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => onEliminarGasto(gasto.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Eliminar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   No hay gastos variables registrados
                 </TableCell>
               </TableRow>

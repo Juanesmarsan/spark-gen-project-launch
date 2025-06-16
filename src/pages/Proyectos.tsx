@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
@@ -16,7 +17,7 @@ export const Proyectos = () => {
 
   const { toast } = useToast();
   const { empleados } = useEmpleados();
-  const { proyectos, agregarProyecto, updateProyecto, eliminarProyecto, agregarGastoProyecto, agregarCertificacion } = useProyectos();
+  const { proyectos, agregarProyecto, updateProyecto, eliminarProyecto, agregarGastoProyecto, eliminarGastoProyecto, agregarCertificacion } = useProyectos();
 
   const handleAgregarProyecto = (data: ProyectoFormData) => {
     const nuevoProyecto = agregarProyecto(data, empleados);
@@ -59,6 +60,23 @@ export const Proyectos = () => {
     toast({
       title: "Gasto añadido",
       description: "El gasto se ha añadido al proyecto correctamente.",
+    });
+  };
+
+  const handleEliminarGastoProyecto = (proyectoId: number, gastoId: number) => {
+    eliminarGastoProyecto(proyectoId, gastoId);
+    
+    // Actualizar proyecto seleccionado si es el mismo
+    if (selectedProyecto && selectedProyecto.id === proyectoId) {
+      const proyectoActualizado = proyectos.find(p => p.id === proyectoId);
+      if (proyectoActualizado) {
+        setSelectedProyecto(proyectoActualizado);
+      }
+    }
+
+    toast({
+      title: "Gasto eliminado",
+      description: "El gasto se ha eliminado del proyecto correctamente.",
     });
   };
 
@@ -117,6 +135,7 @@ export const Proyectos = () => {
             onUpdateProyecto={handleUpdateProyecto}
             onEliminarProyecto={handleEliminarProyecto}
             onAgregarGasto={handleAgregarGastoProyecto}
+            onEliminarGasto={handleEliminarGastoProyecto}
             onAgregarCertificacion={handleAgregarCertificacion}
           />
         )}

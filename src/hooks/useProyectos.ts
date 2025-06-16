@@ -146,6 +146,21 @@ export const useProyectos = () => {
     saveToLocalStorage(nuevosProyectos);
   }, [proyectos, saveToLocalStorage]);
 
+  const eliminarGastoProyecto = useCallback((proyectoId: number, gastoId: number) => {
+    console.log('useProyectos: Eliminando gasto de proyecto...');
+    const nuevosProyectos = proyectos.map(proyecto => {
+      if (proyecto.id === proyectoId) {
+        return {
+          ...proyecto,
+          gastosVariables: proyecto.gastosVariables?.filter(gasto => gasto.id !== gastoId) || []
+        };
+      }
+      return proyecto;
+    });
+    setProyectos(nuevosProyectos);
+    saveToLocalStorage(nuevosProyectos);
+  }, [proyectos, saveToLocalStorage]);
+
   const agregarCertificacion = useCallback((proyectoId: number, certificacion: any) => {
     console.log('useProyectos: Agregando certificación a proyecto...');
     const nuevosProyectos = proyectos.map(proyecto => {
@@ -171,6 +186,7 @@ export const useProyectos = () => {
     updateProyecto,
     eliminarProyecto,
     agregarGastoProyecto,
+    eliminarGastoProyecto,
     agregarCertificacion
   };
 };

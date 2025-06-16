@@ -13,8 +13,11 @@ export const useCalculosBeneficios = () => {
   const { obtenerGastosPorProyectoMes } = useGastosEmpleados();
 
   const calcularGastosTotales = useCallback((proyecto: Proyecto) => {
+    console.log(`Calculando gastos totales para proyecto ${proyecto.nombre}...`);
+    
     // Gastos variables del proyecto
     const gastosVariables = proyecto.gastosVariables?.reduce((total, gasto) => total + gasto.importe, 0) || 0;
+    console.log(`Gastos variables: €${gastosVariables}`);
     
     // Gastos salariales acumulados de todos los meses
     const añoActual = new Date().getFullYear();
@@ -22,7 +25,7 @@ export const useCalculosBeneficios = () => {
     
     for (let mes = 1; mes <= 12; mes++) {
       const gastosEmpleados = obtenerGastosPorProyectoMes(proyecto.id, mes, añoActual);
-      gastosSalarialesTotal += gastosEmpleados.reduce((total, gastoEmpleado) => {
+      const gastosSalarialesMes = gastosEmpleados.reduce((total, gastoEmpleado) => {
         return total + 
           gastoEmpleado.salarioBrutoProrrateo + 
           gastoEmpleado.seguridadSocialEmpresaProrrateo + 
@@ -30,9 +33,19 @@ export const useCalculosBeneficios = () => {
           gastoEmpleado.importeHorasFestivas +
           gastoEmpleado.gastos.reduce((subTotal, gasto) => subTotal + gasto.importe, 0);
       }, 0);
+      
+      gastosSalarialesTotal += gastosSalarialesMes;
+      
+      if (gastosSalarialesMes > 0) {
+        console.log(`Gastos salariales mes ${mes}: €${gastosSalarialesMes}`);
+      }
     }
     
-    return gastosVariables + gastosSalarialesTotal;
+    console.log(`Gastos salariales totales: €${gastosSalarialesTotal}`);
+    const total = gastosVariables + gastosSalarialesTotal;
+    console.log(`Gastos totales del proyecto: €${total}`);
+    
+    return total;
   }, [obtenerGastosPorProyectoMes]);
 
   const calcularBeneficioNeto = useCallback((proyecto: Proyecto) => {
@@ -41,6 +54,8 @@ export const useCalculosBeneficios = () => {
       : calcularBeneficioBrutoPresupuesto(proyecto);
     
     const gastosTotales = calcularGastosTotales(proyecto);
+    
+    console.log(`Beneficio neto ${proyecto.nombre}: €${beneficioBruto} - €${gastosTotales} = €${beneficioBruto - gastosTotales}`);
     
     return beneficioBruto - gastosTotales;
   }, [calcularBeneficioBrutoAdministracion, calcularBeneficioBrutoPresupuesto, calcularGastosTotales]);
@@ -54,7 +69,10 @@ export const useCalculosBeneficios = () => {
     
     if (beneficioBruto === 0) return 0;
     
-    return (beneficioNeto / beneficioBruto) * 100;
+    const margen = (beneficioNeto / beneficioBruto) * 100;
+    console.log(`Margen ${proyecto.nombre}: (€${beneficioNeto} / €${beneficioBruto}) * 100 = ${margen.toFixed(1)}%`);
+    
+    return margen;
   }, [calcularBeneficioBrutoAdministracion, calcularBeneficioBrutoPresupuesto, calcularBeneficioNeto]);
 
   return {

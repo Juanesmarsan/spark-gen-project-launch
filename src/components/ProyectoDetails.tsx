@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +20,7 @@ interface ProyectoDetailsProps {
   onUpdateProyecto: (proyecto: Proyecto) => void;
   onEliminarProyecto: (id: number) => void;
   onAgregarGasto: (proyectoId: number, gasto: any) => void;
+  onEliminarGasto: (proyectoId: number, gastoId: number) => void;
   onAgregarCertificacion: (proyectoId: number, certificacion: any) => void;
 }
 
@@ -30,6 +30,7 @@ export const ProyectoDetails = ({
   onUpdateProyecto,
   onEliminarProyecto,
   onAgregarGasto,
+  onEliminarGasto,
   onAgregarCertificacion
 }: ProyectoDetailsProps) => {
   const getEstadoColor = (estado: string) => {
@@ -152,6 +153,7 @@ export const ProyectoDetails = ({
             <GastosVariablesProyectoTab 
               proyecto={proyecto}
               onAgregarGasto={(gasto) => onAgregarGasto(proyecto.id, gasto)}
+              onEliminarGasto={(gastoId) => onEliminarGasto(proyecto.id, gastoId)}
             />
           </TabsContent>
 
