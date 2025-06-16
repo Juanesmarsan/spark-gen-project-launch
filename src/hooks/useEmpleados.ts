@@ -1,187 +1,227 @@
-import { useState, useEffect } from 'react';
-import { Empleado, GastoVariableEmpleado, HistorialSalario } from '@/types/empleado';
-import { empleadosEjemplo } from '@/data/empleadosEjemplo';
-import { cargarEmpleadosDesdeStorage, guardarEmpleadosEnStorage } from '@/utils/empleadosStorage';
+
+import { useState, useEffect, useCallback } from 'react';
+import { Empleado, EmpleadoFormData, GastoVariableEmpleado, CambioSalario } from '@/types/empleado';
 
 export const useEmpleados = () => {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Cargar empleados desde localStorage solo una vez
+  // Cargar empleados desde localStorage
   useEffect(() => {
-    if (isLoaded) return;
-    
     console.log('useEmpleados: Cargando empleados desde localStorage...');
     
-    const empleadosGuardados = cargarEmpleadosDesdeStorage();
-    
-    // Solo cargar empleados de ejemplo si no hay datos guardados Y no se ha hecho reset
-    const wasReset = localStorage.getItem('empleados-reset');
-    
-    if (empleadosGuardados === null && wasReset !== 'true') {
-      console.log('useEmpleados: Primera carga, cargando empleados de ejemplo');
-      setEmpleados(empleadosEjemplo);
-      guardarEmpleadosEnStorage(empleadosEjemplo);
-    } else if (empleadosGuardados !== null) {
-      console.log('useEmpleados: Empleados cargados desde storage:', empleadosGuardados.length);
-      setEmpleados(empleadosGuardados);
-    } else {
-      console.log('useEmpleados: Sistema reseteado, array vacío');
+    try {
+      const empleadosGuardados = localStorage.getItem('empleados');
+      
+      if (empleadosGuardados) {
+        const empleadosParseados = JSON.parse(empleadosGuardados);
+        const empleadosProcesados = empleadosParseados.map((empleado: any) => ({
+          ...empleado,
+          fechaAlta: new Date(empleado.fechaAlta),
+          fechaBaja: empleado.fechaBaja ? new Date(empleado.fechaBaja) : undefined,
+          adelantos: empleado.adelantos?.map((adelanto: any) => ({
+            ...adelanto,
+            fecha: new Date(adelanto.fecha)
+          })) || [],
+          gastosVariables: empleado.gastosVariables?.map((gasto: any) => ({
+            ...gasto,
+            fecha: new Date(gasto.fecha)
+          })) || [],
+          cambiosSalario: empleado.cambiosSalario?.map((cambio: any) => ({
+            ...cambio,
+            fechaCambio: new Date(cambio.fechaCambio)
+          })) || [],
+          episAsignados: empleado.episAsignados || [],
+          herramientasAsignadas: empleado.herramientasAsignadas || [],
+          vehiculosAsignados: empleado.vehiculosAsignados || []
+        }));
+        
+        console.log('useEmpleados: Empleados cargados desde storage:', empleadosProcesados.length);
+        setEmpleados(empleadosProcesados);
+      } else {
+        console.log('useEmpleados: No se encontraron empleados en localStorage');
+        setEmpleados([]);
+      }
+    } catch (error) {
+      console.error("Error al cargar empleados:", error);
       setEmpleados([]);
     }
-    
-    setIsLoaded(true);
-  }, [isLoaded]);
+  }, []);
 
-  const eliminarTodosEmpleados = () => {
-    console.log('useEmpleados: Eliminando todos los empleados permanentemente...');
-    setEmpleados([]);
-    guardarEmpleadosEnStorage([]);
-  };
+  // Función para guardar en localStorage
+  const saveToLocalStorage = useCallback((newEmpleados: Empleado[]) => {
+    try {
+      const empleadosParaGuardar = newEmpleados.map(empleado => ({
+        ...empleado,
+        fechaAlta: empleado.fechaAlta.toISOString(),
+        fechaBaja: empleado.fechaBaja ? empleado.fechaBaja.toISOString() : undefined,
+        adelantos: empleado.adelantos?.map(adelanto => ({
+          ...adelanto,
+          fecha: adelanto.fecha.toISOString()
+        })) || [],
+        gastosVariables: empleado.gastosVariables?.map(gasto => ({
+          ...gasto,
+          fecha: gasto.fecha.toISOString()
+        })) || [],
+        cambiosSalario: empleado.cambiosSalario?.map(cambio => ({
+          ...cambio,
+          fechaCambio: cambio.fechaCambio.toISOString()
+        })) || [],
+      }));
+      
+      localStorage.setItem('empleados', JSON.stringify(empleadosParaGuardar));
+      console.log('useEmpleados: Empleados guardados correctamente en localStorage');
+    } catch (error) {
+      console.error("Error al guardar empleados:", error);
+    }
+  }, []);
 
-  const resetearTodosEmpleados = () => {
-    console.log('useEmpleados: Reseteando completamente todos los empleados...');
-    setEmpleados([]);
-    localStorage.removeItem('empleados');
-    localStorage.setItem('empleados-reset', 'true');
-  };
-
-  const agregarEmpleado = (nuevoEmpleadoData: Omit<Empleado, 'id' | 'adelantos' | 'epis' | 'herramientas' | 'documentos' | 'proyectos' | 'vehiculo' | 'gastosVariables' | 'historialSalarios' | 'activo'>) => {
+  const agregarEmpleado = useCallback((data: EmpleadoFormData) => {
     console.log('useEmpleados: Agregando empleado...');
-    
-    const fechaActual = new Date();
-    const mes = fechaActual.getMonth() + 1;
-    const anio = fechaActual.getFullYear();
-    
-    const historialInicial: HistorialSalario = {
-      id: Date.now(),
-      mes,
-      anio,
-      salarioBruto: nuevoEmpleadoData.salarioBruto,
-      seguridadSocialTrabajador: nuevoEmpleadoData.seguridadSocialTrabajador,
-      seguridadSocialEmpresa: nuevoEmpleadoData.seguridadSocialEmpresa,
-      retenciones: nuevoEmpleadoData.retenciones,
-      embargo: nuevoEmpleadoData.embargo,
-      fechaCambio: fechaActual
-    };
-    
     const nuevoEmpleado: Empleado = {
-      ...nuevoEmpleadoData,
+      ...data,
       id: Date.now(),
-      departamento: nuevoEmpleadoData.departamento || 'operario',
-      categoria: nuevoEmpleadoData.categoria || 'peon',
-      precioHoraExtra: nuevoEmpleadoData.precioHoraExtra || 20,
-      precioHoraFestiva: nuevoEmpleadoData.precioHoraFestiva || 25,
-      adelantos: [],
-      epis: [],
-      herramientas: [],
-      documentos: [],
-      proyectos: [],
-      gastosVariables: [],
-      historialSalarios: [historialInicial],
+      fechaAlta: new Date(),
       activo: true,
+      adelantos: [],
+      gastosVariables: [],
+      cambiosSalario: [],
+      episAsignados: [],
+      herramientasAsignadas: [],
+      vehiculosAsignados: []
     };
-    
-    // Al agregar un empleado, quitar la marca de reset
-    localStorage.removeItem('empleados-reset');
-    
+
     const nuevosEmpleados = [...empleados, nuevoEmpleado];
     setEmpleados(nuevosEmpleados);
-    guardarEmpleadosEnStorage(nuevosEmpleados);
+    saveToLocalStorage(nuevosEmpleados);
     
     return nuevoEmpleado;
-  };
+  }, [empleados, saveToLocalStorage]);
 
-  const updateEmpleado = (empleadoActualizado: Empleado) => {
+  const updateEmpleado = useCallback((empleadoActualizado: Empleado) => {
     console.log('useEmpleados: Actualizando empleado...');
-    const nuevosEmpleados = empleados.map(emp => 
-      emp.id === empleadoActualizado.id ? empleadoActualizado : emp
+    const nuevosEmpleados = empleados.map(empleado =>
+      empleado.id === empleadoActualizado.id ? empleadoActualizado : empleado
     );
     setEmpleados(nuevosEmpleados);
-    guardarEmpleadosEnStorage(nuevosEmpleados);
-  };
+    saveToLocalStorage(nuevosEmpleados);
+  }, [empleados, saveToLocalStorage]);
 
-  const eliminarEmpleado = (empleadoId: number) => {
+  const eliminarEmpleado = useCallback((id: number) => {
     console.log('useEmpleados: Eliminando empleado...');
-    const nuevosEmpleados = empleados.filter(emp => emp.id !== empleadoId);
+    const nuevosEmpleados = empleados.filter(empleado => empleado.id !== id);
     setEmpleados(nuevosEmpleados);
-    guardarEmpleadosEnStorage(nuevosEmpleados);
-  };
+    saveToLocalStorage(nuevosEmpleados);
+  }, [empleados, saveToLocalStorage]);
 
-  const deshabilitarEmpleado = (empleadoId: number) => {
-    console.log('useEmpleados: Deshabilitando empleado...');
-    const nuevosEmpleados = empleados.map(emp => 
-      emp.id === empleadoId ? { ...emp, activo: false } : emp
-    );
-    setEmpleados(nuevosEmpleados);
-    guardarEmpleadosEnStorage(nuevosEmpleados);
-  };
-
-  const habilitarEmpleado = (empleadoId: number) => {
-    console.log('useEmpleados: Habilitando empleado...');
-    const nuevosEmpleados = empleados.map(emp => 
-      emp.id === empleadoId ? { ...emp, activo: true } : emp
-    );
-    setEmpleados(nuevosEmpleados);
-    guardarEmpleadosEnStorage(nuevosEmpleados);
-  };
-
-  const agregarCambioSalario = (empleadoId: number, nuevosSalarios: Omit<HistorialSalario, 'id' | 'fechaCambio'>) => {
-    console.log('useEmpleados: Agregando cambio de salario...');
-    const nuevosEmpleados = empleados.map(emp => {
-      if (emp.id === empleadoId) {
-        const nuevoCambio: HistorialSalario = {
-          ...nuevosSalarios,
-          id: Date.now(),
-          fechaCambio: new Date()
+  const agregarAdelanto = useCallback((empleadoId: number, concepto: string, cantidad: number) => {
+    console.log('useEmpleados: Agregando adelanto...');
+    const nuevosEmpleados = empleados.map(empleado => {
+      if (empleado.id === empleadoId) {
+        return {
+          ...empleado,
+          adelantos: [...empleado.adelantos, {
+            id: Date.now(),
+            concepto,
+            cantidad,
+            fecha: new Date()
+          }]
         };
+      }
+      return empleado;
+    });
+    setEmpleados(nuevosEmpleados);
+    saveToLocalStorage(nuevosEmpleados);
+  }, [empleados, saveToLocalStorage]);
+
+  const agregarGastoVariable = useCallback((empleadoId: number, gasto: Omit<GastoVariableEmpleado, 'id'>) => {
+    console.log('useEmpleados: Agregando gasto variable...', { empleadoId, gasto });
+    
+    const nuevoGasto: GastoVariableEmpleado = {
+      ...gasto,
+      id: Date.now()
+    };
+
+    const nuevosEmpleados = empleados.map(empleado => {
+      if (empleado.id === empleadoId) {
+        const gastosActualizados = [...(empleado.gastosVariables || []), nuevoGasto];
+        console.log('useEmpleados: Gastos actualizados para empleado:', gastosActualizados);
         
         return {
-          ...emp,
-          // Actualizar los datos principales del empleado con los nuevos valores
-          salarioBruto: nuevosSalarios.salarioBruto,
-          seguridadSocialTrabajador: nuevosSalarios.seguridadSocialTrabajador,
-          seguridadSocialEmpresa: nuevosSalarios.seguridadSocialEmpresa,
-          retenciones: nuevosSalarios.retenciones,
-          embargo: nuevosSalarios.embargo,
-          historialSalarios: [...(emp.historialSalarios || []), nuevoCambio]
+          ...empleado,
+          gastosVariables: gastosActualizados
         };
       }
-      return emp;
+      return empleado;
     });
+    
     setEmpleados(nuevosEmpleados);
-    guardarEmpleadosEnStorage(nuevosEmpleados);
-  };
+    saveToLocalStorage(nuevosEmpleados);
+    console.log('useEmpleados: Gasto variable agregado correctamente');
+  }, [empleados, saveToLocalStorage]);
 
-  const agregarGastoVariable = (empleadoId: number, gasto: Omit<GastoVariableEmpleado, 'id'>) => {
-    console.log('useEmpleados: Agregando gasto variable...');
-    const nuevosEmpleados = empleados.map(emp => {
-      if (emp.id === empleadoId) {
-        const nuevoGasto: GastoVariableEmpleado = {
-          ...gasto,
-          id: Date.now()
+  const agregarCambioSalario = useCallback((empleadoId: number, cambio: Omit<CambioSalario, 'id'>) => {
+    console.log('useEmpleados: Agregando cambio de salario...');
+    const nuevosEmpleados = empleados.map(empleado => {
+      if (empleado.id === empleadoId) {
+        const nuevoEmpleado = {
+          ...empleado,
+          // Actualizar salario actual
+          salarioBruto: cambio.nuevoSalarioBruto,
+          seguridadSocialTrabajador: cambio.nuevaSeguridadSocialTrabajador,
+          seguridadSocialEmpresa: cambio.nuevaSeguridadSocialEmpresa,
+          retenciones: cambio.nuevasRetenciones,
+          embargo: cambio.nuevoEmbargo,
+          precioHoraExtra: cambio.nuevoPrecioHoraExtra,
+          precioHoraFestiva: cambio.nuevoPrecioHoraFestiva,
+          // Agregar al historial
+          cambiosSalario: [...empleado.cambiosSalario, {
+            ...cambio,
+            id: Date.now(),
+            fechaCambio: new Date()
+          }]
         };
-        return {
-          ...emp,
-          gastosVariables: [...(emp.gastosVariables || []), nuevoGasto]
-        };
+        return nuevoEmpleado;
       }
-      return emp;
+      return empleado;
     });
     setEmpleados(nuevosEmpleados);
-    guardarEmpleadosEnStorage(nuevosEmpleados);
-  };
+    saveToLocalStorage(nuevosEmpleados);
+  }, [empleados, saveToLocalStorage]);
+
+  const eliminarTodosEmpleados = useCallback(() => {
+    console.log('useEmpleados: Eliminando todos los empleados...');
+    setEmpleados([]);
+    saveToLocalStorage([]);
+  }, [saveToLocalStorage]);
+
+  const deshabilitarEmpleado = useCallback((id: number) => {
+    console.log('useEmpleados: Deshabilitando empleado...');
+    const nuevosEmpleados = empleados.map(empleado =>
+      empleado.id === id ? { ...empleado, activo: false, fechaBaja: new Date() } : empleado
+    );
+    setEmpleados(nuevosEmpleados);
+    saveToLocalStorage(nuevosEmpleados);
+  }, [empleados, saveToLocalStorage]);
+
+  const habilitarEmpleado = useCallback((id: number) => {
+    console.log('useEmpleados: Habilitando empleado...');
+    const nuevosEmpleados = empleados.map(empleado =>
+      empleado.id === id ? { ...empleado, activo: true, fechaBaja: undefined } : empleado
+    );
+    setEmpleados(nuevosEmpleados);
+    saveToLocalStorage(nuevosEmpleados);
+  }, [empleados, saveToLocalStorage]);
 
   return {
     empleados,
     agregarEmpleado,
     updateEmpleado,
     eliminarEmpleado,
+    agregarAdelanto,
+    agregarGastoVariable,
+    agregarCambioSalario,
     eliminarTodosEmpleados,
     deshabilitarEmpleado,
-    habilitarEmpleado,
-    agregarCambioSalario,
-    agregarGastoVariable,
-    resetearTodosEmpleados
+    habilitarEmpleado
   };
 };

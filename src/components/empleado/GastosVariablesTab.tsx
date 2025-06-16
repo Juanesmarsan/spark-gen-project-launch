@@ -30,6 +30,20 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('GastosVariablesTab: Agregando gasto variable:', formData);
+    
+    // Validar que el importe sea mayor que 0
+    if (formData.importe <= 0) {
+      alert('El importe debe ser mayor que 0');
+      return;
+    }
+
+    // Validar que el concepto no esté vacío
+    if (!formData.concepto) {
+      alert('Debe seleccionar un concepto');
+      return;
+    }
+
     onAgregarGasto(formData);
     setMostrarDialog(false);
     setFormData({
@@ -108,6 +122,7 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
                   id="importe"
                   type="number"
                   step="0.01"
+                  min="0.01"
                   value={formData.importe}
                   onChange={(e) => setFormData(prev => ({ ...prev, importe: parseFloat(e.target.value) || 0 }))}
                   required
@@ -154,7 +169,9 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto }: GastosVariables
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">€{totalGastos.toFixed(2)}</div>
-          <p className="text-sm text-muted-foreground">Total de gastos variables</p>
+          <p className="text-sm text-muted-foreground">
+            Total de gastos variables ({empleado.gastosVariables?.length || 0} gastos)
+          </p>
         </CardContent>
       </Card>
 
