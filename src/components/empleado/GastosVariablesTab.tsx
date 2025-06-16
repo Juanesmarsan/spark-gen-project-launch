@@ -25,8 +25,13 @@ interface GastosVariablesTabProps {
 export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, onEliminarGasto }: GastosVariablesTabProps) => {
   const [mostrarDialog, setMostrarDialog] = useState(false);
   const [gastoEditando, setGastoEditando] = useState<GastoVariableEmpleado | null>(null);
-  const [formData, setFormData] = useState({
-    concepto: 'dieta' as const,
+  const [formData, setFormData] = useState<{
+    concepto: 'dieta' | 'alojamiento' | 'transporte' | 'otro';
+    descripcion: string;
+    importe: number;
+    fecha: Date;
+  }>({
+    concepto: 'dieta',
     descripcion: '',
     importe: 0,
     fecha: new Date()
@@ -34,7 +39,7 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
 
   const resetForm = () => {
     setFormData({
-      concepto: 'dieta' as const,
+      concepto: 'dieta',
       descripcion: '',
       importe: 0,
       fecha: new Date()
@@ -132,7 +137,10 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
                 <Label>Concepto</Label>
                 <Select 
                   value={formData.concepto} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, concepto: value as any }))}
+                  onValueChange={(value) => setFormData(prev => ({ 
+                    ...prev, 
+                    concepto: value as 'dieta' | 'alojamiento' | 'transporte' | 'otro'
+                  }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
