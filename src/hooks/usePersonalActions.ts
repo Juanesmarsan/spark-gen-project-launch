@@ -10,7 +10,7 @@ export const usePersonalActions = () => {
   console.log('usePersonalActions: Inicializando hook');
   
   const { toast } = useToast();
-  const { empleados: todosEmpleados, agregarEmpleado, agregarCambioSalario } = useEmpleados();
+  const { empleados: todosEmpleados, agregarEmpleado, eliminarEmpleado, deshabilitarEmpleado, agregarCambioSalario } = useEmpleados();
   const { sincronizarGastoVariableConGastosFijos, sincronizarSalariosGerenciaConGastosFijos } = useGastosPersonalGerencia();
   
   // Filtrar solo el personal de gerencia
@@ -45,6 +45,53 @@ export const usePersonalActions = () => {
     });
   }, [agregarEmpleado, toast, sincronizarSalariosGerenciaConGastosFijos, baseActions]);
 
+  const handleEliminarEmpleado = useCallback((empleadoId: number) => {
+    console.log('usePersonalActions: Eliminando empleado con ID:', empleadoId);
+    eliminarEmpleado(empleadoId);
+    
+    if (baseActions.empleadoSeleccionado?.id === empleadoId) {
+      baseActions.setEmpleadoSeleccionado(null);
+    }
+    
+    toast({
+      title: "Personal eliminado",
+      description: "El personal ha sido eliminado permanentemente.",
+      variant: "destructive"
+    });
+  }, [eliminarEmpleado, baseActions, toast]);
+
+  const handleBulkEliminar = useCallback((empleadoIds: number[]) => {
+    console.log('usePersonalActions: Eliminación masiva de personal:', empleadoIds);
+    empleadoIds.forEach(id => eliminarEmpleado(id));
+    
+    if (baseActions.empleadoSeleccionado && empleadoIds.includes(baseActions.empleadoSeleccionado.id)) {
+      baseActions.setEmpleadoSeleccionado(null);
+    }
+    
+    toast({
+      title: "Personal eliminado",
+      description: `Se han eliminado ${empleadoIds.length} empleado${empleadoIds.length !== 1 ? 's' : ''} permanentemente.`,
+      variant: "destructive"
+    });
+  }, [eliminarEmpleado, baseActions, toast]);
+
+  const handleBulkDeshabilitar = useCallback((empleadoIds: number[]) => {
+    console.log('usePersonalActions: Inhabilitación masiva de personal:', empleadoIds);
+    empleadoIds.forEach(id => deshabilitarEmpleado(id));
+    
+    if (baseActions.empleadoSeleccionado && empleadoIds.includes(baseActions.empleadoSeleccionado.id)) {
+      const empleadoActualizado = empleados.find(emp => emp.id === baseActions.empleadoSeleccionado.id);
+      if (empleadoActualizado) {
+        baseActions.setEmpleadoSeleccionado({ ...empleadoActualizado, activo: false });
+      }
+    }
+    
+    toast({
+      title: "Personal inhabilitado",
+      description: `Se han inhabilitado ${empleadoIds.length} empleado${empleadoIds.length !== 1 ? 's' : ''}.`,
+    });
+  }, [deshabilitarEmpleado, baseActions, empleados, toast]);
+
   const handleUpdateEmpleado = useCallback((empleadoActualizado: Empleado) => {
     console.log('usePersonalActions: Actualizando empleado');
     baseActions.handleUpdateEmpleado(empleadoActualizado);
@@ -66,12 +113,30 @@ export const usePersonalActions = () => {
     sincronizarGastoVariableConGastosFijos(baseActions.empleadoSeleccionado.id, gastoConId);
   }, [baseActions, sincronizarGastoVariableConGastosFijos]);
 
+  const handleAgregarCambioSalario = useCallback((empleadoId: number, nuevosSalarios: any) => {
+    console.log('usePersonalActions: Agregando cambio de salario');
+    agregarCambioSalario(empleadoId, nuevosSalarios);
+    
+    // Actualizar el empleado seleccionado con los nuevos datos
+    setTimeout(() => {
+      baseActions.actualizarEmpleadoSeleccionado(empleadoId);
+    }, 100);
+    
+    toast({
+      title: "Salario actualizado",
+      description: "El cambio de salario se ha registrado correctamente.",
+    });
+  }, [agregarCambioSalario, baseActions, toast]);
+
   return {
     empleados,
     ...baseActions,
     handleAgregarEmpleado,
+    handleEliminarEmpleado,
+    handleBulkEliminar,
+    handleBulkDeshabilitar,
     handleUpdateEmpleado: handleUpdateEmpleado,
     handleAgregarGastoVariable,
-    agregarCambioSalario
+    agregarCambioSalario: handleAgregarCambioSalario
   };
 };
