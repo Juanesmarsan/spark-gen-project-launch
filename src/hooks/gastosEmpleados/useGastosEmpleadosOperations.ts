@@ -87,8 +87,18 @@ export const useGastosEmpleadosOperations = (
     guardarEnStorage(gastosActualizados);
   }, [gastosEmpleadosProyectos, setGastosEmpleadosProyectos, guardarEnStorage]);
 
+  // Eliminar registro de gasto de empleado
+  const eliminarGastoEmpleadoProyecto = useCallback((gastoId: number) => {
+    console.log('useGastosEmpleadosOperations: Eliminando gasto de empleado...');
+    
+    const gastosActualizados = gastosEmpleadosProyectos.filter(gasto => gasto.id !== gastoId);
+    setGastosEmpleadosProyectos(gastosActualizados);
+    guardarEnStorage(gastosActualizados);
+  }, [gastosEmpleadosProyectos, setGastosEmpleadosProyectos, guardarEnStorage]);
+
   return {
     registrarGastoEmpleadoProyecto,
-    agregarGastoVariable
+    agregarGastoVariable,
+    eliminarGastoEmpleadoProyecto
   };
 };

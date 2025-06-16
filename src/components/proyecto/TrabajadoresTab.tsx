@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Users, Clock, CalendarDays, Edit, Trash2, CalendarIcon } from "lucide-react";
+import { Users, Clock, CalendarDays, Edit, Trash2, CalendarIcon, UserPlus } from "lucide-react";
 import { Proyecto, Trabajador } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
 import { useState } from "react";
@@ -18,6 +17,7 @@ import { format, startOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { generarCalendarioMesPuro } from "@/utils/calendarioUtils";
+import { TrabajadorAssignment } from "./TrabajadorAssignment";
 
 interface TrabajadoresTabProps {
   proyecto: Proyecto;
@@ -83,6 +83,9 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
   const [fechaEntrada, setFechaEntrada] = useState<Date | undefined>();
   const [fechaSalida, setFechaSalida] = useState<Date | undefined>();
   const [precioHora, setPrecioHora] = useState<number | undefined>();
+  const [mostrarAsignacion, setMostrarAsignacion] = useState(false);
+  const [trabajadoresAsignados, setTrabajadoresAsignados] = useState<number[]>([]);
+  const [trabajadoresConFechas, setTrabajadoresConFechas] = useState<{id: number; fechaEntrada?: Date; fechaSalida?: Date}[]>([]);
 
   const mesesDisponibles = [
     { value: '2025-01', label: 'Enero 2025', date: new Date(2025, 0, 1) },
@@ -100,6 +103,57 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
   ];
 
   const mesActual = format(mesSeleccionado, 'yyyy-MM');
+
+  const empleadosActivos = empleados.filter(e => e.activo);
+  const empleadosDisponibles = empleadosActivos.filter(e => 
+    !proyecto.trabajadoresAsignados.some(t => t.id === e.id)
+  );
+
+  const handleTrabajadorToggle = (empleadoId: number, checked: boolean) => {
+    if (checked) {
+      setTrabajadoresAsignados(prev => [...prev, empleadoId]);
+      setTrabajadoresConFechas(prev => [...prev, { id: empleadoId, fechaEntrada: new Date() }]);
+    } else {
+      setTrabajadoresAsignados(prev => prev.filter(id => id !== empleadoId));
+      setTrabajadoresConFechas(prev => prev.filter(t => t.id !== empleadoId));
+    }
+  };
+
+  const handleUpdateTrabajadorFecha = (empleadoId: number, tipo: 'entrada' | 'salida', fecha: Date | undefined) => {
+    setTrabajadoresConFechas(prev => 
+      prev.map(t => 
+        t.id === empleadoId 
+          ? { ...t, [tipo === 'entrada' ? 'fechaEntrada' : 'fechaSalida']: fecha }
+          : t
+      )
+    );
+  };
+
+  const handleAsignarTrabajadores = () => {
+    const nuevosTrabajadores: Trabajador[] = trabajadoresAsignados.map(empleadoId => {
+      const empleado = empleados.find(e => e.id === empleadoId);
+      const fechasTrabajador = trabajadoresConFechas.find(t => t.id === empleadoId);
+      
+      return {
+        id: empleado!.id,
+        nombre: empleado!.nombre,
+        apellidos: empleado!.apellidos,
+        precioHora: proyecto.tipo === 'administracion' ? proyecto.precioHora : undefined,
+        fechaEntrada: fechasTrabajador?.fechaEntrada,
+        fechaSalida: fechasTrabajador?.fechaSalida
+      };
+    });
+
+    const proyectoActualizado = {
+      ...proyecto,
+      trabajadoresAsignados: [...proyecto.trabajadoresAsignados, ...nuevosTrabajadores]
+    };
+
+    onUpdateProyecto(proyectoActualizado);
+    setMostrarAsignacion(false);
+    setTrabajadoresAsignados([]);
+    setTrabajadoresConFechas([]);
+  };
 
   const handleEditarTrabajador = (trabajador: Trabajador) => {
     setTrabajadorEditando(trabajador);
@@ -170,6 +224,43 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
                   </SelectContent>
                 </Select>
               </div>
+              
+              {empleadosDisponibles.length > 0 && (
+                <Dialog open={mostrarAsignacion} onOpenChange={setMostrarAsignacion}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Asignar Trabajadores
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Asignar Nuevos Trabajadores</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <TrabajadorAssignment
+                        empleadosActivos={empleadosDisponibles}
+                        trabajadoresAsignados={trabajadoresAsignados}
+                        trabajadoresConFechas={trabajadoresConFechas}
+                        onTrabajadorToggle={handleTrabajadorToggle}
+                        onUpdateTrabajadorFecha={handleUpdateTrabajadorFecha}
+                      />
+                      
+                      <div className="flex justify-end gap-2 pt-4">
+                        <Button variant="outline" onClick={() => setMostrarAsignacion(false)}>
+                          Cancelar
+                        </Button>
+                        <Button 
+                          onClick={handleAsignarTrabajadores}
+                          disabled={trabajadoresAsignados.length === 0}
+                        >
+                          Asignar Trabajadores
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
         </CardHeader>

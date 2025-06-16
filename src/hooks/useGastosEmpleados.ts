@@ -7,7 +7,7 @@ import { useGastosEmpleadosQueries } from './gastosEmpleados/useGastosEmpleadosQ
 export const useGastosEmpleados = () => {
   const { gastosEmpleadosProyectos, setGastosEmpleadosProyectos, guardarEnStorage } = useGastosEmpleadosStorage();
   const { calcularCosteEmpleado, calcularDiasLaborales } = useCalculosEmpleados();
-  const { registrarGastoEmpleadoProyecto, agregarGastoVariable } = useGastosEmpleadosOperations(
+  const { registrarGastoEmpleadoProyecto, agregarGastoVariable, eliminarGastoEmpleadoProyecto } = useGastosEmpleadosOperations(
     gastosEmpleadosProyectos,
     setGastosEmpleadosProyectos,
     guardarEnStorage
@@ -19,6 +19,7 @@ export const useGastosEmpleados = () => {
     calcularCosteEmpleado,
     registrarGastoEmpleadoProyecto,
     agregarGastoVariable,
+    eliminarGastoEmpleadoProyecto,
     obtenerGastosPorEmpleadoMes,
     obtenerGastosPorProyectoMes,
     calcularCosteTotalEmpleadoProyecto,

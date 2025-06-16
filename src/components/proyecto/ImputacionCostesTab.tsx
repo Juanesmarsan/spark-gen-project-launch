@@ -1,11 +1,11 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, Users, Euro, Calendar } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Calculator, Users, Euro, Calendar, Trash2 } from "lucide-react";
 import { Proyecto } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
 import { useImputacionCostesSalariales } from "@/hooks/useImputacionCostesSalariales";
@@ -24,7 +24,7 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
   const [procesando, setProcesando] = useState(false);
 
   const { imputarCostesSalarialesEmpleado } = useImputacionCostesSalariales();
-  const { obtenerGastosPorProyectoMes } = useGastosEmpleados();
+  const { obtenerGastosPorProyectoMes, eliminarGastoEmpleadoProyecto } = useGastosEmpleados();
   const { toast } = useToast();
 
   const mesesDisponibles = [
@@ -97,6 +97,23 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
       });
     } finally {
       setProcesando(false);
+    }
+  };
+
+  const handleEliminarCoste = async (gastoId: number) => {
+    try {
+      eliminarGastoEmpleadoProyecto(gastoId);
+      toast({
+        title: "Coste eliminado",
+        description: "El coste imputado se ha eliminado correctamente.",
+      });
+    } catch (error) {
+      console.error('Error al eliminar coste:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un error al eliminar el coste.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -225,6 +242,7 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
                 <TableHead>Horas Extras</TableHead>
                 <TableHead>Gastos Variables</TableHead>
                 <TableHead>Total</TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -267,12 +285,38 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
                         )}
                       </TableCell>
                       <TableCell className="font-bold">€{safeToFixed(totalEmpleado)}</TableCell>
+                      <TableCell>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar coste imputado?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción eliminará los costes imputados de {empleado?.nombre} {empleado?.apellidos} para {format(new Date(anio, mes - 1), 'MMMM yyyy', { locale: es })}. Esta acción no se puede deshacer.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleEliminarCoste(gasto.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     No hay costes imputados para el mes seleccionado
                   </TableCell>
                 </TableRow>
