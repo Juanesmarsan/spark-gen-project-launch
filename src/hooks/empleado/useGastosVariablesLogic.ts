@@ -1,9 +1,9 @@
-
 import { useState, useCallback } from "react";
 import { Empleado, GastoVariableEmpleado } from "@/types/empleado";
 import { useToast } from "@/hooks/use-toast";
 import { useProyectos } from "@/hooks/useProyectos";
 import { useGastosEmpleados } from "@/hooks/useGastosEmpleados";
+import { useImputacionCostesSalariales } from "@/hooks/useImputacionCostesSalariales";
 
 export const useGastosVariablesLogic = (
   empleado: Empleado,
@@ -19,6 +19,7 @@ export const useGastosVariablesLogic = (
 
   const { proyectos, agregarGastoProyecto } = useProyectos();
   const { agregarGastoVariable } = useGastosEmpleados();
+  const { imputarCostesSalarialesEmpleado } = useImputacionCostesSalariales();
   const { toast } = useToast();
 
   const buscarProyectosActivos = useCallback((fechaGasto: Date) => {
@@ -41,6 +42,25 @@ export const useGastosVariablesLogic = (
     console.log('useGastosVariablesLogic: Proyectos encontrados:', proyectosDelEmpleado.length);
     return proyectosDelEmpleado;
   }, [empleado.id, proyectos]);
+
+  // Imputar gastos salariales automáticamente
+  const imputarGastosSalariales = useCallback((fechaGasto: Date) => {
+    console.log('useGastosVariablesLogic: Imputando gastos salariales automáticamente para fecha:', fechaGasto);
+    
+    const mes = fechaGasto.getMonth() + 1;
+    const anio = fechaGasto.getFullYear();
+    
+    // Imputar costes salariales del empleado para el mes del gasto
+    const imputaciones = imputarCostesSalarialesEmpleado(empleado, mes, anio);
+    
+    if (imputaciones.length > 0) {
+      console.log('useGastosVariablesLogic: Gastos salariales imputados:', imputaciones.length, 'proyectos');
+      toast({
+        title: "Gastos salariales imputados",
+        description: `Se han imputado automáticamente los costes salariales a ${imputaciones.length} proyecto(s) para ${mes}/${anio}`,
+      });
+    }
+  }, [empleado, imputarCostesSalarialesEmpleado, toast]);
 
   // Mapear conceptos de empleado a tipos de gastos de proyecto
   const mapearConceptoAProyecto = useCallback((concepto: 'dieta' | 'alojamiento' | 'transporte' | 'otro') => {
@@ -69,6 +89,9 @@ export const useGastosVariablesLogic = (
       setGastoEditando(null);
     } else {
       console.log('useGastosVariablesLogic: Agregando nuevo gasto');
+      
+      // Imputar gastos salariales automáticamente cuando se agrega un gasto
+      imputarGastosSalariales(formData.fecha);
       
       // Buscar proyectos activos para la fecha del gasto
       const proyectosActivos = buscarProyectosActivos(formData.fecha);
@@ -123,10 +146,13 @@ export const useGastosVariablesLogic = (
       onAgregarGasto(formData);
       setMostrarDialog(false);
     }
-  }, [gastoEditando, onEditarGasto, onAgregarGasto, empleado.id, empleado.nombre, buscarProyectosActivos, agregarGastoProyecto, agregarGastoVariable, mapearConceptoAProyecto, toast]);
+  }, [gastoEditando, onEditarGasto, onAgregarGasto, empleado.id, empleado.nombre, buscarProyectosActivos, agregarGastoProyecto, agregarGastoVariable, mapearConceptoAProyecto, imputarGastosSalariales, toast]);
 
   const handleImputarProyectoSeleccionado = useCallback((proyectoId: number) => {
     if (gastoParaImputar) {
+      // Imputar gastos salariales cuando se selecciona un proyecto
+      imputarGastosSalariales(gastoParaImputar.fecha);
+      
       // Imputar al proyecto seleccionado
       const gastoProyecto = {
         concepto: `${gastoParaImputar.concepto} - ${empleado.nombre}`,
@@ -163,10 +189,13 @@ export const useGastosVariablesLogic = (
     setMostrarDialogProyectos(false);
     setGastoParaImputar(null);
     setProyectosDisponibles([]);
-  }, [gastoParaImputar, empleado.id, empleado.nombre, agregarGastoProyecto, agregarGastoVariable, mapearConceptoAProyecto, onAgregarGasto, proyectosDisponibles, toast]);
+  }, [gastoParaImputar, empleado.id, empleado.nombre, agregarGastoProyecto, agregarGastoVariable, mapearConceptoAProyecto, onAgregarGasto, proyectosDisponibles, imputarGastosSalariales, toast]);
 
   const handleNoImputar = useCallback(() => {
     if (gastoParaImputar) {
+      // Imputar gastos salariales aunque no se impute el gasto variable
+      imputarGastosSalariales(gastoParaImputar.fecha);
+      
       // Solo agregar como gasto del empleado sin imputar a proyecto
       onAgregarGasto(gastoParaImputar);
       toast({
@@ -178,7 +207,7 @@ export const useGastosVariablesLogic = (
     setMostrarDialogProyectos(false);
     setGastoParaImputar(null);
     setProyectosDisponibles([]);
-  }, [gastoParaImputar, onAgregarGasto, toast]);
+  }, [gastoParaImputar, onAgregarGasto, imputarGastosSalariales, toast]);
 
   const handleEditar = useCallback((gasto: GastoVariableEmpleado) => {
     console.log('useGastosVariablesLogic: Preparando edición de gasto:', gasto);

@@ -31,7 +31,10 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
 
   return (
     <div className="space-y-6">
-      <GastosVariablesHeader onAgregarGasto={() => setMostrarDialog(true)} />
+      <GastosVariablesHeader 
+        empleado={empleado}
+        onAgregarGasto={() => setMostrarDialog(true)} 
+      />
 
       <GastoVariableForm
         open={mostrarDialog}
