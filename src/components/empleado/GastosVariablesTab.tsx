@@ -50,6 +50,18 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
     return proyectosDelEmpleado;
   };
 
+  // Mapear conceptos de empleado a tipos de gastos de proyecto
+  const mapearConceptoAProyecto = (concepto: 'dieta' | 'alojamiento' | 'transporte' | 'otro') => {
+    switch (concepto) {
+      case 'transporte':
+        return 'viaje';
+      case 'otro':
+        return 'otro';
+      default:
+        return concepto;
+    }
+  };
+
   const handleSubmit = (formData: {
     concepto: 'dieta' | 'alojamiento' | 'transporte' | 'otro';
     descripcion: string;
@@ -86,11 +98,10 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
         agregarGastoProyecto(proyecto.id, gastoProyecto);
         
         // También agregar como gasto variable del empleado para el proyecto
-        const mes = formData.fecha.getMonth() + 1;
-        const anio = formData.fecha.getFullYear();
+        const tipoGastoEmpleado = mapearConceptoAProyecto(formData.concepto) as 'dieta' | 'alojamiento' | 'combustible' | 'viaje' | 'otro';
         
         agregarGastoVariable(Date.now(), {
-          tipo: formData.concepto,
+          tipo: tipoGastoEmpleado,
           concepto: formData.descripcion,
           importe: formData.importe,
           fecha: formData.fecha,
@@ -137,8 +148,10 @@ export const GastosVariablesTab = ({ empleado, onAgregarGasto, onEditarGasto, on
       agregarGastoProyecto(proyectoId, gastoProyecto);
       
       // También agregar como gasto variable del empleado
+      const tipoGastoEmpleado = mapearConceptoAProyecto(gastoParaImputar.concepto) as 'dieta' | 'alojamiento' | 'combustible' | 'viaje' | 'otro';
+      
       agregarGastoVariable(Date.now(), {
-        tipo: gastoParaImputar.concepto,
+        tipo: tipoGastoEmpleado,
         concepto: gastoParaImputar.descripcion,
         importe: gastoParaImputar.importe,
         fecha: gastoParaImputar.fecha,
