@@ -44,6 +44,7 @@ const Empleados = () => {
           onEliminarEmpleado={handleEliminarEmpleado}
           onDeshabilitarEmpleado={handleDeshabilitarEmpleado}
           onHabilitarEmpleado={handleHabilitarEmpleado}
+          allowPermanentDelete={true}
         />
 
         {empleadoSeleccionado && (
