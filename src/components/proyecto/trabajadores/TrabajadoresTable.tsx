@@ -40,8 +40,6 @@ export const TrabajadoresTable = ({
           <TableHead>Fecha Entrada</TableHead>
           <TableHead>Fecha Salida</TableHead>
           <TableHead>Horas en {format(mesSeleccionado, 'MMMM yyyy', { locale: es })}</TableHead>
-          {proyecto.tipo === 'administracion' && <TableHead>Precio/Hora</TableHead>}
-          {proyecto.tipo === 'administracion' && <TableHead>Total Mes</TableHead>}
           <TableHead>Estado</TableHead>
           <TableHead>Acciones</TableHead>
         </TableRow>
@@ -49,9 +47,6 @@ export const TrabajadoresTable = ({
       <TableBody>
         {proyecto.trabajadoresAsignados.map((trabajador) => {
           const horasDelMes = calcularHorasTrabajador(trabajador, mesSeleccionado);
-          const totalMes = proyecto.tipo === 'administracion' && trabajador.precioHora 
-            ? horasDelMes * trabajador.precioHora 
-            : null;
 
           return (
             <TableRow key={trabajador.id}>
@@ -74,16 +69,6 @@ export const TrabajadoresTable = ({
                   {horasDelMes}h
                 </div>
               </TableCell>
-              {proyecto.tipo === 'administracion' && (
-                <TableCell>
-                  {trabajador.precioHora ? `${trabajador.precioHora}€` : 'No especificado'}
-                </TableCell>
-              )}
-              {proyecto.tipo === 'administracion' && (
-                <TableCell>
-                  {totalMes ? `${totalMes.toFixed(2)}€` : '-'}
-                </TableCell>
-              )}
               <TableCell>
                 <Badge variant={trabajador.fechaSalida ? "secondary" : "default"}>
                   {trabajador.fechaSalida ? "Finalizado" : "Activo"}

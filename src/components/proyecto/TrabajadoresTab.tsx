@@ -73,7 +73,6 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
   const [trabajadorEditando, setTrabajadorEditando] = useState<Trabajador | null>(null);
   const [fechaEntrada, setFechaEntrada] = useState<Date | undefined>();
   const [fechaSalida, setFechaSalida] = useState<Date | undefined>();
-  const [precioHora, setPrecioHora] = useState<number | undefined>();
   const [mostrarAsignacion, setMostrarAsignacion] = useState(false);
   const [trabajadoresAsignados, setTrabajadoresAsignados] = useState<number[]>([]);
   const [trabajadoresConFechas, setTrabajadoresConFechas] = useState<{id: number; fechaEntrada?: Date; fechaSalida?: Date}[]>([]);
@@ -112,7 +111,6 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
         id: empleado!.id,
         nombre: empleado!.nombre,
         apellidos: empleado!.apellidos,
-        precioHora: proyecto.tipo === 'administracion' ? proyecto.precioHora : undefined,
         fechaEntrada: fechasTrabajador?.fechaEntrada,
         fechaSalida: fechasTrabajador?.fechaSalida
       };
@@ -133,7 +131,6 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
     setTrabajadorEditando(trabajador);
     setFechaEntrada(trabajador.fechaEntrada);
     setFechaSalida(trabajador.fechaSalida);
-    setPrecioHora(trabajador.precioHora);
   };
 
   const handleGuardarEdicion = () => {
@@ -141,7 +138,7 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
 
     const trabajadoresActualizados = proyecto.trabajadoresAsignados.map(t => 
       t.id === trabajadorEditando.id 
-        ? { ...t, fechaEntrada, fechaSalida, precioHora }
+        ? { ...t, fechaEntrada, fechaSalida }
         : t
     );
 
@@ -154,7 +151,6 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
     setTrabajadorEditando(null);
     setFechaEntrada(undefined);
     setFechaSalida(undefined);
-    setPrecioHora(undefined);
   };
 
   const handleEliminarTrabajador = (trabajadorId: number) => {
@@ -201,11 +197,9 @@ export const TrabajadoresTab = ({ proyecto, empleados, onUpdateProyecto }: Traba
         proyecto={proyecto}
         fechaEntrada={fechaEntrada}
         fechaSalida={fechaSalida}
-        precioHora={precioHora}
         onClose={() => setTrabajadorEditando(null)}
         onFechaEntradaChange={setFechaEntrada}
         onFechaSalidaChange={setFechaSalida}
-        onPrecioHoraChange={setPrecioHora}
         onGuardar={handleGuardarEdicion}
       />
 

@@ -1,7 +1,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,11 +14,9 @@ interface TrabajadorEditDialogProps {
   proyecto: Proyecto;
   fechaEntrada?: Date;
   fechaSalida?: Date;
-  precioHora?: number;
   onClose: () => void;
   onFechaEntradaChange: (fecha: Date | undefined) => void;
   onFechaSalidaChange: (fecha: Date | undefined) => void;
-  onPrecioHoraChange: (precio: number | undefined) => void;
   onGuardar: () => void;
 }
 
@@ -28,11 +25,9 @@ export const TrabajadorEditDialog = ({
   proyecto,
   fechaEntrada,
   fechaSalida,
-  precioHora,
   onClose,
   onFechaEntradaChange,
   onFechaSalidaChange,
-  onPrecioHoraChange,
   onGuardar
 }: TrabajadorEditDialogProps) => {
   return (
@@ -110,19 +105,6 @@ export const TrabajadorEditDialog = ({
               </Button>
             )}
           </div>
-
-          {proyecto.tipo === 'administracion' && (
-            <div>
-              <Label>Precio por Hora (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={precioHora || ''}
-                onChange={(e) => onPrecioHoraChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                placeholder="Precio por hora"
-              />
-            </div>
-          )}
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
