@@ -10,6 +10,7 @@ import { es } from "date-fns/locale";
 import { ImputacionHeader } from "./imputacion/ImputacionHeader";
 import { CosteSummaryCards } from "./imputacion/CosteSummaryCards";
 import { CostesTable } from "./imputacion/CostesTable";
+import { TrabajadoresAusenciasSection } from "./imputacion/TrabajadoresAusenciasSection";
 
 interface ImputacionCostesTabProps {
   proyecto: Proyecto;
@@ -110,6 +111,13 @@ export const ImputacionCostesTab = ({ proyecto, empleados }: ImputacionCostesTab
         mes={mes}
         anio={anio}
         cantidadRegistros={gastosImputados.length}
+      />
+
+      <TrabajadoresAusenciasSection
+        proyecto={proyecto}
+        empleados={empleados}
+        mes={mes}
+        anio={anio}
       />
 
       <CostesTable
