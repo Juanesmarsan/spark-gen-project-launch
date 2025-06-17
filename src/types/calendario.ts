@@ -4,6 +4,8 @@ export interface DiaCalendario {
   diaSemana: number; // 0 = domingo, 1 = lunes, etc.
   horasDefecto: number;
   horasReales: number;
+  horasExtras: number; // Nueva propiedad añadida
+  horasFestivas: number; // Nueva propiedad añadida
   tipo: 'laborable' | 'festivo' | 'sabado' | 'domingo';
   ausencia?: {
     tipo: 'baja_medica' | 'baja_laboral' | 'baja_personal' | 'ausencia' | 'vacaciones';
