@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from 'react';
 import { DiaCalendario, CalendarioMensual, FestivoEspañol, ResumenHoras } from '@/types/calendario';
 
@@ -167,6 +166,8 @@ export const useCalendario = (empleadoId: number) => {
         diaSemana: fecha.getDay(),
         horasDefecto,
         horasReales: horasDefecto,
+        horasExtras: 0,
+        horasFestivas: 0,
         tipo,
       });
     }

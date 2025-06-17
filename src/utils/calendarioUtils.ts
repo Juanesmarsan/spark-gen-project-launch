@@ -113,6 +113,8 @@ export const generarCalendarioMesPuro = (empleadoId: number, mes: number, año: 
       diaSemana: fecha.getDay(),
       horasDefecto,
       horasReales: horasDefecto,
+      horasExtras: 0,
+      horasFestivas: 0,
       tipo,
     });
   }

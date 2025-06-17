@@ -1,8 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Code, Database, Users, Calculator, Building, FileText, Wrench, Car } from "lucide-react";
+import { Code, Database, Users, Calculator, Building, FileText, Wrench, Car, Calendar } from "lucide-react";
 
 export const ManualDesarrollador = () => {
   return (

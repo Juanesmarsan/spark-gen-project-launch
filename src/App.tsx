@@ -14,6 +14,7 @@ import GastosVariables from "./pages/GastosVariables";
 import NotFound from "./pages/NotFound";
 import Epis from "./pages/Epis";
 import Gerencia from "./pages/Gerencia";
+import Manual from "./pages/Manual";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => {
               <Route path="/vehiculos" element={<Vehiculos />} />
               <Route path="/gastos-variables" element={<GastosVariables />} />
               <Route path="/gerencia/*" element={<Gerencia />} />
+              <Route path="/manual" element={<Manual />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
