@@ -1,91 +1,86 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Clock, AlertTriangle } from "lucide-react";
 import { Trabajador } from "@/types/proyecto";
 import { Empleado } from "@/types/empleado";
-import { TrabajadorStats } from "./TrabajadorStatsCalculator";
+import { EstadisticasTrabajador } from "./TrabajadorStatsCalculator";
 
 interface TrabajadorRowProps {
   trabajador: Trabajador;
   empleado: Empleado;
-  estadisticas: TrabajadorStats;
+  estadisticas: EstadisticasTrabajador;
 }
 
-const getAusenciaColor = (tipo: string) => {
-  switch (tipo) {
-    case 'vacaciones': return 'bg-blue-100 text-blue-800';
-    case 'baja': return 'bg-red-100 text-red-800';
-    case 'ausencia': return 'bg-yellow-100 text-yellow-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
-
 export const TrabajadorRow = ({ trabajador, empleado, estadisticas }: TrabajadorRowProps) => {
+  const safeToFixed = (value: number | undefined | null, decimals: number = 2): string => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return "0.00";
+    }
+    return Number(value).toFixed(decimals);
+  };
+
   return (
-    <TableRow key={trabajador.id}>
+    <TableRow>
       <TableCell className="font-medium">
-        {trabajador.nombre} {trabajador.apellidos}
+        {empleado.nombre} {empleado.apellidos}
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1">
-          <Clock className="w-4 h-4" />
-          {estadisticas.horasLaborales}h
-        </div>
+        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+          {safeToFixed(estadisticas.horasLaborales, 1)}h
+        </Badge>
       </TableCell>
       <TableCell>
         {estadisticas.horasExtras > 0 ? (
           <Badge variant="outline" className="bg-orange-50 text-orange-700">
-            {estadisticas.horasExtras}h
+            {safeToFixed(estadisticas.horasExtras, 1)}h
           </Badge>
         ) : (
-          '-'
+          <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
       <TableCell>
         {estadisticas.horasFestivas > 0 ? (
           <Badge variant="outline" className="bg-purple-50 text-purple-700">
-            {estadisticas.horasFestivas}h
+            {safeToFixed(estadisticas.horasFestivas, 1)}h
           </Badge>
         ) : (
-          '-'
+          <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
       <TableCell>
         {estadisticas.diasVacaciones > 0 ? (
-          <Badge className={getAusenciaColor('vacaciones')}>
+          <Badge variant="outline" className="bg-green-50 text-green-700">
             {estadisticas.diasVacaciones} días
           </Badge>
         ) : (
-          '-'
+          <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
       <TableCell>
-        {estadisticas.diasBaja > 0 ? (
-          <Badge className={getAusenciaColor('baja')}>
-            <AlertTriangle className="w-3 h-3 mr-1" />
-            {estadisticas.diasBaja} días
+        {estadisticas.diasBajas > 0 ? (
+          <Badge variant="outline" className="bg-red-50 text-red-700">
+            {estadisticas.diasBajas} días
           </Badge>
         ) : (
-          '-'
+          <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
       <TableCell>
-        {estadisticas.diasAusencia > 0 ? (
-          <Badge className={getAusenciaColor('ausencia')}>
-            {estadisticas.diasAusencia} días
+        {estadisticas.diasAusencias > 0 ? (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+            {estadisticas.diasAusencias} días
           </Badge>
         ) : (
-          '-'
+          <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
       <TableCell>
         {estadisticas.gastosVariables > 0 ? (
-          <span className="font-medium text-green-600">
-            €{estadisticas.gastosVariables.toFixed(2)}
-          </span>
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
+            €{safeToFixed(estadisticas.gastosVariables)}
+          </Badge>
         ) : (
-          '-'
+          <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
     </TableRow>

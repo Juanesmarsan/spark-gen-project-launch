@@ -27,8 +27,26 @@ export const RentabilidadTrabajadores: React.FC<RentabilidadTrabajadoresProps> =
   const trabajadoresOrdenados = [...trabajadores].sort((a, b) => (b.rentabilidad || 0) - (a.rentabilidad || 0));
 
   const safeToFixed = (value: number | undefined | null, decimals: number = 2): string => {
-    return (value ?? 0).toFixed(decimals);
+    if (value === null || value === undefined || isNaN(value)) {
+      return "0.00";
+    }
+    return Number(value).toFixed(decimals);
   };
+
+  if (!trabajadores || trabajadores.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Rentabilidad por Trabajador</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            No hay datos de rentabilidad disponibles
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
