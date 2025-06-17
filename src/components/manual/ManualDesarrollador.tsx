@@ -1,19 +1,97 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Code, Database, Users, Calculator, Building, FileText, Wrench, Car, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Code, Database, Users, Calculator, Building, FileText, Wrench, Car, Calendar, Download } from "lucide-react";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { toast } from 'sonner';
 
 export const ManualDesarrollador = () => {
+  const descargarManualPDF = async () => {
+    try {
+      toast.info('Generando manual en PDF...');
+      
+      const elemento = document.getElementById('manual-desarrollador');
+      if (!elemento) {
+        toast.error('Error al encontrar el contenido del manual');
+        return;
+      }
+
+      // Configurar el elemento para la captura
+      const canvas = await html2canvas(elemento, {
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        height: elemento.scrollHeight,
+        width: elemento.scrollWidth
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 0;
+
+      // Si la imagen es muy alta, dividirla en páginas
+      const totalPages = Math.ceil((imgHeight * ratio) / pdfHeight);
+      
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        const sourceY = (i * pdfHeight) / ratio;
+        const sourceHeight = Math.min(imgHeight - sourceY, pdfHeight / ratio);
+        
+        // Crear un canvas temporal para esta página
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = imgWidth;
+        pageCanvas.height = sourceHeight;
+        const pageCtx = pageCanvas.getContext('2d');
+        
+        if (pageCtx) {
+          pageCtx.drawImage(canvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
+          const pageImgData = pageCanvas.toDataURL('image/png');
+          
+          pdf.addImage(pageImgData, 'PNG', imgX, imgY, imgWidth * ratio, sourceHeight * ratio);
+        }
+      }
+      
+      const fechaActual = new Date();
+      const nombreArchivo = `Manual_Desarrollador_${fechaActual.toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`;
+      
+      pdf.save(nombreArchivo);
+      toast.success('Manual descargado correctamente en PDF');
+    } catch (error) {
+      console.error('Error al generar el PDF:', error);
+      toast.error('Error al generar el PDF del manual');
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div id="manual-desarrollador" className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold">Manual de Desarrollador</h1>
         <p className="text-xl text-muted-foreground">
           Sistema de Gestión Empresarial - Documentación Técnica Completa
         </p>
-        <Badge variant="outline" className="text-lg px-4 py-2">
-          Versión 1.0 - Arquitectura React + TypeScript
-        </Badge>
+        <div className="flex items-center justify-center gap-4">
+          <Badge variant="outline" className="text-lg px-4 py-2">
+            Versión 1.0 - Arquitectura React + TypeScript
+          </Badge>
+          <Button onClick={descargarManualPDF} className="flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Descargar PDF
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="arquitectura" className="w-full">
