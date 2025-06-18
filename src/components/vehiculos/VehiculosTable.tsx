@@ -21,6 +21,13 @@ export const VehiculosTable = ({ vehiculos, onEdit, onDelete, onAgregarGasto }: 
     return fecha <= unMes && fecha >= ahora;
   };
 
+  const formatKilometros = (kilometros: number | undefined | null): string => {
+    if (kilometros === undefined || kilometros === null) {
+      return "0";
+    }
+    return kilometros.toLocaleString();
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -59,7 +66,7 @@ export const VehiculosTable = ({ vehiculos, onEdit, onDelete, onAgregarGasto }: 
                 {format(vehiculo.caducidadSeguro, "dd/MM/yyyy", { locale: es })}
               </span>
             </TableCell>
-            <TableCell>{vehiculo.kilometros.toLocaleString()} km</TableCell>
+            <TableCell>{formatKilometros(vehiculo.kilometros)} km</TableCell>
             <TableCell>
               <span className={`px-2 py-1 rounded-full text-xs ${
                 vehiculo.asignado 
