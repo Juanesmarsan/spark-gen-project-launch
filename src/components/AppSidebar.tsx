@@ -1,3 +1,4 @@
+
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +27,8 @@ import {
   FileText,
   Shield,
   ChevronRight,
-  UserCog
+  UserCog,
+  BookOpen
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -65,6 +67,11 @@ const menuItems = [
     title: "Gastos Variables",
     url: "/gastos-variables",
     icon: TrendingUp,
+  },
+  {
+    title: "Manual del Desarrollador",
+    url: "/manual",
+    icon: BookOpen,
   },
 ];
 
